@@ -10265,6 +10265,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     else if( inTutorialNumber > 0 ) {
         
+        tutorialOffsetX = SettingsManager::getIntSetting( 
+            "tutorialOffsetX", 400000 );
+
         // different tutorials go in different x blocks, far apart
         int startX = maxPlacementX + tutorialOffsetX * inTutorialNumber;
         int startY = tutorialCount * 40;

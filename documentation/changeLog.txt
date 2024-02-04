@@ -35,6 +35,8 @@ Server Fixes:
   are placed out at 400,000, so there's a chance of some tutorial horseplay.
   But now it's possible to one-hop fly out to the map origin.
 
+--tutorialOffsetX is now a live setting (was hardcoded).  Live setting now
+  pushed to 1,000,000 (was 400,000).
 
 
 
