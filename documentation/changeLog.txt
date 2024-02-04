@@ -29,6 +29,14 @@ Version 410   ???
 
 
 
+Server Fixes:
+
+--maxFlightDistanced upped to 700,000, maybe temporarily.  Currently, tutorials
+  are placed out at 400,000, so there's a chance of some tutorial horseplay.
+  But now it's possible to one-hop fly out to the map origin.
+
+
+
 
 Version 409   2024-January-13
 
