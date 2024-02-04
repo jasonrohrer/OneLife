@@ -5021,6 +5021,42 @@ void deleteObjectFromBank( int inID ) {
         }
 
     freeObjectBankRecord( inID );
+
+
+    // avoid inflation of nextObjectNumber by rolling it back
+    // whenever final object in bank is deleted
+    if( objectsDir.exists() && objectsDir.isDirectory() ) {
+        
+        File *nextNumberFile = 
+            objectsDir.getChildFile( "nextObjectNumber.txt" );
+        
+        int nextObjectNumber = nextNumberFile->readFileIntContents( 1 );
+        
+        
+        if( nextObjectNumber == inID + 1 ) {
+        
+            // our last object was deleted
+            
+            // walk backward in idMap and find last non-NULL record
+            
+            int lastRecord = 0;
+            
+            for( int i = mapSize - 1; i >= 0; i-- ) {
+                if( idMap[i] != NULL ) {
+                    lastRecord = i;
+                    break;
+                    }
+                }
+            
+            nextObjectNumber = lastRecord + 1;
+            
+            nextNumberFile->writeToFile( nextObjectNumber );
+            
+            }
+        
+        delete nextNumberFile;
+        }
+
     }
 
 

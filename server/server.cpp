@@ -10265,6 +10265,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
     else if( inTutorialNumber > 0 ) {
         
+        tutorialOffsetX = SettingsManager::getIntSetting( 
+            "tutorialOffsetX", 400000 );
+
         // different tutorials go in different x blocks, far apart
         int startX = maxPlacementX + tutorialOffsetX * inTutorialNumber;
         int startY = tutorialCount * 40;
@@ -17981,7 +17984,7 @@ int main() {
 
 
     int dataVer = readIntFromFile( "dataVersionNumber.txt", 1 );
-    int codVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
+    int codeVer = readIntFromFile( "serverCodeVersionNumber.txt", 1 );
     
     int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
     
@@ -17990,8 +17993,8 @@ int main() {
         }
     else {
         versionNumber = dataVer;
-        if( codVer > versionNumber ) {
-            versionNumber = codVer;
+        if( codeVer > versionNumber ) {
+            versionNumber = codeVer;
             }
         }
     

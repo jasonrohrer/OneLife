@@ -16,6 +16,27 @@ Version 410   ???
   AutoUpdatePage messaging is different for AHAP clients when downloading diff
   bundles.
 
+--Importer, when adding new objects (instead of replacing old), prints out
+  object ID remapping.
+
+--Fixed objectBank and spriteBank to roll back nextObject/SpriteNumber value
+  whenever last object/sprite in bank is deleted, to avoid id inflation.
+  soundBank was already doing this.
+
+--Whoops... major bug when importing new sprites.  fillSprite can actually
+  modify sprite data (to expand edges of sprites for seamless tiling), so we
+  can't do that before saving the sprite data to disk.
+
+
+
+Server Fixes:
+
+--maxFlightDistanced upped to 700,000, maybe temporarily.  Currently, tutorials
+  are placed out at 400,000, so there's a chance of some tutorial horseplay.
+  But now it's possible to one-hop fly out to the map origin.
+
+--tutorialOffsetX is now a live setting (was hardcoded).  Live setting now
+  pushed to 1,000,000 (was 400,000).
 
 
 
