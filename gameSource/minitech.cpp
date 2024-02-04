@@ -585,6 +585,9 @@ void minitech::drawObj(doublePair posCen, int objId, string strDescFirstLine, st
 	if( maxD > maxSize ) zoom = maxSize / maxD;
 	zoom = zoom * guiScale;
 	doublePair posAfterOffset = sub (posCen, mult( getObjectCenterOffset( obj ), zoom ));
+	
+	setDrawColor( 1, 1, 1, 1 ); 
+	
 	drawObject( obj, 2, posAfterOffset, 0, false, false, 20, 0, false, false,
 				getEmptyClothingSet(), zoom );
 }
@@ -640,11 +643,11 @@ void minitech::drawStr(
 	doublePair textPos = {posLT.x + padding, posCen.y};
 	
 	if (withBackground) {
-		setDrawColor( 0, 0, 0, 0.8 );
+		setDrawColor( 1, 1, 1, 0.8 ); //def: 0, 0, 0
 		drawRect( posCen, recWidth/2, recHeight/2);
 	}
 	
-	setDrawColor( 1, 1, 1, 1 );
+	setDrawColor( 0, 0, 0, 1 ); //def: 1, 1, 1 (white)
 	if (font == "handwritten") {
 		handwritingFont->drawString( sBuf, textPos, alignLeft );
 	} else if (font == "main") {
@@ -1006,9 +1009,9 @@ void minitech::updateDrawTwoTech() {
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
 		doublePair posBR = {posLT.x + recWidth, posLT.y - recHeight};
-		setDrawColor( 0, 0, 0, 0.8 );
-		drawRect( posCenter, recWidth/2, recHeight/2);
 		
+		setDrawColor( 0.94, 0.91, 0.87, 0.9 ); //def: 0, 0, 0, 0.8
+		drawRect( posCenter, recWidth/2, recHeight/2);
 		drawStr("CRAFTING GUIDE", posCenter, "tinyHandwritten", false);
 		
 		float headerWidth = recWidth;
@@ -1028,7 +1031,7 @@ void minitech::updateDrawTwoTech() {
 			sub(minLT, screenPos), 
 			sub(minBR, screenPos));
 		if (minListener->mouseHover) {
-			setDrawColor( 1, 1, 1, 0.3 );
+			setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 			drawRect(minCen, iconSize/4, iconSize/4);
 		}
 		if (minListener->mouseClick) {
@@ -1066,7 +1069,7 @@ void minitech::updateDrawTwoTech() {
 		posLT.y = posLT.y + recHeight + (60); //panel height = 60
 		posLT.x = posLT.x - recWidth;
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
-		setDrawColor( 0, 0, 0, 0.8 );
+		setDrawColor( 0.94, 0.91, 0.87, 0.9 ); //def: 0, 0, 0, 0.8
 		drawRect( posCenter, recWidth/2, recHeight/2);
 		drawStr("NO RECIPES FOUND :)", posCenter, "tinyHandwritten", false);
 		
@@ -1093,7 +1096,7 @@ void minitech::updateDrawTwoTech() {
 		posLT.x = posLT.x - recWidth;
 		
 		doublePair posCenter = {posLT.x + recWidth / 2, posLT.y - recHeight / 2};
-		setDrawColor( 0, 0, 0, 0.8 );
+		setDrawColor( 0.94, 0.91, 0.87, 0.9 ); //def: 0, 0, 0, 0.8
 		drawRect( posCenter, recWidth/2, recHeight/2);
 		
 		doublePair posLineLCen = {
@@ -1166,7 +1169,7 @@ void minitech::updateDrawTwoTech() {
 				&twotechMouseListeners, sub(posLineTL, screenPos), sub(posLineBR, screenPos));
 			if (lineListener->mouseHover) {
 				doublePair posLineCen = {posCenter.x, posLineLCen.y};
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(posLineCen, recWidth/2, iconSize/2 * 1.25);
 				
 				int holdingID = ourLiveObject->holdingID;
@@ -1195,7 +1198,7 @@ void minitech::updateDrawTwoTech() {
 			pair<mouseListener*,int> iconAListenerId(iconAListener, trans->actor);
 			iconListenerIds.push_back(iconAListenerId);
 			if (iconAListener->mouseHover && trans->actor > 0) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 			if (trans->actor == -1 && trans->autoDecaySeconds != 0) {
@@ -1232,7 +1235,7 @@ void minitech::updateDrawTwoTech() {
 			pair<mouseListener*,int> iconBListenerId(iconBListener, trans->target);
 			iconListenerIds.push_back(iconBListenerId);
 			if (iconBListener->mouseHover && trans->target > 0) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 			if (trans->target == -1) {
@@ -1272,7 +1275,7 @@ void minitech::updateDrawTwoTech() {
 			pair<mouseListener*,int> iconCListenerId(iconCListener, trans->newActor);
 			iconListenerIds.push_back(iconCListenerId);
 			if (iconCListener->mouseHover && trans->newActor > 0) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 			if (trans->actor > 0 && trans->target > 0 && trans->newActor == 0) {
@@ -1321,7 +1324,7 @@ void minitech::updateDrawTwoTech() {
 			pair<mouseListener*,int> iconDListenerId(iconDListener, trans->newTarget);
 			iconListenerIds.push_back(iconDListenerId);
 			if (iconDListener->mouseHover && trans->newTarget > 0) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 			if (trans->actor == -1 && trans->autoDecaySeconds != 0 && trans->newTarget == 0) {
@@ -1368,7 +1371,7 @@ void minitech::updateDrawTwoTech() {
 				sub(prevPageButtonTLPos, screenPos), 
 				sub(prevPageButtonBRPos, screenPos));
 			if (prevListener->mouseHover) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 		} else {
@@ -1386,7 +1389,7 @@ void minitech::updateDrawTwoTech() {
 				sub(nextPageButtonTLPos, screenPos), 
 				sub(nextPageButtonBRPos, screenPos));
 			if (nextListener->mouseHover) {
-				setDrawColor( 1, 1, 1, 0.3 );
+				setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 				drawRect(pos, iconSize/2, iconSize/2);
 			}
 		} else {
@@ -1439,7 +1442,7 @@ void minitech::updateDrawTwoTech() {
 	float headerHeight = (paddingY + iconSize + barHeight + paddingY);
 	doublePair headerLT = {posLT.x, posLT.y + separatorHeight + headerHeight};
 	doublePair headerCen = {headerLT.x + headerWidth / 2, headerLT.y - headerHeight / 2};
-	setDrawColor( 0, 0, 0, 0.8 );
+	setDrawColor( 1, 1, 1, 0.8 ); //def: 0, 0, 0, 0.8
 	drawRect( headerCen, headerWidth/2, headerHeight/2);
 
 	string useStr = "HOW DO I USE:";
@@ -1454,7 +1457,7 @@ void minitech::updateDrawTwoTech() {
 	doublePair secondLineLT = {secondLine.x - textWidth/2 - paddingX/2, secondLine.y + tinyLineHeight/2 + paddingY/2};
 	doublePair secondLineBR = {secondLine.x + textWidth/2 + paddingX/2, secondLine.y - tinyLineHeight/2 - paddingY/2};
 
-	setDrawColor( 1, 1, 1, 0.3 );
+	setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 	if (useOrMake == 0) {
 		drawRect( firstLine, textWidth/2 + paddingX/2, tinyLineHeight/2 + paddingY/2);
 	} else if (useOrMake == 1) {
@@ -1520,7 +1523,7 @@ void minitech::updateDrawTwoTech() {
 		sub(minLT, screenPos), 
 		sub(minBR, screenPos));
 	if (minListener->mouseHover) {
-		setDrawColor( 1, 1, 1, 0.3 );
+		setDrawColor( 0, 0, 0, 0.1 ); //def: 1, 1, 1, 0.3
 		drawRect(minCen, iconSize/4, iconSize/4);
 	}
 	if (minListener->mouseClick) {
