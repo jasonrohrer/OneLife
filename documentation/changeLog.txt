@@ -38,6 +38,9 @@ Server Fixes:
 --tutorialOffsetX is now a live setting (was hardcoded).  Live setting now
   pushed to 1,000,000 (was 400,000).
 
+--protocol.txt has note abut ** for newlines in MS global messages.  Fixes #1023
+
+
 
 
 Version 409   2024-January-13
