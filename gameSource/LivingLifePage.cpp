@@ -9725,7 +9725,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         }
     
     for( int i=0; i<NUM_HINT_SHEETS; i++ ) {
-		if ( ! minitech::minitechEnabled ) //minitech
+        if ( ! minitech::minitechEnabled ) //minitech
         if( ! equal( mHintPosOffset[i], mHintHideOffset[i] ) 
             &&
             mHintMessage[i] != NULL ) {
@@ -10277,7 +10277,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
 
 
 
-
+    // draw minitech gui before, to hide the background behind the bottom bar
+    float worldMouseX, worldMouseY;
+    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
+    screenToWorld( lastScreenMouseX, lastScreenMouseY, &worldMouseX, &worldMouseY );
+    minitech::livingLifeDraw(worldMouseX, worldMouseY);
 
     // info panel at bottom, over top of all the other slips
     setDrawColor( 1, 1, 1, 1 );
@@ -11170,11 +11174,6 @@ void LivingLifePage::draw( doublePair inViewCenter,
             }
         }
 
-    // minitech
-    float worldMouseX, worldMouseY;
-    getLastMouseScreenPos( &lastScreenMouseX, &lastScreenMouseY );
-    screenToWorld( lastScreenMouseX, lastScreenMouseY, &worldMouseX, &worldMouseY );
-    minitech::livingLifeDraw(worldMouseX, worldMouseY);
     
     
     if( vogMode ) {
