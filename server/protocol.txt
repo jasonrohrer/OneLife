@@ -964,6 +964,7 @@ some_message_text_with_space_replaced_by_underscore
 #
 
 Server sending a global message to be displayed by all non-tutorial clients.
+Note that ** in the message encodes a newline.
 
 
 

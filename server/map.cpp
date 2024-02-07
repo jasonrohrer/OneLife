@@ -6353,7 +6353,8 @@ int getTweakedBaseMap( int inX, int inY ) {
                     }
                 }
             }
-        else if( !wasGridPlacement && getObjectHeight( result ) < CELL_D ) {
+        else if( result != edgeObjectID && 
+                 !wasGridPlacement && getObjectHeight( result ) < CELL_D ) {
             // a short object should be here
             // and it wasn't forced by a grid placement
 
