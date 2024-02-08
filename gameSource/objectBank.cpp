@@ -26,6 +26,8 @@
 
 #include "spriteDrawColorOverride.h"
 
+#include "authorship.h"
+
 
 // supplied by animation bank
 extern void checkDrawPos( int inObjectID, doublePair inPos );
@@ -1804,7 +1806,26 @@ ObjectRecord *scanObjectRecordFromString( const char *inString ) {
                     &( r->cachedHeight ) );
             next++;
             }       
-                
+        
+        
+        r->authorTag = NULL;
+        
+        if( next < numLines ) {
+            
+            char authorTagBuffer[100];
+            
+            authorTagBuffer[0] = '\0';
+
+            sscanf( lines[next], "author=%99s", authorTagBuffer );
+            
+            if( strlen( authorTagBuffer ) > 0 ) {
+                r->authorTag = stringDuplicate( authorTagBuffer );
+                }
+            
+            next++;
+            }
+        
+
         r->toolSetIndex = -1;
                 
         r->isBiomeLimited = false;
@@ -3137,6 +3158,10 @@ void freeObjectRecord( ObjectRecord *inObject ) {
     if( inObject->permittedBiomeMap != NULL ) {
         delete [] inObject->permittedBiomeMap;
         }
+    
+    if( inObject->authorTag != NULL ) {
+        delete [] inObject->authorTag;
+        }
 
     delete inObject;
     }
@@ -3593,6 +3618,10 @@ int addObject( const char *inDescription,
                char inNoWriteToFile,
                int inReplaceID,
                int inExistingObjectHeight ) {
+
+
+    char *authorHash = getAuthorHash();
+    
     
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
@@ -3877,6 +3906,12 @@ int addObject( const char *inDescription,
 
         lines.push_back( autoSprintf( "pixHeight=%d",
                                       newHeight ) );
+        
+        
+        lines.push_back( autoSprintf( "author=%s",
+                                      authorHash ) );
+        
+        
 
 
         char **linesArray = lines.getElementArray();
@@ -3923,6 +3958,9 @@ int addObject( const char *inDescription,
     
     if( newID == -1 && ! inNoWriteToFile ) {
         // failed to save it to disk
+
+        delete [] authorHash;
+        
         return -1;
         }
     
@@ -4314,6 +4352,8 @@ int addObject( const char *inDescription,
             }
         }
     
+    
+    r->authorTag = authorHash;
     
     
     freeObjectBankRecord( newID );

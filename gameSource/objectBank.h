@@ -515,6 +515,8 @@ typedef struct ObjectRecord {
         // applied to results of getObjectBottomCenterOffset
         int containOffsetBottomX;
         int containOffsetBottomY;
+        
+        char *authorTag;
 
     } ObjectRecord;
 

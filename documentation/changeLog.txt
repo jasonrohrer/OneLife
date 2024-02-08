@@ -27,6 +27,8 @@ Version 410   ???
   modify sprite data (to expand edges of sprites for seamless tiling), so we
   can't do that before saving the sprite data to disk.
 
+--Authorship tagging (with hmac of email) in object text files.
+
 
 
 Server Fixes:
