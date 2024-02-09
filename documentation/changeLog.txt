@@ -31,6 +31,8 @@ Version 410   ???
 
 --Authorship tagging in animation text files.
 
+--Authorship tagging in transition text files.
+
 
 
 Server Fixes:

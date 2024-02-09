@@ -69,7 +69,9 @@ typedef struct TransRecord {
         int newTargetNoChange;
         
         char *comment;
-
+        
+        char *authorTag;
+        
     } TransRecord;
 
 

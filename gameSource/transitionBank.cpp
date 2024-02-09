@@ -12,6 +12,8 @@
 #include "objectBank.h"
 #include "categoryBank.h"
 
+#include "authorship.h"
+
 
 
 void regenerateDepthMap();
@@ -213,6 +215,23 @@ float initTransBankStep() {
                     else {
                         r->comment = stringDuplicate( "" );
                         }
+
+                    
+                    r->authorTag = NULL;
+                    
+                    if( numParts > 2 ) {
+                        char authorTagBuffer[100];
+            
+                        authorTagBuffer[0] = '\0';
+
+                        sscanf( parts[2], "author=%99s", authorTagBuffer );
+            
+                        if( strlen( authorTagBuffer ) > 0 ) {
+                            r->authorTag = stringDuplicate( authorTagBuffer );
+                            }    
+                        }
+
+                    
                 
                     records.push_back( r );
                             
@@ -1650,6 +1669,11 @@ void freeTransBank() {
         TransRecord *r = records.getElementDirect(i);
 
         delete [] r->comment;
+
+        if( r->authorTag != NULL ) {
+            delete [] r->authorTag;
+            }
+        
         delete r;
         }
     
@@ -2627,6 +2651,8 @@ void addTrans( int inActor, int inTarget,
         t->newTargetNoChange = inNewTargetNoChange;
         
         t->comment = stringDuplicate( inComment );
+        
+        t->authorTag = getAuthorHash();
 
         records.push_back( t );
 
@@ -2719,6 +2745,12 @@ void addTrans( int inActor, int inTarget,
             delete [] t->comment;
             t->comment = stringDuplicate( inComment );
 
+            if( t->authorTag == NULL ) {
+                delete [] t->authorTag;
+                }
+            t->authorTag = getAuthorHash();
+            
+
             if( inNewActor != 0 ) {
                 producesMap[inNewActor].push_back( t );
                 }
@@ -2794,12 +2826,20 @@ void addTrans( int inActor, int inTarget,
                 commentPartAllocated = true;
                 }
 
+
+            char *authorHash = getAuthorHash();
+            
+            char *authorPart = autoSprintf( "\nauthor=%s", authorHash );
+            
+            delete [] authorHash;
+            
             
             // don't save change chance to file
             // it's only for auto-generated transitions
 
             char *fileContents = autoSprintf( "%d %d %d %f %f %d %d "
                                               "%d %d %d %d"
+                                              "%s"
                                               "%s", 
                                               inNewActor, inNewTarget,
                                               inAutoDecaySeconds,
@@ -2811,12 +2851,15 @@ void addTrans( int inActor, int inTarget,
                                               inDesiredMoveDist,
                                               noUseActorFlag,
                                               noUseTargetFlag,
-                                              commentPart );
+                                              commentPart,
+                                              authorPart );
 
             if( commentPartAllocated ) {
                 delete [] commentPart;
                 }
 
+            delete [] authorPart;
+            
         
             File *cacheFile = transDir.getChildFile( "cache.fcz" );
 
@@ -2905,6 +2948,10 @@ void deleteTransFromBank( int inActor, int inTarget,
         
         delete [] t->comment;
         
+        if( t->authorTag != NULL ) {
+            delete [] t->authorTag;
+            }
+
         delete t;
         }
     }
