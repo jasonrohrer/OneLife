@@ -3438,7 +3438,10 @@ LivingLifePage::~LivingLifePage() {
         delete [] homelands.getElementDirect( i ).familyName;
         }
     homelands.deleteAll();
-    }
+    
+    minitech::clearStep();
+    
+}
 
 
 

@@ -103,6 +103,7 @@ public:
 	static bool livingLifeKeyDown(unsigned char inASCII);
 	static void livingLifeDraw(float mouseX, float mouseY);
 	static bool livingLifePageMouseDown(float mouseX, float mouseY);
+	static void clearStep();
 	
 	static std::vector<TransRecord*> currentHintTrans;
 	static int currentTwoTechPage;
