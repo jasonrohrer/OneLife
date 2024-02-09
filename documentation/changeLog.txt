@@ -29,6 +29,8 @@ Version 410   ???
 
 --Authorship tagging (with hmac of email) in object text files.
 
+--Authorship tagging in animation text files.
+
 
 
 Server Fixes:
