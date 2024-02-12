@@ -5,6 +5,11 @@
 
 
 
+// authorship hash uses only the first 10 characters of the HMAC
+// We expect 1 collision in this space if we have 1.5 million unique
+// contributors, according to the formula here:
+// https://matt.might.net/articles/counting-hash-collisions/
+
 inline char *getAuthorHash() {
 
     // use a fixed salt here so that authorship hashes are consistent
@@ -27,6 +32,13 @@ inline char *getAuthorHash() {
     char *hash = hmac_sha1( salt, email );
 
     delete [] email;
+
+    // terminate at 10 characters
+    hash[10] = '\0';
     
-    return hash;
+    char *result = stringDuplicate( hash );
+    
+    delete [] hash;
+
+    return result;
     }
