@@ -478,10 +478,23 @@ char finalizeExportBundle( const char *inExportName ) {
                 }
             
 
-            fprintf( outFILE, "sprite %d %s %d %d %d %d#",
+            const char *authorString = "";
+            
+            char *authorStringToDestroy = NULL;
+            
+
+            if( r->authorTag != NULL ) {
+                authorStringToDestroy = autoSprintf( "author=%s ", 
+                                                     r->authorTag );
+                authorString = authorStringToDestroy;
+                }
+            
+
+            fprintf( outFILE, "sprite %d %s %d %d %d %s%d#",
                      id, tag, r->multiplicativeBlend, 
                      r->centerAnchorXOffset,
                      r->centerAnchorYOffset,
+                     authorString,
                      tgaFileSize );
             
             fwrite( tgaData, 1, tgaFileSize, outFILE );
@@ -490,6 +503,10 @@ char finalizeExportBundle( const char *inExportName ) {
 
             if( tagToDestroy != NULL ) {
                 delete [] tagToDestroy;
+                }
+
+            if( authorStringToDestroy != NULL ) {
+                delete [] authorStringToDestroy;
                 }
             }
         }

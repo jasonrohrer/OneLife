@@ -33,6 +33,10 @@ Version 410   ???
 
 --Authorship tagging in transition text files.
 
+--Authorship tagging for sprite files.  Also special handling of sprite
+  author=tag in export/import headers for sprites.
+
+
 
 
 Server Fixes:

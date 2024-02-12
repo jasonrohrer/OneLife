@@ -64,6 +64,8 @@ typedef struct SpriteRecord {
         char remappable;
         char remapTarget;
 
+        char *authorTag;
+        
     } SpriteRecord;
 
 
@@ -146,11 +148,13 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 
 // returns new ID, or -1 if adding failed
+// if inAuthorTag is NULL, author tag generated automatically from email setting
 int addSprite( const char *inTag, SpriteHandle inSprite, 
                Image *inSourceImage,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset = 0,
-               int inCenterAnchorYOffset = 0 );
+               int inCenterAnchorYOffset = 0,
+               const char *inAuthorTag = NULL );
 
 
 
@@ -160,7 +164,8 @@ int addSprite( const char *inTag,
                unsigned char *inTGAData, int inTGADataLength, 
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
-               int inCenterAnchorYOffset );
+               int inCenterAnchorYOffset,
+               const char *inAuthorTag = NULL );
 
 
 

@@ -592,10 +592,54 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             int centerAnchorXOffset = 0;
             int centerAnchorYOffset = 0;
             
-            sscanf( currentHeader, "%99s %d %99s %d %d %d",
-                    blockType, &id, tag, &multiplicativeBlend, 
-                    &centerAnchorXOffset,
-                    &centerAnchorYOffset );
+            char authorTagBuffer[100];
+            authorTagBuffer[0] = '\0';            
+
+            char *authorTag = NULL;
+
+            char containsAuthorTag = false;
+            
+            // skip spaces 3 times to get past tag field
+            char *skipTag = strstr( currentHeader, " " );
+            
+            if( skipTag != NULL ) {
+                skipTag = strstr( &( skipTag[1] ), " " );    
+                }
+            
+            if( skipTag != NULL ) {
+                skipTag = strstr( &( skipTag[1] ), " " );    
+                }
+            
+
+            if( skipTag != NULL ) {
+                // look for "author=" label
+                // note that this might occur in the tag itself
+                // (because = isn't a forbidden character there), which
+                // is why we skip the tag before looking.
+
+                if( strstr( skipTag, "author=" ) != NULL ) {
+                    containsAuthorTag = true;
+                    }
+                }
+            
+            
+            if( containsAuthorTag ) {
+                sscanf( currentHeader, "%99s %d %99s %d %d %d author=%99s",
+                        blockType, &id, tag, &multiplicativeBlend, 
+                        &centerAnchorXOffset,
+                        &centerAnchorYOffset,
+                        authorTagBuffer );
+                
+                authorTag = authorTagBuffer;
+                }
+            else {
+                sscanf( currentHeader, "%99s %d %99s %d %d %d",
+                        blockType, &id, tag, &multiplicativeBlend, 
+                        &centerAnchorXOffset,
+                        &centerAnchorYOffset );
+                }
+            
+
             
             if( id > -1 ) {
                 // header at least contained an ID                
@@ -651,7 +695,9 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                                 im,
                                                 multiplicativeBlend,
                                                 centerAnchorXOffset,
-                                                centerAnchorYOffset );
+                                                centerAnchorYOffset,
+                                                // will be NULL if label missing
+                                                authorTag );
                             delete im;
                             }
                         }
@@ -662,7 +708,9 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                             addSprite( tag, currentDataBlock, currentDataLength,
                                        multiplicativeBlend,
                                        centerAnchorXOffset,
-                                       centerAnchorYOffset );
+                                       centerAnchorYOffset,
+                                       // will be NULL if label missing
+                                       authorTag );
                         }
                     
                     if( bankID == -1 ) {
