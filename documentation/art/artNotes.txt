@@ -58,4 +58,6 @@ Sepia for Steam capsules:
 
 Gaussian blur radius for drop shadows on Steam Capsule logos:  15
 
+Radius for drop shadow on small capsule:  10
+
 Radius for drop shadows on weekly update image text:  25
