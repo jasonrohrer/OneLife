@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 412   ???
+Version 412   2024-February-16
 
 --Support for AHAP differentiation with a text file in the game folder.  AHAP
   clients skip universal _all.dbz content diff bundles.
