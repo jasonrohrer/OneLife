@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 410   ???
+Version 412   ???
 
 --Support for AHAP differentiation with a text file in the game folder.  AHAP
   clients skip universal _all.dbz content diff bundles.
@@ -55,6 +55,8 @@ Server Fixes:
 
 --Max flight distance disabled for now.  It's not so bad to have occasional
   flights to the Tutorial area or Donkeytown.
+
+--Added isAHAP.txt installation in remoteServerUpdate script.
 
 
 

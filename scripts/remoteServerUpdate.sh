@@ -59,4 +59,9 @@ rm -f dataVersionNumber.txt
 ln -s ~/checkout/OneLifeData7/dataVersionNumber.txt .
 
 
+rm -f isAHAP.txt
+
+ln -s ~/checkout/OneLifeData7/isAHAP.txt .
+
+
 git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
