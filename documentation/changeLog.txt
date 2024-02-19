@@ -13,6 +13,9 @@ Version 414   ???
   data.  Fixed the Editor to only IMPORT ADD and IMPORT REPLACE, and not load
   anything from the mods folder.  Only the game client can load mods.
 
+--Each sound in the soundBank folder now has a .txt file tracking authorship.
+
+
 
 
 Version 412   2024-February-16

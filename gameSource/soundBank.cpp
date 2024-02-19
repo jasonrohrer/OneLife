@@ -27,6 +27,9 @@
 
 #include "binFolderCache.h"
 
+#include "authorship.h"
+
+
 
 
 static int mapSize;
@@ -1368,6 +1371,31 @@ void deleteSoundFromBank( int inID ) {
         delete [] fileNameAIFF;
 
 
+        const char *printFormatOGG = "%d.ogg";
+
+        char *fileNameOGG = autoSprintf( printFormatOGG, inID );
+        File *soundFileOGG = soundsDir.getChildFile( fileNameOGG );
+        
+        soundFileOGG->remove();
+        delete soundFileOGG;
+
+        delete [] fileNameOGG;
+        
+
+        // delete .txt file which may contain author tag
+        
+        const char *printFormatTXT = "%d.txt";
+
+        char *fileNameTXT = autoSprintf( printFormatTXT, inID );
+        File *soundFileTXT = soundsDir.getChildFile( fileNameTXT );
+        
+        soundFileTXT->remove();
+        delete soundFileTXT;
+
+        delete [] fileNameTXT;
+        
+        
+
         loadedSounds.deleteElementEqualTo( inID );
 
         
@@ -1604,6 +1632,28 @@ int stopRecordingSound() {
         delete eqSoundFile;
 
         delete [] fileNameAIFF;
+
+        
+        // save authorship tag
+        char *authorTag = getAuthorHash();
+        
+        const char *printFormatTXT = "%d.txt";
+        
+        char *fileNameTXT = autoSprintf( printFormatTXT, nextSoundNumber );
+            
+        File *txtFile = soundsDir.getChildFile( fileNameTXT );
+        
+        delete [] fileNameTXT;
+
+        char *fileContents = autoSprintf( "author=%s", authorTag );
+        delete [] authorTag;
+        
+        txtFile->writeToFile( fileContents );
+        delete [] fileContents;
+        
+        delete txtFile;
+        
+
         
         
         delete [] samples;
