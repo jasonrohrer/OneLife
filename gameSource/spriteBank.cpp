@@ -1361,7 +1361,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                int inCenterAnchorXOffset,
                int inCenterAnchorYOffset,
                const char *inAuthorTag,
-               char inNoAutoTag ) {
+               char inNoAutoTag,
+               unsigned char *inTGAFileData,
+               int inTGAFileLength ) {
 
     char *authorTag = NULL;
     
@@ -1422,13 +1424,18 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         clearCacheFiles();
 
         File *spriteFile = spritesDir.getChildFile( fileNameTGA );
-            
-        TGAImageConverter tga;
-            
-        FileOutputStream stream( spriteFile );
         
-        tga.formatImage( inSourceImage, &stream );
-                    
+        if( inTGAFileData != NULL ) {
+            spriteFile->writeToFile( inTGAFileData, inTGAFileLength );
+            }
+        else {
+            TGAImageConverter tga;
+            
+            FileOutputStream stream( spriteFile );
+        
+            tga.formatImage( inSourceImage, &stream );
+            }
+        
         delete [] fileNameTGA;
         delete spriteFile;
 

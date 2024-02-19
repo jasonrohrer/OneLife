@@ -701,7 +701,20 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                                 // leave NULL tag alone
                                                 // and don't force import
                                                 // to have THIS author
-                                                true );
+                                                true,
+                                                // pass raw file data
+                                                // in for saving to disk
+                                                // so imported sprite
+                                                // will be file-identical.
+                                                // We can't guarantee
+                                                // that TGA file was originally
+                                                // saved by our code
+                                                // so we can't re-save
+                                                // image data and be sure
+                                                // that resulting file
+                                                // will be identical.
+                                                currentDataBlock,
+                                                currentDataLength );
                             delete im;
                             }
                         }
