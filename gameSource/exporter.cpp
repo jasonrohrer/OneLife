@@ -569,12 +569,43 @@ char finalizeExportBundle( const char *inExportName ) {
 
         // header format:
         // sound id type fileSize#
-        fprintf( outFILE, "sound %d %s %d#",
-                 id, soundFileType, soundFileSize );
+        //
+        // OR
+        // sound id type author=authorTag fileSize#
+        
+        const char *authorString = "";
+            
+        char *authorStringToDestroy = NULL;
+
+        char *txtFileName = autoSprintf( "%d.txt", id );
+            
+        File *txtFile = soundFolder.getChildFile( txtFileName );
+            
+        delete [] txtFileName;
+
+        if( txtFile->exists() ) {
+            char *authorTag = txtFile->readFileContents();
+
+            if( authorTag != NULL ) {
+                authorStringToDestroy = autoSprintf( "author=%s ", 
+                                                     authorTag );
+                authorString = authorStringToDestroy;
+                
+                delete [] authorTag;
+                }
+            }
+        delete txtFile;
+        
+        fprintf( outFILE, "sound %d %s %s%d#",
+                 id, soundFileType, authorString, soundFileSize );
         
         fwrite( soundFileData, 1, soundFileSize, outFILE );
         
         delete [] soundFileData;
+
+        if( authorStringToDestroy != NULL ) {
+            delete [] authorStringToDestroy;
+            }
         }
     
     

@@ -732,9 +732,26 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             char blockType[100];
             int id = -1;
             char soundType[100];
+
+            char authorBuffer[100];
             
-            sscanf( currentHeader, "%99s %d %99s",
-                    blockType, &id, soundType );
+            char *authorTag = NULL;
+            
+            char containsAuthorTag = false;
+            
+            if( strstr( currentHeader, "author=" ) != NULL ) {
+                containsAuthorTag = true;
+                }
+            
+            if( containsAuthorTag ) {
+                sscanf( currentHeader, "%99s %d %99s author=%99s",
+                        blockType, &id, soundType, authorBuffer );
+                authorTag = authorBuffer;
+                }
+            else {
+                sscanf( currentHeader, "%99s %d %99s",
+                        blockType, &id, soundType );
+                }
             
             if( id > -1 ) {
                 // header at least contained an ID
@@ -750,7 +767,8 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                     bankID = addSoundToBank( currentDataLength,
                                              currentDataBlock,
                                              soundType,
-                                             inSaveIntoDataDirs );
+                                             inSaveIntoDataDirs,
+                                             authorTag );
                     
                     if( bankID == -1 ) {
                         printf( "Loading sound data from data block "

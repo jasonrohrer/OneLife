@@ -1468,6 +1468,41 @@ char startRecordingSound() {
 
 
 
+void addAuthorshipFile( int inID, const char *inAuthorTag = NULL ) {
+    
+    char deleteTag = false;    
+
+    const char *authorTag = inAuthorTag;
+
+    if( authorTag == NULL ) {
+        authorTag = getAuthorHash();
+        deleteTag = true;
+        }
+    
+    const char *printFormatTXT = "%d.txt";
+    
+    char *fileNameTXT = autoSprintf( printFormatTXT, inID );
+    
+    File soundsDir( NULL, "sounds" );
+
+    File *txtFile = soundsDir.getChildFile( fileNameTXT );
+        
+    delete [] fileNameTXT;
+
+    char *fileContents = autoSprintf( "author=%s", authorTag );
+    
+    if( deleteTag ) {
+        delete [] authorTag;
+        }
+
+    txtFile->writeToFile( fileContents );
+    delete [] fileContents;
+    
+    delete txtFile;    
+    }
+
+
+
 
 int stopRecordingSound() {
 
@@ -1635,24 +1670,7 @@ int stopRecordingSound() {
 
         
         // save authorship tag
-        char *authorTag = getAuthorHash();
-        
-        const char *printFormatTXT = "%d.txt";
-        
-        char *fileNameTXT = autoSprintf( printFormatTXT, nextSoundNumber );
-            
-        File *txtFile = soundsDir.getChildFile( fileNameTXT );
-        
-        delete [] fileNameTXT;
-
-        char *fileContents = autoSprintf( "author=%s", authorTag );
-        delete [] authorTag;
-        
-        txtFile->writeToFile( fileContents );
-        delete [] fileContents;
-        
-        delete txtFile;
-        
+        addAuthorshipFile( nextSoundNumber );
 
         
         
@@ -1915,7 +1933,8 @@ int doesSoundRecordExist(
 int addSoundToBank( int inNumSoundFileBytes,
                     unsigned char *inSoundFileData,
                     const char *inType,
-                    char inSaveToDisk ) {
+                    char inSaveToDisk,
+                    const char *inAuthorTag ) {
 
     int numSamples;
     int16_t *samples = NULL;
@@ -2045,7 +2064,11 @@ int addSoundToBank( int inNumSoundFileBytes,
 
             delete [] fileName;          
 
-        
+            
+            if( inAuthorTag != NULL ) {
+                addAuthorshipFile( newID, inAuthorTag );
+                }
+
             File *nextNumberFile = 
                 soundsDir.getChildFile( "nextSoundNumber.txt" );
             
