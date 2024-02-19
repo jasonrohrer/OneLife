@@ -149,12 +149,14 @@ SpriteRecord **searchSprites( const char *inSearch,
 
 // returns new ID, or -1 if adding failed
 // if inAuthorTag is NULL, author tag generated automatically from email setting
+//    UNLESS inNoAutoTag is true
 int addSprite( const char *inTag, SpriteHandle inSprite, 
                Image *inSourceImage,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset = 0,
                int inCenterAnchorYOffset = 0,
-               const char *inAuthorTag = NULL );
+               const char *inAuthorTag = NULL,
+               char inNoAutoTag = false );
 
 
 
@@ -165,7 +167,8 @@ int addSprite( const char *inTag,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
                int inCenterAnchorYOffset,
-               const char *inAuthorTag = NULL );
+               const char *inAuthorTag = NULL,
+               char inNoAutoTag = false );
 
 
 

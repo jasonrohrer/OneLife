@@ -17,6 +17,9 @@ Version 414   ???
 
 --OXZ export/import files now track authorship tags for sounds.
 
+--Fixed so that when importing authorless sprites from OXZ files, we don't
+  auto-tag sprites with our authorship tag (falsely taking credit).
+
 
 
 

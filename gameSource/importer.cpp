@@ -697,7 +697,11 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                                 centerAnchorXOffset,
                                                 centerAnchorYOffset,
                                                 // will be NULL if label missing
-                                                authorTag );
+                                                authorTag,
+                                                // leave NULL tag alone
+                                                // and don't force import
+                                                // to have THIS author
+                                                true );
                             delete im;
                             }
                         }
@@ -710,7 +714,11 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                        centerAnchorXOffset,
                                        centerAnchorYOffset,
                                        // will be NULL if label missing
-                                       authorTag );
+                                       authorTag,
+                                       // leave NULL tag alone
+                                       // and don't force import
+                                       // to have THIS author
+                                       true );
                         }
                     
                     if( bankID == -1 ) {

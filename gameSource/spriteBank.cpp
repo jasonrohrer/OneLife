@@ -1254,14 +1254,15 @@ int addSprite( const char *inTag,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
                int inCenterAnchorYOffset,
-               const char *inAuthorTag ) {
+               const char *inAuthorTag,
+               char inNoAutoTag ) {
 
     char *authorTag = NULL;
     
     if( inAuthorTag != NULL ) {
         authorTag = stringDuplicate( inAuthorTag );
         }
-    else {
+    else if( ! inNoAutoTag ) {
         authorTag = getAuthorHash();
         }
     
@@ -1359,14 +1360,15 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
                int inCenterAnchorYOffset,
-               const char *inAuthorTag ) {
+               const char *inAuthorTag,
+               char inNoAutoTag ) {
 
     char *authorTag = NULL;
     
     if( inAuthorTag != NULL ) {
         authorTag = stringDuplicate( inAuthorTag );
         }
-    else {
+    else if( ! inNoAutoTag ) {
         authorTag = getAuthorHash();
         }
     
@@ -1437,12 +1439,22 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             multFlag = 1;
             }
         
-        char *metaContents = autoSprintf( "%s %d %d %d author=%s", 
-                                          inTag, multFlag,
-                                          inCenterAnchorXOffset, 
-                                          inCenterAnchorYOffset,
-                                          authorTag );
+        char *metaContents;
 
+        if( authorTag != NULL ) {    
+            metaContents = autoSprintf( "%s %d %d %d author=%s", 
+                                        inTag, multFlag,
+                                        inCenterAnchorXOffset, 
+                                        inCenterAnchorYOffset,
+                                        authorTag );
+            }
+        else {
+            metaContents = autoSprintf( "%s %d %d %d", 
+                                        inTag, multFlag,
+                                        inCenterAnchorXOffset, 
+                                        inCenterAnchorYOffset );
+            }
+        
         metaFile->writeToFile( metaContents );
         
         delete [] metaContents;
@@ -1467,7 +1479,9 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     if( newID == -1 ) {
         // failed to save it to disk
         
-        delete [] authorTag;
+        if( authorTag != NULL ) {
+            delete [] authorTag;
+            }
 
         return -1;
         }
