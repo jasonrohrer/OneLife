@@ -4,6 +4,17 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 414   ???
+
+--Actually, we can't load mods into RAM only in an active Editor, since they
+  pollute the object, sprite, and sound ID space.  If the Editor ever creates
+  a new object, sprite, or sound while the RAM-only mod is loaded, it will
+  either need to leave a gap in the ID space on disk, or overwrite the mod
+  data.  Fixed the Editor to only IMPORT ADD and IMPORT REPLACE, and not load
+  anything from the mods folder.  Only the game client can load mods.
+
+
+
 Version 412   2024-February-16
 
 --Support for AHAP differentiation with a text file in the game folder.  AHAP
