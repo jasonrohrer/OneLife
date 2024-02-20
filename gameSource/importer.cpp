@@ -592,10 +592,54 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             int centerAnchorXOffset = 0;
             int centerAnchorYOffset = 0;
             
-            sscanf( currentHeader, "%99s %d %99s %d %d %d",
-                    blockType, &id, tag, &multiplicativeBlend, 
-                    &centerAnchorXOffset,
-                    &centerAnchorYOffset );
+            char authorTagBuffer[100];
+            authorTagBuffer[0] = '\0';            
+
+            char *authorTag = NULL;
+
+            char containsAuthorTag = false;
+            
+            // skip spaces 3 times to get past tag field
+            char *skipTag = strstr( currentHeader, " " );
+            
+            if( skipTag != NULL ) {
+                skipTag = strstr( &( skipTag[1] ), " " );    
+                }
+            
+            if( skipTag != NULL ) {
+                skipTag = strstr( &( skipTag[1] ), " " );    
+                }
+            
+
+            if( skipTag != NULL ) {
+                // look for "author=" label
+                // note that this might occur in the tag itself
+                // (because = isn't a forbidden character there), which
+                // is why we skip the tag before looking.
+
+                if( strstr( skipTag, "author=" ) != NULL ) {
+                    containsAuthorTag = true;
+                    }
+                }
+            
+            
+            if( containsAuthorTag ) {
+                sscanf( currentHeader, "%99s %d %99s %d %d %d author=%99s",
+                        blockType, &id, tag, &multiplicativeBlend, 
+                        &centerAnchorXOffset,
+                        &centerAnchorYOffset,
+                        authorTagBuffer );
+                
+                authorTag = authorTagBuffer;
+                }
+            else {
+                sscanf( currentHeader, "%99s %d %99s %d %d %d",
+                        blockType, &id, tag, &multiplicativeBlend, 
+                        &centerAnchorXOffset,
+                        &centerAnchorYOffset );
+                }
+            
+
             
             if( id > -1 ) {
                 // header at least contained an ID                
@@ -651,7 +695,26 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                                                 im,
                                                 multiplicativeBlend,
                                                 centerAnchorXOffset,
-                                                centerAnchorYOffset );
+                                                centerAnchorYOffset,
+                                                // will be NULL if label missing
+                                                authorTag,
+                                                // leave NULL tag alone
+                                                // and don't force import
+                                                // to have THIS author
+                                                true,
+                                                // pass raw file data
+                                                // in for saving to disk
+                                                // so imported sprite
+                                                // will be file-identical.
+                                                // We can't guarantee
+                                                // that TGA file was originally
+                                                // saved by our code
+                                                // so we can't re-save
+                                                // image data and be sure
+                                                // that resulting file
+                                                // will be identical.
+                                                currentDataBlock,
+                                                currentDataLength );
                             delete im;
                             }
                         }
@@ -662,7 +725,13 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                             addSprite( tag, currentDataBlock, currentDataLength,
                                        multiplicativeBlend,
                                        centerAnchorXOffset,
-                                       centerAnchorYOffset );
+                                       centerAnchorYOffset,
+                                       // will be NULL if label missing
+                                       authorTag,
+                                       // leave NULL tag alone
+                                       // and don't force import
+                                       // to have THIS author
+                                       true );
                         }
                     
                     if( bankID == -1 ) {
@@ -684,9 +753,26 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
             char blockType[100];
             int id = -1;
             char soundType[100];
+
+            char authorBuffer[100];
             
-            sscanf( currentHeader, "%99s %d %99s",
-                    blockType, &id, soundType );
+            char *authorTag = NULL;
+            
+            char containsAuthorTag = false;
+            
+            if( strstr( currentHeader, "author=" ) != NULL ) {
+                containsAuthorTag = true;
+                }
+            
+            if( containsAuthorTag ) {
+                sscanf( currentHeader, "%99s %d %99s author=%99s",
+                        blockType, &id, soundType, authorBuffer );
+                authorTag = authorBuffer;
+                }
+            else {
+                sscanf( currentHeader, "%99s %d %99s",
+                        blockType, &id, soundType );
+                }
             
             if( id > -1 ) {
                 // header at least contained an ID
@@ -702,7 +788,8 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                     bankID = addSoundToBank( currentDataLength,
                                              currentDataBlock,
                                              soundType,
-                                             inSaveIntoDataDirs );
+                                             inSaveIntoDataDirs,
+                                             authorTag );
                     
                     if( bankID == -1 ) {
                         printf( "Loading sound data from data block "

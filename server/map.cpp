@@ -9737,7 +9737,7 @@ GridPos getNextFlightLandingPos( int inCurrentX, int inCurrentY,
               
         double dist = distance( curPos, thisPos );
 
-        if( dist > maxDist ) {
+        if( dist > maxDist && maxDist > 0 ) {
             continue;
             }
         

@@ -27,6 +27,9 @@
 
 #include "binFolderCache.h"
 
+#include "authorship.h"
+
+
 
 
 static int mapSize;
@@ -1368,6 +1371,31 @@ void deleteSoundFromBank( int inID ) {
         delete [] fileNameAIFF;
 
 
+        const char *printFormatOGG = "%d.ogg";
+
+        char *fileNameOGG = autoSprintf( printFormatOGG, inID );
+        File *soundFileOGG = soundsDir.getChildFile( fileNameOGG );
+        
+        soundFileOGG->remove();
+        delete soundFileOGG;
+
+        delete [] fileNameOGG;
+        
+
+        // delete .txt file which may contain author tag
+        
+        const char *printFormatTXT = "%d.txt";
+
+        char *fileNameTXT = autoSprintf( printFormatTXT, inID );
+        File *soundFileTXT = soundsDir.getChildFile( fileNameTXT );
+        
+        soundFileTXT->remove();
+        delete soundFileTXT;
+
+        delete [] fileNameTXT;
+        
+        
+
         loadedSounds.deleteElementEqualTo( inID );
 
         
@@ -1437,6 +1465,41 @@ char startRecordingSound() {
 
 
 
+
+
+
+void addAuthorshipFile( int inID, const char *inAuthorTag = NULL ) {
+    
+    char deleteTag = false;    
+
+    const char *authorTag = inAuthorTag;
+
+    if( authorTag == NULL ) {
+        authorTag = getAuthorHash();
+        deleteTag = true;
+        }
+    
+    const char *printFormatTXT = "%d.txt";
+    
+    char *fileNameTXT = autoSprintf( printFormatTXT, inID );
+    
+    File soundsDir( NULL, "sounds" );
+
+    File *txtFile = soundsDir.getChildFile( fileNameTXT );
+        
+    delete [] fileNameTXT;
+
+    char *fileContents = autoSprintf( "author=%s", authorTag );
+    
+    if( deleteTag ) {
+        delete [] authorTag;
+        }
+
+    txtFile->writeToFile( fileContents );
+    delete [] fileContents;
+    
+    delete txtFile;    
+    }
 
 
 
@@ -1604,6 +1667,11 @@ int stopRecordingSound() {
         delete eqSoundFile;
 
         delete [] fileNameAIFF;
+
+        
+        // save authorship tag
+        addAuthorshipFile( nextSoundNumber );
+
         
         
         delete [] samples;
@@ -1865,7 +1933,8 @@ int doesSoundRecordExist(
 int addSoundToBank( int inNumSoundFileBytes,
                     unsigned char *inSoundFileData,
                     const char *inType,
-                    char inSaveToDisk ) {
+                    char inSaveToDisk,
+                    const char *inAuthorTag ) {
 
     int numSamples;
     int16_t *samples = NULL;
@@ -1995,7 +2064,11 @@ int addSoundToBank( int inNumSoundFileBytes,
 
             delete [] fileName;          
 
-        
+            
+            if( inAuthorTag != NULL ) {
+                addAuthorshipFile( newID, inAuthorTag );
+                }
+
             File *nextNumberFile = 
                 soundsDir.getChildFile( "nextSoundNumber.txt" );
             

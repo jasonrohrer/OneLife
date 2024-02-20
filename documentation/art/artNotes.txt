@@ -52,3 +52,12 @@ Sepia for Steam capsules:
 2.  Colorize with these settings:
   Hue, sat, lightness:
   39,  38,  16
+
+
+
+
+Gaussian blur radius for drop shadows on Steam Capsule logos:  15
+
+Radius for drop shadow on small capsule:  10
+
+Radius for drop shadows on weekly update image text:  25

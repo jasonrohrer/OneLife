@@ -147,6 +147,8 @@ typedef struct AnimationRecord {
         SpriteAnimationRecord *spriteAnim;
         SpriteAnimationRecord *slotAnim;
         
+        char *authorTag;
+
     } AnimationRecord;
 
 

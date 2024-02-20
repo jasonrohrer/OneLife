@@ -1,4 +1,4 @@
-int versionNumber = 409;
+int versionNumber = 412;
 
 
 
@@ -1315,40 +1315,6 @@ void drawFrame( char inUpdate ) {
                         
                         loadingPhaseStartTime = Time::getCurrentTime();
 
-                        int numBlocks = initModLoaderStart();
-                        loadingPage->setCurrentPhase( "MODS" );
-                        loadingPage->setCurrentProgress( 0 );
-                        
-
-                        loadingStepBatchSize = numBlocks / 20;
-                        
-                        if( loadingStepBatchSize < 1 ) {
-                            loadingStepBatchSize = 1;
-                            }
-
-                        loadingPhase ++;
-                        }
-                    break;
-                    }
-                case 7: {
-                    float progress;
-                    for( int i=0; i<loadingStepBatchSize; i++ ) {    
-                        progress = initModLoaderStep();
-                        loadingPage->setCurrentProgress( progress );
-                        }
-                    
-                    if( progress == 1.0 ) {
-                        initModLoaderFinish();
-                        
-                        // mods load sounds which may need reverbs applied
-                        doneApplyingReverb();
-                        
-                        printf( "Finished loading mods in %f sec\n",
-                                Time::getCurrentTime() - 
-                                loadingPhaseStartTime );
-                        
-                        loadingPhaseStartTime = Time::getCurrentTime();
-
                         char rebuilding;
                         
                         int numCats = 
@@ -1374,7 +1340,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 8: {
+                case 7: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initCategoryBankStep();
@@ -1418,7 +1384,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 9: {
+                case 8: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initTransBankStep();
@@ -1441,7 +1407,7 @@ void drawFrame( char inUpdate ) {
                         }
                     break;
                     }
-                case 10: {
+                case 9: {
                     float progress;
                     for( int i=0; i<loadingStepBatchSize; i++ ) {    
                         progress = initGroundSpritesStep();

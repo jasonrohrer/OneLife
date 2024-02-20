@@ -22,6 +22,8 @@
 #include "folderCache.h"
 #include "binFolderCache.h"
 
+#include "authorship.h"
+
 
 
 static int mapSize;
@@ -536,7 +538,8 @@ float initSpriteBankStep() {
             r->sha1Hash = NULL;
             
             r->tag = NULL;
-
+            r->authorTag = NULL;
+            
             r->centerXOffset = 0;
             r->centerYOffset = 0;
         
@@ -580,7 +583,20 @@ float initSpriteBankStep() {
                     sscanf( tokens->getElementDirect( 3 ),
                             "%d", &( r->centerAnchorYOffset ) );
                     }
+                
+                if( numTokens >=5 ) {
+                    char authorTagBuffer[100];
             
+                    authorTagBuffer[0] = '\0';
+
+                    sscanf( tokens->getElementDirect( 4 ), 
+                            "author=%99s", authorTagBuffer );
+            
+                    if( strlen( authorTagBuffer ) > 0 ) {
+                        r->authorTag = stringDuplicate( authorTagBuffer );
+                        }
+                    }
+
 
                 tokens->deallocateStringElements();
                 delete tokens;
@@ -804,6 +820,10 @@ static void freeSpriteRecord( int inID ) {
                 delete [] idMap[inID]->sha1Hash;    
                 }
             
+            if( idMap[inID]->authorTag != NULL ) {
+                delete [] idMap[inID]->authorTag;
+                }
+
             delete idMap[inID];
             idMap[inID] = NULL;
             
@@ -837,6 +857,10 @@ void freeSpriteBank() {
             
             if( idMap[i]->sha1Hash != NULL ) {
                 delete [] idMap[i]->sha1Hash;    
+                }
+            
+            if( idMap[i]->authorTag != NULL ) {
+                delete [] idMap[i]->authorTag;
                 }
 
             delete idMap[i];
@@ -1229,8 +1253,20 @@ int addSprite( const char *inTag,
                unsigned char *inTGAData, int inTGADataLength, 
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
-               int inCenterAnchorYOffset ) {
+               int inCenterAnchorYOffset,
+               const char *inAuthorTag,
+               char inNoAutoTag ) {
 
+    char *authorTag = NULL;
+    
+    if( inAuthorTag != NULL ) {
+        authorTag = stringDuplicate( inAuthorTag );
+        }
+    else if( ! inNoAutoTag ) {
+        authorTag = getAuthorHash();
+        }
+    
+    
     int newID = maxLiveSpriteID + 1;
 
     if( newID >= mapSize ) {
@@ -1268,9 +1304,11 @@ int addSprite( const char *inTag,
     r->centerAnchorXOffset = inCenterAnchorXOffset;
     r->centerAnchorYOffset = inCenterAnchorYOffset;
     r->hitMap = NULL;
-    
     r->noFlip = false;
+    
+    r->authorTag = authorTag;
                     
+    
     if( strstr( r->tag, "NoFlip" ) != NULL ) {
         r->noFlip = true;
         }
@@ -1321,7 +1359,21 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
                Image *inSourceImage,
                char inMultiplicativeBlending,
                int inCenterAnchorXOffset,
-               int inCenterAnchorYOffset ) {
+               int inCenterAnchorYOffset,
+               const char *inAuthorTag,
+               char inNoAutoTag,
+               unsigned char *inTGAFileData,
+               int inTGAFileLength ) {
+
+    char *authorTag = NULL;
+    
+    if( inAuthorTag != NULL ) {
+        authorTag = stringDuplicate( inAuthorTag );
+        }
+    else if( ! inNoAutoTag ) {
+        authorTag = getAuthorHash();
+        }
+    
 
     int maxD = inSourceImage->getWidth();
     
@@ -1372,13 +1424,18 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         clearCacheFiles();
 
         File *spriteFile = spritesDir.getChildFile( fileNameTGA );
-            
-        TGAImageConverter tga;
-            
-        FileOutputStream stream( spriteFile );
         
-        tga.formatImage( inSourceImage, &stream );
-                    
+        if( inTGAFileData != NULL ) {
+            spriteFile->writeToFile( inTGAFileData, inTGAFileLength );
+            }
+        else {
+            TGAImageConverter tga;
+            
+            FileOutputStream stream( spriteFile );
+        
+            tga.formatImage( inSourceImage, &stream );
+            }
+        
         delete [] fileNameTGA;
         delete spriteFile;
 
@@ -1389,10 +1446,22 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
             multFlag = 1;
             }
         
-        char *metaContents = autoSprintf( "%s %d %d %d", inTag, multFlag,
-                                          inCenterAnchorXOffset, 
-                                          inCenterAnchorYOffset );
+        char *metaContents;
 
+        if( authorTag != NULL ) {    
+            metaContents = autoSprintf( "%s %d %d %d author=%s", 
+                                        inTag, multFlag,
+                                        inCenterAnchorXOffset, 
+                                        inCenterAnchorYOffset,
+                                        authorTag );
+            }
+        else {
+            metaContents = autoSprintf( "%s %d %d %d", 
+                                        inTag, multFlag,
+                                        inCenterAnchorXOffset, 
+                                        inCenterAnchorYOffset );
+            }
+        
         metaFile->writeToFile( metaContents );
         
         delete [] metaContents;
@@ -1413,8 +1482,14 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
         delete nextNumberFile;
         }
     
+
     if( newID == -1 ) {
         // failed to save it to disk
+        
+        if( authorTag != NULL ) {
+            delete [] authorTag;
+            }
+
         return -1;
         }
 
@@ -1452,6 +1527,7 @@ int addSprite( const char *inTag, SpriteHandle inSprite,
     r->sha1Hash = NULL;
     r->maxD = maxD;
     r->multiplicativeBlend = inMultiplicativeBlending;
+    r->authorTag = authorTag;
     
 
     r->w = inSourceImage->getWidth();

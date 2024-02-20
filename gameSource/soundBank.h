@@ -173,7 +173,8 @@ int doesSoundRecordExist(
 int addSoundToBank( int inNumSoundFileBytes,
                     unsigned char *inSoundFileData,
                     const char *inType = "AIFF",
-                    char inSaveToDisk = false );
+                    char inSaveToDisk = false,
+                    const char *inAuthorTag = NULL );
 
 
 // frees memory associated with reverb filter
