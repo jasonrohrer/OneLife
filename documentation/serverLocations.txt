@@ -1,21 +1,33 @@
+http://onehouronelife.com/reflector/server.php
+http://onehouronelife.com/updateServer/server.php
+
 http://onehouronelife.com/ticketServer/server.php
+
 http://onehouronelife.com/steamGate/server.php
 http://onehouronelife.com/fitnessServer/server.php
 http://onehouronelife.com/reviewServer/server.php
 http://onehouronelife.com/curseServer/server.php
 http://onehouronelife.com/lifeTokenServer/server.php
+http://onehouronelife.com/arcServer/server.php
 
 http://lineage.onehouronelife.com/server.php
 http://photos.onehouronelife.com/server.php
 
 
 
+
+
+http://onehouronelife.com/ahapReflector/server.php
+http://onehouronelife.com/ahapUpdateServer/server.php
+
 http://onehouronelife.com/ahapTicketServer/server.php
+
 http://onehouronelife.com/ahapSteamGate/server.php
 http://onehouronelife.com/ahapFitnessServer/server.php
 http://onehouronelife.com/ahapReviewServer/server.php
 http://onehouronelife.com/ahapCurseServer/server.php
 http://onehouronelife.com/ahapLifeTokenServer/server.php
+http://onehouronelife.com/ahapArcServer/server.php
 
 http://lineage.onehouronelife.com/ahapLineageServer/server.php
 http://photos.onehouronelife.com/ahapPhotoServer/server.php
