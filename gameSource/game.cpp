@@ -693,8 +693,16 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     settingsPage = new SettingsPage;
 
 
-    char *reviewURL = 
-        SettingsManager::getStringSetting( "reviewServerURL", "" );
+    char *reviewURL;
+    
+    if( isAHAP ) {
+        reviewURL =
+            SettingsManager::getStringSetting( "ahapReviewServerURL", "" );
+        }
+    else {
+        reviewURL =
+            SettingsManager::getStringSetting( "reviewServerURL", "" );
+        }
     
     if( strcmp( reviewURL, "" ) == 0 ) {
         existingAccountPage->showReviewButton( false );

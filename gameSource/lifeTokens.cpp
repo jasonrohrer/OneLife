@@ -9,6 +9,7 @@
 extern Font *mainFont;
 extern Font *numbersFontFixed;
 extern char *userEmail;
+extern char isAHAP;
 
 
 static int webRequest = -1;
@@ -55,11 +56,20 @@ void triggerLifeTokenUpdate() {
         
         char *emailEncoded = URLUtils::urlEncode( userEmail );
         
-        char *serverURL = 
-            SettingsManager::getStringSetting( 
+        char *serverURL;
+        
+        if( isAHAP ) {
+            serverURL = SettingsManager::getStringSetting( 
+                "ahapLifeTokenServerURL",
+                "http://onehouronelife.com/lifeTokenServer/server.php" );
+            }
+        else {
+            serverURL = SettingsManager::getStringSetting( 
                 "lifeTokenServerURL",
                 "http://onehouronelife.com/lifeTokenServer/server.php" );
+            }
 
+        
         char *url = autoSprintf( 
             "%s?action=get_token_count&email=%s",
             serverURL, emailEncoded );

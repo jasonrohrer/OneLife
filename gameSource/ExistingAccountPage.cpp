@@ -32,11 +32,28 @@ extern char gamePlayingBack;
 
 extern char *userEmail;
 extern char *accountKey;
+extern char isAHAP;
 
 
 extern SpriteHandle instructionsSprite;
 
 extern char loginEditOverride;
+
+
+
+// result destroyed by caller
+static char *getLineageServerURL() {
+    char *url;
+    
+    if( isAHAP ) {
+        url = SettingsManager::getStringSetting( "ahapLineageServerURL", "" );
+        }
+    else {
+        url = SettingsManager::getStringSetting( "lineageServerURL", "" );
+        }
+    
+    return url;
+    }
 
 
 
@@ -283,7 +300,7 @@ void ExistingAccountPage::makeActive( char inFresh ) {
         mEmailField.setContentsHidden( true );
         mKeyField.setContentsHidden( true );
         
-        char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
+        char *url = getLineageServerURL();
 
         char show = ( strcmp( url, "" ) != 0 )
             && isURLLaunchSupported();
@@ -407,7 +424,7 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         setSignal( "genes" );
         }
     else if( inTarget == &mFamilyTreesButton ) {
-        char *url = SettingsManager::getStringSetting( "lineageServerURL", "" );
+        char *url = getLineageServerURL();
 
         if( strcmp( url, "" ) != 0 ) {
             char *email = mEmailField.getText();
@@ -444,7 +461,15 @@ void ExistingAccountPage::actionPerformed( GUIComponent *inTarget ) {
         delete [] url;
         }
     else if( inTarget == &mTechTreeButton ) {
-        char *url = SettingsManager::getStringSetting( "techTreeURL", "" );
+        char *url;
+        
+        if( isAHAP ) {
+            url = SettingsManager::getStringSetting( "ahapTechTreeURL", "" );
+            }
+        else {
+            url = SettingsManager::getStringSetting( "techTreeURL", "" );
+            }
+        
 
         if( strcmp( url, "" ) != 0 ) {
             launchURL( url );
