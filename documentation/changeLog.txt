@@ -32,6 +32,14 @@ Version 414   ???
 
 
 
+Server Fixes:
+
+--Changed curse radius formula to start much smaller when there are only a few
+  living people cursing you, but then go up on a parabolic curve from there.
+  Old formula started larger and then went up linearly.  The old formula
+  allowed one mega-curser to effectively block lots of players from being born
+  in a given town.  Fixes #1034
+
 
 
 

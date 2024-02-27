@@ -32,6 +32,9 @@ static int curseBlockRadius = 50;
 static double curseBlockOfflineFactor = 1.0;
 static double curseBlockOfflineExponent = 2.0;
 
+static double curseBlockOnlineFactor = 1.0;
+static double curseBlockOnlineExponent = 2.0;
+
 static double settingCheckInterval = 60;
 
 
@@ -72,6 +75,14 @@ static void checkSettings() {
         
         curseBlockOfflineExponent = 
             SettingsManager::getDoubleSetting( "curseBlockOfflineExponent", 
+                                               2.0 );
+
+        curseBlockOnlineFactor = 
+            SettingsManager::getDoubleSetting( "curseBlockOnlineFactor", 
+                                               1.0 );
+        
+        curseBlockOnlineExponent = 
+            SettingsManager::getDoubleSetting( "curseBlockOnlineExponent", 
                                                2.0 );
         
         lastSettingCheckTime = curTime;
@@ -819,9 +830,22 @@ void addPersonToPersonalCurseTest( const char *inEmail,
 
 
 static int getCurseRadius( int inLiveCurseCount, int inTotalCurseCount ) {
+    
+    // 0 if no one live is blocking
+    int startRadius = 0;
+    
+    if( inLiveCurseCount > 0 ) {
+        startRadius = curseBlockRadius;
+        }
+    
+
     return 
-        // 0 if no one live is blocking
-        curseBlockRadius * inLiveCurseCount +
+        startRadius
+        +
+        // add in extra curve based on online cursing people
+        curseBlockOnlineFactor * 
+        pow( inLiveCurseCount, curseBlockOnlineExponent )
+        +
         // add in extra curve based on total, including offline people
         curseBlockOfflineFactor * 
         pow( inTotalCurseCount, curseBlockOfflineExponent );
