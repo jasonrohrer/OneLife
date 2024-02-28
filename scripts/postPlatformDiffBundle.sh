@@ -209,11 +209,19 @@ read
 
 
 echo ""
-echo "Telling update server and reflector about latest version."
+echo "Telling update server and OHOL reflector about latest binary version."
 
 echo -n "$newVersion" > ~/diffBundles/latest.txt
 
 echo -n "<?php \$version=$newVersion; ?>" > ~/www/reflector/requiredVersion.php
+
+
+
+echo ""
+echo "Telling AHAP reflector about latest binary version."
+
+echo -n "<?php \$version=$newVersion; ?>" > ~/www/ahapReflector/requiredVersion.php
+
 
 
 

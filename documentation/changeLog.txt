@@ -31,6 +31,8 @@ Version 414   ???
 
 --Updated rootAddNewDownloadServer.sh to handle AHAP downloads.
 
+--postPlatformDiffBundle.sh now updates required binary version number on AHAP
+  refelctor also.
 
 
 
