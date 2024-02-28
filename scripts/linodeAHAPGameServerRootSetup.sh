@@ -35,7 +35,7 @@ echo ""
 
 
 apt-get -o Acquire::ForceIPv4=true update
-apt-get -y install emacs-nox mercurial git g++ expect gdb make fail2ban ufw
+apt-get -y install emacs-nox mercurial git g++ expect gdb make fail2ban ufw glibc-tools
 
 
 echo ""
