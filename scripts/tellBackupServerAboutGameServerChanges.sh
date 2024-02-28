@@ -17,4 +17,4 @@ cat ~/www/reflector/remoteServerList.ini ~/www/ahapReflector/remoteServerList.in
 scp /tmp/remoteServerList.ini jcr13@backup.onehouronelife.com:
 
 
-rm /tmp/tempRemote
+rm /tmp/remoteServerList.ini
