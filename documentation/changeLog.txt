@@ -44,6 +44,9 @@ Server Fixes:
   allowed one mega-curser to effectively block lots of players from being born
   in a given town.  Fixes #1034
 
+--Re-directing stderr when launching headless server, which prevents
+  invocations over ssh by scripts from stalling.
+
 
 
 
