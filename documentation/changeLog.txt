@@ -37,6 +37,8 @@ Version 414   ???
 --steamGateClient now looks for server url in file steamGateServerURL.txt
   instead of having it hard-coded.
 
+--Scripts and VDFs in place for generating/posting AHAP-specific windows Steam
+  build.
 
 
 Server Fixes:
