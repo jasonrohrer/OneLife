@@ -36,6 +36,11 @@ echo "Putting 1 in isAHAP.txt for AHAP build"
 echo -n "1" > steamLatestAHAP/isAHAP.txt
 
 
+echo "Setting steamGateServerURL.txt for AHAP build to:"
+echo "http://onehouronelife.com/ahapSteamGate/server.php"
+
+echo -n "http://onehouronelife.com/ahapSteamGate/server.php" > steamLatestAHAP/steamGateServerURL.txt
+
 
 
 echo "Running steamcmd to push AHAP Windows build"
