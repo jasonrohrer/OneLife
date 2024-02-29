@@ -9,6 +9,8 @@ then
 fi
 
 
+cd ~
+
 echo "Removing old steamLatestAHAP directory."
 
 rm -rf steamLatestAHAP

@@ -9,6 +9,9 @@ then
 fi
 
 
+cd ~
+
+
 echo "Removing old steamLatest directory."
 
 rm -rf steamLatest
@@ -26,4 +29,4 @@ echo ""
 echo -n "Hit [ENTER] when ready: "
 read
 
-./runWindowsSteamDepotBuildAHAP.sh $1
+checkout/OneLifeWorking/scripts/runWindowsSteamDepotBuildAHAP.sh $1
