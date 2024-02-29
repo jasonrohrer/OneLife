@@ -34,6 +34,9 @@ Version 414   ???
 --postPlatformDiffBundle.sh now updates required binary version number on AHAP
   refelctor also.
 
+--steamGateClient now looks for server url in file steamGateServerURL.txt
+  instead of having it hard-coded.
+
 
 
 Server Fixes:
