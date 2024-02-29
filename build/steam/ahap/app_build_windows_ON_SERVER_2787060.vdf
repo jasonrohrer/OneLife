@@ -1,0 +1,25 @@
+"appbuild"
+{
+	"appid"	"2787060"
+
+	"desc" "Replaced On Command Line" // description for this build
+
+	"buildoutput" "/home/jcr15/steamOutputAHAP" // build output folder for .log, .csm & .csd files, relative to location of this file
+
+	"contentroot" "/home/jcr15/steamLatestAHAP" // root content folder, relative to location of this file
+
+	// NOT auto-setting this build to live with setlive public
+	// we need to make sure that all other platforms are built and ready
+	// to deploy, so we have to make this build live manually
+	
+	"setlive"	"" // branch to set live after successful build, non if empty
+
+	"preview" "0" // to enable preview builds
+
+	"local"	""	// set to flie path of local content server 
+	
+	"depots"
+	{
+		"2787062" "depot_build_windows_ON_SERVER_2787062.vdf"
+	}
+}
