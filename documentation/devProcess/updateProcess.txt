@@ -3,6 +3,18 @@ the various servers.
 
 
 
+NOTE:
+Due to changes with Steam, updates can no longer be pushed by scripts
+automatically, without manual developer intervention, mid-update, to make
+the build live on Steam.
+
+Quite a bit of this documentation, which talks about automation, scheduling,
+etc. is outdated.
+
+Only the NOW operations described below should still be used.
+
+
+
 
 ++++
 Scheduling a data-only update for tonight at 9:15 UTC for all platforms.
