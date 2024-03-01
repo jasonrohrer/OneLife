@@ -55,6 +55,8 @@ Server Fixes:
 
 --AHAP versions of status report and update posts scripts.
 
+--Scripts in place for generating AHAP content diff bundles.
+
 
 
 
