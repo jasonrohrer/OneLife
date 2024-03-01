@@ -1,0 +1,116 @@
+#!/bin/sh
+
+if [ ! -e minorGems ]
+then
+	git clone https://github.com/jasonrohrer/minorGems.git	
+fi
+
+if [ ! -e OneLife ]
+then
+	git clone https://github.com/jasonrohrer/OneLife.git
+fi
+
+if [ ! -e AnotherPlanetData ]
+then
+	git clone https://github.com/jasonrohrer/AnotherPlanetData.git	
+fi
+
+
+cd minorGems
+git fetch --tags
+latestTaggedVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
+git checkout -q OneLife_v$latestTaggedVersion
+
+
+cd ../OneLife
+git fetch --tags
+latestTaggedVersionA=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
+git checkout -q OneLife_v$latestTaggedVersionA
+
+
+cd ../AnotherPlanetData
+git fetch --tags
+latestTaggedVersionB=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/AnotherPlanet_v* | sed -e 's/AnotherPlanet_v//'`
+git checkout -q AnotherPlanet_v$latestTaggedVersionB
+
+rm */cache.fcz
+
+
+
+
+
+cd ..
+
+
+if [ ! -h animations ]
+then
+	ln -s AnotherPlanetData/animations .	
+fi
+
+
+if [ ! -h categories ]
+then
+	ln -s AnotherPlanetData/categories .	
+fi
+
+
+if [ ! -h ground ]
+then
+	ln -s AnotherPlanetData/ground .	
+fi
+
+
+if [ ! -h music ]
+then
+	ln -s AnotherPlanetData/music .	
+fi
+
+
+if [ ! -h objects ]
+then
+	ln -s AnotherPlanetData/objects .	
+fi
+
+
+if [ ! -h sounds ]
+then
+	ln -s AnotherPlanetData/sounds .	
+fi
+
+
+if [ ! -h sprites ]
+then
+	ln -s AnotherPlanetData/sprites .	
+fi
+
+
+if [ ! -h transitions ]
+then
+	ln -s AnotherPlanetData/transitions .	
+fi
+
+
+if [ ! -h dataVersionNumber.txt ]
+then
+	ln -s AnotherPlanetData/dataVersionNumber.txt .	
+fi
+
+
+if [ ! -h isAHAP.txt ]
+then
+	ln -s AnotherPlanetData/isAHAP.txt .	
+fi
+
+
+
+
+cp OneLife/build/source/runToBuild .
+
+
+./runToBuild 1
+
+
+
+echo
+echo
+echo "Done building v$latestTaggedVersionB data and v$latestTaggedVersionA code"
