@@ -81,12 +81,14 @@ chmod 644 authorized_keys
 cd /home/jcr13
 
 mkdir downloads
+mkdir ahapDownloads
 
 exit
 EOSU
 
 
 ln -s /home/jcr13/downloads /var/www/html/
+ln -s /home/jcr13/ahapDownloads /var/www/html/
 
 echo ""
 echo "Done with remote setup."

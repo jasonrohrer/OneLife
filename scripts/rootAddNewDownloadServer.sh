@@ -135,7 +135,7 @@ cd /home/jcr15/ahaDiffBundles
 
 for file in *.dbz; do
     urlFile=$(echo $file | sed -e 's/.dbz/_urls.txt/g')
-    echo "http://$subdomain.onehouronelife.com/downloads/$file" >> $urlFile 
+    echo "http://$subdomain.onehouronelife.com/ahapDownloads/$file" >> $urlFile 
 done
 
 
