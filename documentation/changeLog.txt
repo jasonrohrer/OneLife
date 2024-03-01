@@ -41,6 +41,7 @@ Version 414   ???
   build.
 
 
+
 Server Fixes:
 
 --Changed curse radius formula to start much smaller when there are only a few
@@ -51,6 +52,8 @@ Server Fixes:
 
 --Re-directing stderr when launching headless server, which prevents
   invocations over ssh by scripts from stalling.
+
+--AHAP versions of status report and update posts scripts.
 
 
 
