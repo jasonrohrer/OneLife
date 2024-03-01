@@ -186,7 +186,7 @@ fi
 
 
 
-cd ~/checkout/AnotherPlanetLatest
+cd ~/checkout/AnotherPlanetDataLatest
 
 
 # remove any old, stale directories
