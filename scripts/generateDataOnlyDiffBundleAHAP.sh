@@ -565,7 +565,7 @@ echo ""
 echo -n "$newVersion" > ~/ahapDiffBundles/latest.txt
 
 # also updated required ahapVersion.txt file
-echo -n "$newVersion http://onehouronelife.com/ahapUpdateServer/server.php" > ~/www/ahapVersion.txt
+echo -n "$newVersion http://onehouronelife.com/ahapUpdateServer/server.php OK" > ~/www/ahapVersion.txt
 
 # note that we do NOT update reflector required version number, not even
 # for the AHAP-specific reflector, since that version number tracks required
