@@ -678,6 +678,9 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     getAHAPVersionPage = new ServerActionPage( ahapVersionURL, "none", 
                                                2, resultNamesB, false );
 
+    delete [] ahapVersionURL;
+    
+
     finalMessagePage = new FinalMessagePage;
     loadingPage = new LoadingPage;
     
