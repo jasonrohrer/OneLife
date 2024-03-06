@@ -1,7 +1,11 @@
 #!/bin/sh
 
 if [ $# -lt 1 ] ; then
+   echo ""
    echo "Usage: $0 release_name"
+   echo ""
+   echo "Example: $0 v412"
+   echo ""
    exit 1
 fi
 
@@ -24,7 +28,7 @@ cd AnotherPlanet_$1
 
 
 echo "Removing content items from AHAP build."
-rm -rf animations categories contentSettings faces ground groundTileCache music objects overlays reverbCache reverbImpulseResponse.aiff scenes sounds sprites transitions tutorialMaps
+rm -rf animations categories contentSettings faces ground groundTileCache music objects overlays reverbCache reverbImpulseResponse.aiff scenes sounds sprites transitions tutorialMaps dataVersionNumber.txt
 
 echo -n "1" > isAHAP.txt
 
