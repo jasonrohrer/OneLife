@@ -42,6 +42,19 @@ Version 414   ???
 
 --Script for making linux binary build for AHAP using OHOL build as a basis.
 
+--Game recording (recordGame.ini setting) is now off by default.  To correctly
+  play back a game, all network traffic has to be recorded.  I found that for
+  the AHAP client, which downloads a big content bundle the first time it
+  starts, there's a huge lag at the end of the update download as this network
+  data is hex-encoded and written into the game recording text file.  I haven't
+  actively reviewed a user-submitted game recording in many years.  This is
+  good to have on in early development, when tracking lots of mystery bugs, but
+  it generates extra disk traffic (and lags in certain situtations) that isn't
+  worth it now.  If someone needs to capture a bug in the future, they can
+  temporarily turn game recording back on.
+
+
+
 
 
 
