@@ -79,6 +79,10 @@ Server Fixes:
 
 --Script for Live_UnixSource distribution for AHAP.
 
+--Remote server update scripts now --force when pulling tags, to overwrite
+  tags if tags have changed remotely.
+
+
 
 
 Version 412   2024-February-16

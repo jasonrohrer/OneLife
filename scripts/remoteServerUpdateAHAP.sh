@@ -32,7 +32,7 @@ echo ""
 
 cd ~/checkout/AnotherPlanetData
 git checkout master
-git pull --tags
+git pull --tags --force
 rm */cache.fcz
 rm */bin_*cache.fcz
 
@@ -42,7 +42,7 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git pull --tags
+git pull --tags --force
 
 
 ~/checkout/OneLife/scripts/serverPull.sh
