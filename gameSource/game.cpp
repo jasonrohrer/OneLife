@@ -468,6 +468,31 @@ void freeDrawString() {
     }
 
 
+static void startSpriteLoading() {
+    
+    char rebuilding;
+    
+    // game needs to compute hashes for mod loading
+    int numSprites = 
+        initSpriteBankStart( &rebuilding, true );
+                        
+    if( rebuilding ) {
+        loadingPage->setCurrentPhase( translate( "spritesRebuild" ) );
+        }
+    else {
+        loadingPage->setCurrentPhase( translate( "sprites" ) );
+        }
+    loadingPage->setCurrentProgress( 0 );
+                        
+
+    loadingStepBatchSize = numSprites / numLoadingSteps;
+    
+    if( loadingStepBatchSize < 1 ) {
+        loadingStepBatchSize = 1;
+        }
+    }
+
+
 
 void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
                       const char *inCustomRecordedGameData,
@@ -730,26 +755,6 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     //setSoundSpriteRateRange( 0.95, 1.05 );
     setSoundSpriteVolumeRange( 0.60, 1.0 );
     
-    char rebuilding;
-    
-    // game needs to compute hashes for mod loading
-    int numSprites = 
-        initSpriteBankStart( &rebuilding, true );
-                        
-    if( rebuilding ) {
-        loadingPage->setCurrentPhase( translate( "spritesRebuild" ) );
-        }
-    else {
-        loadingPage->setCurrentPhase( translate( "sprites" ) );
-        }
-    loadingPage->setCurrentProgress( 0 );
-                        
-
-    loadingStepBatchSize = numSprites / numLoadingSteps;
-    
-    if( loadingStepBatchSize < 1 ) {
-        loadingStepBatchSize = 1;
-        }
 
     // for filter support in LivingLifePage
     enableObjectSearch( true );
@@ -760,6 +765,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
         currentGamePage = getAHAPVersionPage;
         }
     else {
+        startSpriteLoading();
+            
         loadingStarted = true;
         currentGamePage = loadingPage;
         }
@@ -1545,12 +1552,23 @@ void drawFrame( char inUpdate ) {
                             currentGamePage->base_makeActive( true );
                             }
                         else {
+                            // if loading already started, we got caught
+                            // by a final version check after loading
+                            // at this point, it's too late to pre-update
+                            // before content is loaded, so we must auto
+                            // relaunch
+                            autoAHAPUpdatePage->setAutoRelaunch( 
+                                loadingStarted );
+                            
                             currentGamePage = autoAHAPUpdatePage;
                             currentGamePage->base_makeActive( true );
                             }
                         }
                     else {
                         if( ! loadingStarted ) {
+                            
+                            startSpriteLoading();
+                            
                             loadingStarted = true;
                             currentGamePage = loadingPage;
                             currentGamePage->base_makeActive( true );
@@ -1568,8 +1586,23 @@ void drawFrame( char inUpdate ) {
                 else {
                     AppLog::error( 
                         "Failed to fetch ahapVersion.txt from server." );
-                    currentGamePage = loadingPage;
-                    currentGamePage->base_makeActive( true );
+                    
+                    if( !loadingStarted ) {
+                        startSpriteLoading();
+                            
+                        loadingStarted = true;
+                        
+                        currentGamePage = loadingPage;
+                        currentGamePage->base_makeActive( true );
+                        }
+                    else {
+                        // maybe failure to get version number occurred
+                        // after loading, right before making connection?
+                        
+                        // we passed test BEFORE loading, so just
+                        // ignore failure now and connect anyway
+                        startConnectingNoAHAPCheck();
+                        }
                     }
                 }
             }
@@ -1595,6 +1628,19 @@ void drawFrame( char inUpdate ) {
                 finalMessagePage->setMessageKey( "manualRestartMessage" );
                                 
                 currentGamePage->base_makeActive( true );
+                }
+            else if( autoAHAPUpdatePage->checkSignal( "updateDone" ) ) {
+                // we don't auto-relaunch if we run our content-only 
+                // update before loading content
+                // Now that the update is applied, we can load now
+                
+                updateDataVersionNumber();
+                
+                startSpriteLoading();
+                
+                loadingStarted = true;
+                currentGamePage = loadingPage;
+                currentGamePage->base_makeActive( true );            
                 }
             }
         else if( currentGamePage == loadingPage ) {

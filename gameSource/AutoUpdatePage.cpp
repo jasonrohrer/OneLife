@@ -10,7 +10,8 @@
 
 
 AutoUpdatePage::AutoUpdatePage()
-        : mUseAHAPMessaging( false ) {
+        : mUseAHAPMessaging( false ),
+          mAutoRelaunch( true ) {
     }
 
 
@@ -83,15 +84,24 @@ void AutoUpdatePage::step() {
     if( result == 1 ) {
         clearUpdate();
         
-        char relaunched = relaunchGame();
-        
-        if( !relaunched ) {
-            printf( "Relaunch failed\n" );
-            setSignal( "relaunchFailed" );
+        if( ! mAutoRelaunch ) {
+            printf( "AutoUpdatePage NOT re-launching game post-update.\n" );
+            
+            setSignal( "updateDone" );
             }
         else {
-            printf( "Relaunched... but did not exit?\n" );
-            setSignal( "relaunchFailed" );
+            printf( "AutoUpdatePage re-launching game post-update.\n" );
+            
+            char relaunched = relaunchGame();
+        
+            if( !relaunched ) {
+                printf( "Relaunch failed\n" );
+                setSignal( "relaunchFailed" );
+                }
+            else {
+                printf( "Relaunched... but did not exit?\n" );
+                setSignal( "relaunchFailed" );
+                }
             }
         }
     
@@ -103,4 +113,9 @@ void AutoUpdatePage::setUseAHAPMessaging( char inAHAP ) {
     mUseAHAPMessaging = inAHAP;
     }
 
+
         
+void AutoUpdatePage::setAutoRelaunch( char inRelaunch ) {
+    mAutoRelaunch = inRelaunch;
+    }
+

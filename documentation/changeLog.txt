@@ -53,6 +53,10 @@ Version 414   ???
   worth it now.  If someone needs to capture a bug in the future, they can
   temporarily turn game recording back on.
 
+--Fixed so that after AHAP content-only update (which happens before loading),
+  we don't re-launch the client, but instead go right into loading the newly-
+  downloaded content.
+
 
 
 
