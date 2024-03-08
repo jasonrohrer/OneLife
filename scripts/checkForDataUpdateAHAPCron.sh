@@ -20,7 +20,8 @@ then
 
 		logPath="/tmp/ahapUpdateGateLog.txt"
 
-		if[ -f $logPath ]; then
+		if [ -f $logPath ]
+		then
 			mv $logPath /tmp/ahapUpdateGateLog_backup_$date.txt
 		fi
 
