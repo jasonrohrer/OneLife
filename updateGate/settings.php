@@ -45,6 +45,13 @@ $updateScriptLogPath = "/tmp/updateGateLog.txt";
 // Adjust these to change the way the server  works.
 
 
+// so different installations can avoid common challenges and allow
+// replay attacks between installations
+// a serial number is appended to this as the challenge
+$challengePrefix = "updateGate_";
+
+
+
 // header and footers for various pages
 $header = "include( \"header.php\" );";
 $footer = "include( \"footer.php\" );";

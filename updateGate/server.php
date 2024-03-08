@@ -7,14 +7,21 @@ global $header, $footer;
 
 eval( $header );
 
-$challenge = ug_requestFilter( "challenge", "/[0-9]+/i", 0 );
+global $challengePrefix;
+
+
+$challenge = ug_requestFilter( "challenge",
+                               "/$challengePrefix"."[0-9]+/i",
+                               "$challengePrefix" . "0" );
 
 $response = ug_requestFilter( "response", "/[A-F0-9]+/i", "ABCDEF" );
 
 
 $nextNumber = trim( file_get_contents( $serialNumberFilePath ) );
 
-if( $challenge < $nextNumber ) {
+$challengeNumber = str_replace( $challengePrefix, "", $challenge );
+
+if( $challengeNumber < $nextNumber ) {
 
     echo "Challenge value $challenge is stale.";
     
@@ -45,7 +52,7 @@ if( preg_match( "/INVALID/", $result ) ||
     die();
     }
 
-$newNum = $challenge + 1;
+$newNum = $challengeNumber + 1;
 
 if( ! file_put_contents( $serialNumberFilePath, $newNum ) ) {
     echo "Failed to update serial number after hash check.";
