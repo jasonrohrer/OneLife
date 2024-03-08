@@ -61,8 +61,9 @@ $action = ug_requestFilter( "action", "/[A-Z_]+/i" );
 
 if( $action == "content_update" ) {
     global $updateScriptPath, $updateScriptLogPath;
-    
-    shell_exec( 'nohup $updateScriptPath > $updateScriptLogPath 2>&1 &' );
+
+    // pass in two arguments to indicate automation
+    shell_exec( 'nohup $updateScriptPath a a > $updateScriptLogPath 2>&1 &' );
 
     global $entryPointURL;
     
