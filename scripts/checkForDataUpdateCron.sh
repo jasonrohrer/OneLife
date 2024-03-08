@@ -13,12 +13,11 @@ then
 	then
 		echo ""
 		echo "Data update scheduled.  Running it now."
+				
+		echo "0" > $flagFile
 		
 		# pass two arguments to indicate automation and skip interactive
 		# confirmation
 		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh -a -a
-		
-		
-		echo "0" > $flagFile
 	fi
 fi
