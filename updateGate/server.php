@@ -70,7 +70,7 @@ if( $action == "content_update" ) {
     global $updateScriptPath, $updateScriptLogPath;
 
     // pass in two arguments to indicate automation
-    shell_exec( 'nohup $updateScriptPath a a > $updateScriptLogPath 2>&1 &' );
+    shell_exec( "nohup $updateScriptPath a a > $updateScriptLogPath 2>&1 &" );
 
     global $entryPointURL;
     
