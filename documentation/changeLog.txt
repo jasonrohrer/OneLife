@@ -82,6 +82,8 @@ Server Fixes:
 --Remote server update scripts now --force when pulling tags, to overwrite
   tags if tags have changed remotely.
 
+--Added updateGate web service to allow content leader to push updates.
+
 
 
 
