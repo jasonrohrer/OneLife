@@ -67,14 +67,18 @@ $action = ug_requestFilter( "action", "/[A-Z_]+/i" );
 
 
 if( $action == "content_update" ) {
-    global $updateScriptPath, $updateScriptLogPath;
+    global $updateTriggerFilePath;
 
-    // pass in two arguments to indicate automation
-    shell_exec( "nohup $updateScriptPath a a > $updateScriptLogPath 2>&1 &" );
-
+    if( ! file_put_contents( $updateTriggerFilePath, "1" ) ) {
+        echo "Failed to write to update trigger file.";
+    
+        eval( $footer );
+        die();
+        }
+    
     global $entryPointURL;
     
-    echo "Update started.<br><br>";
+    echo "Update trigger set, update should run soon.<br><br>";
 
     echo "Go here to view log:<br>";
 
