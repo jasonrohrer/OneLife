@@ -89,6 +89,12 @@ else if( $action == "view_log" ) {
 
     $logContents = file_get_contents( $updateScriptLogPath );
 
+    global $entryPointURL;
+
+    echo "Go here to reload log:<br>";
+
+    echo "<a href='$entryPointURL'>$entryPointURL</a><br><br><br>";
+    
     echo "Log contents:<br><pre>$logContents</pre>";
     }
 
