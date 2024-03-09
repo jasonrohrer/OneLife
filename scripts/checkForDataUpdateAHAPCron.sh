@@ -29,7 +29,7 @@ then
 
 		# pass two arguments to indicate automation and skip interactive
 		# confirmation
-		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundleAHAP.sh -a -a > $logPath
+		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundleAHAP.sh -a -a > $logPath 2>&1
 				
 	fi
 fi
