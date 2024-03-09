@@ -6,7 +6,7 @@ SHELL=/bin/bash
 15 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForDataUpdateCron.sh
 30 9 * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForServerCodeUpdateCron.sh
 
-* * * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForDataUpdateCronAHAP.sh
+* * * * * /home/jcr15/checkout/OneLifeWorking/scripts/checkForDataUpdateAHAPCron.sh
 
 
 30 8 * * * /home/jcr15/checkout/OneLifeWorking/scripts/makeWebLifeLogData.sh 2
