@@ -1,6 +1,6 @@
 
 
-flagFile=~/dataUpdateFlag.txt
+flagFile=/home/jcr15/dataUpdateFlag.txt
 
 if [ -f $flagFile ]
 then
@@ -18,6 +18,6 @@ then
 		
 		# pass two arguments to indicate automation and skip interactive
 		# confirmation
-		~/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh -a -a
+		/home/jcr15/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundle.sh -a -a
 	fi
 fi

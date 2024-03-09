@@ -84,6 +84,8 @@ Server Fixes:
 
 --Added updateGate web service to allow content leader to push updates.
 
+--Scheduled data update scripts now make home path explicit instead of using ~
+
 
 
 
