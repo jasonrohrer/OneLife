@@ -8,7 +8,7 @@
 # files MUST have Unix line endings in the working directory.
 
 *.txt    text eol=lf
-
+*.sh     text eol=lf
 
 # QCad DXF files are being saved with CRLF
 # leave them alone.
