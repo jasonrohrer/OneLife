@@ -14585,8 +14585,7 @@ void LivingLifePage::step() {
                 // AHAP client, dataVersionNumber is checked separately
                 // and not enforced by server's requiredVersionNumber
 
-                if( mRequiredVersion > versionNumber ||
-                    mRequiredVersion < versionNumber ) {
+                if( mRequiredVersion > versionNumber ) {
                 
                     // if server is using a newer version than us,
                     // we must upgrade our client
