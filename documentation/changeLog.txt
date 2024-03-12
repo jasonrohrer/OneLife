@@ -60,6 +60,9 @@ Version 414   ???
 --No more auto-relaunch on Windows, since it doesn't always work correctly.
   To be safe, let user manually relaunch on Windows.
 
+--Windows steam depot build script now sets isAHAP.txt to 0 and
+  steamGateServerURL.txt for OHOL build.
+
 
 
 
