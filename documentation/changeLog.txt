@@ -57,6 +57,8 @@ Version 414   ???
   we don't re-launch the client, but instead go right into loading the newly-
   downloaded content.
 
+--No more auto-relaunch on Windows, since it doesn't always work correctly.
+  To be safe, let user manually relaunch on Windows.
 
 
 
