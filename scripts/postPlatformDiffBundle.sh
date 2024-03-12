@@ -199,9 +199,10 @@ fi
 
 echo ""
 echo "Updates pushed out to download servers."
-echo "About to make this new version $newVersion live and required."
+echo "About to make this new version $newVersion live and required"
+echo "for both OHOL and AHAP."
 echo ""
-echo "This is a good time to manually make a corresponding Steam build live."
+echo "This is a good time to manually make both corresponding Steam builds live."
 echo ""
 echo -n "Hit [ENTER] when ready: "
 read
