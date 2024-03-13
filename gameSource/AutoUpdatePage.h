@@ -19,10 +19,15 @@ class AutoUpdatePage : public GamePage {
         // defaults to false
         void setUseAHAPMessaging( char inAHAP );
         
+        // defaults to true
+        // set to false to disable re-launch
+        void setAutoRelaunch( char inRelaunch );
+        
         
     protected:
         
         char mUseAHAPMessaging;
+        char mAutoRelaunch;
         
     };
 

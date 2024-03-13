@@ -14,3 +14,12 @@ git pull
 rsync faces/*.png ~/public_html/faces/
 
 rsync objects/*.txt ~/public_html/objects/
+
+
+
+cd ~/checkout/AnotherPlanetData
+git pull
+
+rsync faces/*.png ~/public_html/ahapLineageServer/faces/
+
+rsync objects/*.txt ~/public_html/ahapLineageServer/objects/

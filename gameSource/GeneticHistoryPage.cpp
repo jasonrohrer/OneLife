@@ -20,6 +20,9 @@
 
 extern Font *mainFont;
 
+extern char isAHAP;
+
+
 
 GeneticHistoryPage::GeneticHistoryPage() 
         : mBackButton( mainFont, -522, 300, translate( "backButton" ) ),
@@ -66,8 +69,15 @@ void GeneticHistoryPage::actionPerformed( GUIComponent *inTarget ) {
         mSkip = 0;
         }
     else if( inTarget == &mLeaderboardButton ) {
-        char *url = SettingsManager::getStringSetting( "fitnessServerURL", "" );
-
+        char *url;
+        if( isAHAP ) {
+            url = SettingsManager::getStringSetting( 
+                "ahapFitnessServerURL", "" );
+            }
+        else {
+            url = SettingsManager::getStringSetting( "fitnessServerURL", "" );
+            }
+        
         if( strcmp( url, "" ) != 0 ) {
             
             char *fullURL = autoSprintf( "%s?action=show_leaderboard", url );

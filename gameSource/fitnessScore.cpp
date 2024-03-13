@@ -35,6 +35,9 @@ extern char *userEmail;
 extern Font *mainFont;
 extern Font *numbersFontFixed;
 
+extern char isAHAP;
+
+
 
 static char *leaderboardName = NULL;
 
@@ -81,9 +84,16 @@ static void freeAllOffspring() {
 
 
 void initFitnessScore() {
-    fitnessServerURL = SettingsManager::getStringSetting( 
-        "fitnessServerURL", 
-        "http://localhost/jcr13/fitnessServer/server.php" );
+    if( isAHAP ) {
+        fitnessServerURL = SettingsManager::getStringSetting( 
+            "ahapFitnessServerURL", 
+            "http://localhost/jcr13/fitnessServer/server.php" );
+        }
+    else {
+        fitnessServerURL = SettingsManager::getStringSetting( 
+            "fitnessServerURL", 
+            "http://localhost/jcr13/fitnessServer/server.php" );
+        }
     
     useFitnessServer = SettingsManager::getIntSetting( "useFitnessServer", 0 );
     }

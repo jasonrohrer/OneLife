@@ -97,7 +97,7 @@ echo ""
 useradd -m -s /bin/bash jcr13
 
 
-dataName="OneLifeData7"
+dataName="AnotherPlanetData"
 
 
 su jcr13<<EOSU
@@ -122,26 +122,41 @@ git clone https://github.com/jasonrohrer/minorGems.git
 
 cd $dataName
 
-lastTaggedDataVersion=\`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'\`
+lastTaggedDataVersion=\`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/AnotherPlanet_v* | sed -e 's/AnotherPlanet_v//'\`
 
 
 echo "" 
 echo "Most recent Data git version is:  \$lastTaggedDataVersion"
 echo ""
 
-git checkout -q OneLife_v\$lastTaggedDataVersion
+git checkout -q AnotherPlanet_v\$lastTaggedDataVersion
 
 
 
 cd ../OneLife/server
 
-echo "http://onehouronelife.com/ticketServer/server.php" > settings/ticketServerURL.ini
+echo "http://onehouronelife.com/ahapTicketServer/server.php" > settings/ticketServerURL.ini
+echo "http://onehouronelife.com/ahapReflector/server.php" > settings/reflectorURL.ini
+
+echo "http://onehouronelife.com/ahapCurseServer/server.php" > settings/curseServerURL.ini
+
+echo "http://lineage.onehouronelife.com/ahapLineageServer/server.php" > settings/lineageServerURL.ini
+
+echo "http://onehouronelife.com/ahapLifeTokenServer/server.php" > settings/lifeTokenServerURL.ini
+
+echo "http://onehouronelife.com/ahapFitnessServer/server.php" > settings/fitnessServerURL.ini
+
+echo "http://onehouronelife.com/ahapArcServer/server.php" > settings/arcServerURL.ini
+
+echo "http://onehouronelife.com/ahapReviewServer/server.php" > settings/statsServerURL.ini
+
 
 ln -s ../../$dataName/objects .
 ln -s ../../$dataName/transitions .
 ln -s ../../$dataName/categories .
 ln -s ../../$dataName/tutorialMaps .
 ln -s ../../$dataName/dataVersionNumber.txt .
+ln -s ../../$dataName/isAHAP.txt .
 
 git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
 

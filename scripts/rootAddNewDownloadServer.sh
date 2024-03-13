@@ -81,7 +81,7 @@ echo "IdentityFile   ~/.ssh/remoteServers_id_rsa" >> config
 echo "User           jcr13" >> config
 
 
-echo "Telling local diff bundle folder about new server"
+echo "Telling local OHOL diff bundle folder about new server"
 
 
 cd ~/diffBundles
@@ -91,16 +91,34 @@ echo "jcr13 $subdomain.onehouronelife.com" >> remoteServerList.ini
 
 
 
-echo "Copying diff bundles to new server's download directory"
+echo "Copying OHOL diff bundles to new server's download directory"
 
 scp *.dbz jcr13@$subdomain.onehouronelife.com:downloads/
+
+
+
+
+
+echo "Telling local AHAP diff bundle folder about new server"
+
+
+cd ~/ahapDiffBundles
+
+echo "jcr13 $subdomain.onehouronelife.com" >> remoteServerList.ini
+
+
+
+
+echo "Copying AHAP diff bundles to new server's download directory"
+
+scp *.dbz jcr13@$subdomain.onehouronelife.com:ahapDownloads/
 
 
 EOSU2
 
 
 # cleaner to do this without escaping
-echo "Adding to update server's URL mirror lists"
+echo "Adding to update server's URL mirror lists for OHOL"
 
 cd /home/jcr15/diffBundles
 
@@ -111,8 +129,19 @@ done
 
 
 
+echo "Adding to update server's URL mirror lists for AHAP"
+
+cd /home/jcr15/ahaDiffBundles
+
+for file in *.dbz; do
+    urlFile=$(echo $file | sed -e 's/.dbz/_urls.txt/g')
+    echo "http://$subdomain.onehouronelife.com/ahapDownloads/$file" >> $urlFile 
+done
+
+
+
 su jcr15<<EOSU3
-echo "Copying primary download files to new server's download directory"
+echo "Copying primary OHOL download files to new server's download directory"
 
 
 cd ~/oneLifeDownloads
@@ -121,10 +150,27 @@ scp * jcr13@$subdomain.onehouronelife.com:downloads/
 
 
 echo ""
-echo "Telling ticket server about new mirror for main downloads"
+echo "Telling ticket server about new mirror for main OHOL downloads"
 echo ""
 
 echo "http://$subdomain.onehouronelife.com/downloads/" >> remoteServerList.ini
+
+
+
+
+echo "Copying primary AHAP download files to new server's download directory"
+
+
+cd ~/ahapDownloads
+
+scp * jcr13@$subdomain.onehouronelife.com:ahapDownloads/
+
+
+echo ""
+echo "Telling ticket server about new mirror for main AHAP downloads"
+echo ""
+
+echo "http://$subdomain.onehouronelife.com/ahapDownloads/" >> remoteServerList.ini
 
 
 EOSU3

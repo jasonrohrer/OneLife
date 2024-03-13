@@ -30,7 +30,7 @@ echo "Updating live server data"
 echo ""
 
 
-cd ~/checkout/OneLifeData7
+cd ~/checkout/AnotherPlanetData
 git checkout master
 git pull --tags --force
 rm */cache.fcz
@@ -41,8 +41,8 @@ echo ""
 echo "Re-compiling server"
 echo ""
 
-cd ~/checkout/minorGems --force
-git pull --tags
+cd ~/checkout/minorGems
+git pull --tags --force
 
 
 ~/checkout/OneLife/scripts/serverPull.sh
@@ -56,12 +56,12 @@ make
 
 rm -f dataVersionNumber.txt
 
-ln -s ~/checkout/OneLifeData7/dataVersionNumber.txt .
+ln -s ~/checkout/AnotherPlanetData/dataVersionNumber.txt .
 
 
 rm -f isAHAP.txt
 
-ln -s ~/checkout/OneLifeData7/isAHAP.txt .
+ln -s ~/checkout/AnotherPlanetData/isAHAP.txt .
 
 
 git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt

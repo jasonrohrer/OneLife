@@ -25,6 +25,9 @@ static char currentFailed = false;
 
 static char hardFailure = false;
 
+extern char isAHAP;
+
+
 
 
 void initPhotoCache() {
@@ -275,8 +278,16 @@ SpriteHandle getCachedPhoto( char *inPhotoID, char inNegative ) {
             
             // file not cached
             // start a new web request for it
-            char *url = 
-                SettingsManager::getStringSetting( "photoServerURL", "" );
+            char *url;
+            
+            if( isAHAP ) {
+                url = SettingsManager::getStringSetting( 
+                    "ahapPhotoServerURL", "" );
+                }
+            else {
+                url = SettingsManager::getStringSetting( "photoServerURL", "" );
+                }
+            
             
             char *serverPos = strstr( url, "server.php" );
             

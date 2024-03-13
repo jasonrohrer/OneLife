@@ -1,0 +1,40 @@
+#!/bin/sh
+
+if [ $# -lt 1 ] ; then
+   echo ""
+   echo "Usage: $0 release_name"
+   echo ""
+   echo "Example: $0 v412"
+   echo ""
+   exit 1
+fi
+
+if ! test -d OneLife_$1; then
+	echo
+	echo "Base directory OneLife_$1 does not exist."
+	echo
+	echo "Perhaps you need to run makeLinuxBuild first?"
+	echo
+	exit 1
+fi
+
+rm -rf AnotherPlanet_$1 AnotherPlanet_$1_Linux.tar.gz
+
+
+echo "Copying OneLife_$1 as basis for AHAP build."
+cp -r OneLife_$1 AnotherPlanet_$1
+
+cd AnotherPlanet_$1
+
+
+echo "Removing content items from AHAP build."
+rm -rf animations categories contentSettings faces ground groundTileCache music objects overlays reverbCache reverbImpulseResponse.aiff scenes sounds sprites transitions tutorialMaps dataVersionNumber.txt
+
+echo -n "1" > isAHAP.txt
+
+
+cd ..
+
+echo "Compressing AHAP build as tar.gz"
+tar czf AnotherPlanet_$1_Linux.tar.gz AnotherPlanet_$1
+
