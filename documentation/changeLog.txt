@@ -3,6 +3,15 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 415   ???
+
+--Moving bulk download portion of a web request into a separate thread for
+  maximum throughput while still updating GUI with progress.  Old thread-free
+  method, using non-blocking IO, would not achieve maximum download speeds on
+  fast connections because OS receive buffer would fill up when we're waiting
+  for vsync.
+
+
 
 Version 414   2024-March-12
 
