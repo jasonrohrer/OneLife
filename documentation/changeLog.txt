@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 415   ???
+Version 415   2024-March-15
 
 --Moving bulk download portion of a web request into a separate thread for
   maximum throughput while still updating GUI with progress.  Old thread-free
