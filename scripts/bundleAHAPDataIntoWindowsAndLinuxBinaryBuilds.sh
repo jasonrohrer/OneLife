@@ -22,7 +22,7 @@ fi
 
 
 windowsBaseFileName=AnotherPlanet_v$1_Windows.zip
-linuxBaseFileName=AnotherPlanet_v$1_Linux.zip
+linuxBaseFileName=AnotherPlanet_v$1_Linux.tar.gz
 
 windowsBaseFile=~/ahapDownloads/$windowsBaseFileName
 linuxBaseFile=~/ahapDownloads/$linuxBaseFileName
