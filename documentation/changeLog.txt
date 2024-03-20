@@ -13,6 +13,11 @@ Server Fixes:
   every bit of content from scratch (there's already about 50MB of it, just in
   the starter content alone).
 
+--New script for bundling latest AHAP data with most recent base Windows and
+  Linux binary distributions (what people first download to play AHAP
+  off-Steam).
+
+
 
 
 Version 415   2024-March-15
