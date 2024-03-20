@@ -146,6 +146,24 @@ git checkout -q master
 
 
 echo "" 
+echo "Generating caches for content"
+echo ""
+
+cd ~/checkout/ahapDataTemp/
+
+cp ~/checkout/OneLifeWorking/gameSource/reverbImpulseResponse.aiff .
+~/checkout/OneLifeWorking/gameSource/regenerateCaches
+rm reverbImpulseResponse.aiff
+# don't include bin_cache files in downloads, because they change
+# with each update, and are too big
+# cache.fcz files are full of compressed text files, so they're much smaller
+# and fine to included when they change
+rm */bin_*cache.fcz
+
+
+
+
+echo "" 
 echo "Extracting existing Windows v$1 build"
 echo ""
 
