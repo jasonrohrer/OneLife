@@ -21,8 +21,8 @@ then
 fi
 
 
-windowsBaseFileName=AnotherPlanet_v$1_Windows.zip
-linuxBaseFileName=AnotherPlanet_v$1_Linux.tar.gz
+windowsBaseFileName=AnotherPlanet_v${1}_Windows.zip
+linuxBaseFileName=AnotherPlanet_v${1}_Linux.tar.gz
 
 windowsBaseFile=~/ahapDownloads/$windowsBaseFileName
 linuxBaseFile=~/ahapDownloads/$linuxBaseFileName
@@ -106,13 +106,13 @@ echo ""
 baseDataVersion=$lastTaggedDataVersion
 
 
-newWindowsFileName=AnotherPlanet_v$1_d$baseDataVersion_Windows.zip
-newLinuxFileName=AnotherPlanet_v$1_d$baseDataVersion_Linux.tar.gz
+newWindowsFileName=AnotherPlanet_v${1}_d${baseDataVersion}_Windows.zip
+newLinuxFileName=AnotherPlanet_v${1}_d${baseDataVersion}_Linux.tar.gz
 
 echo "About to bundle these new files:"
 echo "   $newWindowsFileName"
 echo "     and"
-echo "   $$newLinuxFileName"
+echo "   $newLinuxFileName"
 echo ""
 
 
