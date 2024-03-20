@@ -3,6 +3,18 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--AHAP Steam Build script now includes snapshot of most recent AHAP content
+  data, so that new users on Steam don't face a huge content download as their
+  initial experience.  Note that as AHAP development progresses, binary updates
+  will be infrequent, so the content included with the Steam binary bundle will
+  lag behind over time.  But at least they won't have to download absolutely
+  every bit of content from scratch (there's already about 50MB of it, just in
+  the starter content alone).
+
+
+
 Version 415   2024-March-15
 
 --Moving bulk download portion of a web request into a separate thread for
