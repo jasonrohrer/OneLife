@@ -1,32 +1,22 @@
-
+== Called by either game client or game server:
 
 server.php
-?action=get_token_count
+?action=check_grant
 &email=[email address]
 
 Return:
-token_count
-seconds_per_token_earned
-token_cap
-seconds_until_next_token
 OK
 -or-
 DENIED
 
 
-DENIED if email is unknown to server (will be know the first time a server
-spends a token for this email).
-
-Note that this call has no security token.  This simplifies the
-client code which fetches this value.  I can't imagine a situation where the 
-number of life tokens associated with an email address is valuable to an
-attacker.
-
-seconds_until_next_token is -1 if the player is not in the process of
-earning a token (for example, if they're at or above the cap already)
+Check whether a given email has been granted access to Another Planet.
 
 
 
+
+
+== Called by either game client or game server:
 
 server.php
 ?action=get_sequence_number
@@ -37,13 +27,17 @@ sequence number
 OK
 
 Gets next valid sequence number associated with email.  Note that even if
-email is unknown to server, 0 will be returned so that first life can be
+email is unknown to server, 0 will be returned so that initial grant can be
 submitted.
 
 
 
+
+
+== Called by trusted game server only:
+
 server.php
-?action=spend_token
+?action=grant
 &email=[email address]
 &sequence_number=[int]
 &hash_value=[hash value]
@@ -53,27 +47,38 @@ OK
 -or-
 DENIED
 
-Used by game servers to indicate that a given email has spent a life token.
+Used by game servers to indicate that a given email has been granted access to
+Another Planet.
 
 DENIED is returned if there are no life tokens left.
 
 
 hash_value is computed on both ends with:
 
-HMAC_SHA1( $shared_secret, $sequence_number )
+HMAC_SHA1( $shared_secret, $sequence_number$email )
+
+(sequence number concatonated with email)
 
 
-Where $shared_secret is a secret string known to both the lifeTokenServer and
-the game servers that have permission to spend tokens.
+
+Where $shared_secret is a secret string known to both the ahapGate server and
+the game servers that have permission to manipulate the ahapGate.
 
 If sequence number is <= previously used sequence number for this email address,
 request will be rejected.
 
+Secure against replay attacks and modification of submitted email.
+
+
+
+
+== Called by trusted game server only
 
 
 server.php
-?action=refund_token
+?action=register_vote
 &email=[email address]
+&leader_email=[email address]
 &sequence_number=[int]
 &hash_value=[hash value]
 
@@ -82,6 +87,80 @@ OK
 -or-
 DENIED
 
-Used by game servers to indicate that a given email needs a token refunded.
+Used by game servers to indicate a user's vote for content leader.
+This should be called every time a user logs into an Another Planet server,
+re-submitting the vote for each log-in.  Thus, ahapGate can track votes from
+currently-active users.
 
-DENIED is returned if the email isn't known
+DENIED is returned if the user's email isn't known
+
+
+hash_value is computed on both ends with:
+
+HMAC_SHA1( $shared_secret, $sequence_number$email$leaderEmail )
+
+(sequence number concatonated with both emails)
+
+Secure against replay attacks and modification of submitted emails.
+
+
+
+
+
+== Called by game client only
+
+
+server.php
+?action=register_github
+&email=[email address]
+&github_email=[email address]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+OK
+-or-
+DENIED
+
+Used by game clients to update user's github account email.
+
+DENIED is returned if the user's email isn't known
+
+
+hash_value is computed on both ends with:
+
+HMAC_SHA1( $ticket_id, $sequence_number )
+
+Secure only against replay attacks (a modification attack could change the
+submitted github email).
+
+
+
+
+== Called by game client only
+
+
+server.php
+?action=get_content_leader
+&email=[email address]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+leader_email
+OK
+-or-
+DENIED
+
+Used by game clients to get the current content leader's email.
+This is not who they are currently voting for, but who is the current winner
+of the vote.
+
+DENIED is returned if the user's email isn't known
+
+
+hash_value is computed on both ends with:
+
+HMAC_SHA1( $ticket_id, $sequence_number )
+
+Secure against replay attacks.
