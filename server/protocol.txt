@@ -307,7 +307,7 @@ Chunk includes a sizeX x sizeY number of ids (a square of the map).
 Square is positioned on map grid with upper left corner at x y
 binary_size is the number of binary bytes of map data that will follow the #
 
-BINARY_DATA is the raw binary data.  This involves zip compression.  
+BINARY_DATA is the raw binary data.  This involves zlib RFC1950 compression.  
 Check the code in map.cpp for details.
 
 
