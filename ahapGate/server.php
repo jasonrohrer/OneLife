@@ -702,7 +702,7 @@ function ag_checkSeqHash( $email, $concatData ) {
                                   $sequence_number . $concatData ) );
 
     if( $computedHashValue != $hash_value ) {
-        ag_log( "$action denied for bad hash value" );
+        ag_log( "$action denied for bad hash value (correct = $computedHashValue )" );
 
         echo "DENIED";
         die();
@@ -867,7 +867,7 @@ function ag_grant() {
             "WHERE email = '$email';";
 
 
-        $result = ts_queryDatabase( $query );
+        $result = ag_queryDatabase( $query );
         
         $numRows = mysqli_num_rows( $result );
         
@@ -880,11 +880,11 @@ function ag_grant() {
         // could be more than one with this email
         // return first only
         if( $numRows > 0 ) {
-            $ticket_id = ts_mysqli_result( $result, 0, "ticket_id" );
-            $email_opt_in = ts_mysqli_result( $result, 0, "email_opt_in" );
-            $tag = ts_mysqli_result( $result, 0, "tag" );
-            $order_number = ts_mysqli_result( $result, 0, "order_number" );
-            $name = ts_mysqli_result( $result, 0, "name" );
+            $ticket_id = ag_mysqli_result( $result, 0, "ticket_id" );
+            $email_opt_in = ag_mysqli_result( $result, 0, "email_opt_in" );
+            $tag = ag_mysqli_result( $result, 0, "tag" );
+            $order_number = ag_mysqli_result( $result, 0, "order_number" );
+            $name = ag_mysqli_result( $result, 0, "name" );
             }
         else {
             echo "DENIED";
@@ -903,7 +903,7 @@ function ag_grant() {
             "'$tag', '', '0', '0', '0', " .
             "'$email_opt_in' );";
 
-        ts_queryDatabase( $query );
+        ag_queryDatabase( $query );
 
         
         
@@ -922,7 +922,7 @@ function ag_grant() {
                 // we created
                 $query = "DELETE FROM $tableNamePrefixAHAPTicketServer".
                     "tickets WHERE email = '$email';";
-                ts_queryDatabase( $query );
+                ag_queryDatabase( $query );
 
                 echo "DENIED";
                 return;
