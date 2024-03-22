@@ -2,8 +2,8 @@
 
 
 
-global $lt_version;
-$lt_version = "1";
+global $ag_version;
+$ag_version = "1";
 
 
 
@@ -46,7 +46,7 @@ set_error_handler(function($severity, $message, $file, $line) {
 // page layout for web-based setup
 $setup_header = "
 <HTML>
-<HEAD><TITLE>Life Token Server Web-based setup</TITLE></HEAD>
+<HEAD><TITLE>AHAP Gate Server Web-based setup</TITLE></HEAD>
 <BODY BGCOLOR=#FFFFFF TEXT=#000000 LINK=#0000FF VLINK=#FF0000>
 
 <CENTER>
@@ -70,10 +70,10 @@ $setup_footer = "
 // we hand-filter all _REQUEST data with regexs before submitting it to the DB
 if( get_magic_quotes_gpc() ) {
     // force magic quotes to be removed
-    $_GET     = array_map( 'lt_stripslashes_deep', $_GET );
-    $_POST    = array_map( 'lt_stripslashes_deep', $_POST );
-    $_REQUEST = array_map( 'lt_stripslashes_deep', $_REQUEST );
-    $_COOKIE  = array_map( 'lt_stripslashes_deep', $_COOKIE );
+    $_GET     = array_map( 'ag_stripslashes_deep', $_GET );
+    $_POST    = array_map( 'ag_stripslashes_deep', $_POST );
+    $_REQUEST = array_map( 'ag_stripslashes_deep', $_REQUEST );
+    $_COOKIE  = array_map( 'ag_stripslashes_deep', $_COOKIE );
     }
     
 
@@ -83,7 +83,7 @@ if( get_magic_quotes_gpc() ) {
 // (To prevent it from being dangerous to surf other sites while you are
 // logged in as admin.)
 // Thanks Chris Cowan.
-function lt_checkReferrer() {
+function ag_checkReferrer() {
     global $fullServerURL;
     
     if( !isset($_SERVER['HTTP_REFERER']) ||
@@ -97,7 +97,7 @@ function lt_checkReferrer() {
 
 
 // all calls need to connect to DB, so do it once here
-lt_connectToDatabase();
+ag_connectToDatabase();
 
 // close connection down below (before function declarations)
 
@@ -112,9 +112,9 @@ lt_connectToDatabase();
 
 
 // grab POST/GET variables
-$action = lt_requestFilter( "action", "/[A-Z_]+/i" );
+$action = ag_requestFilter( "action", "/[A-Z_]+/i" );
 
-$debug = lt_requestFilter( "debug", "/[01]/" );
+$debug = ag_requestFilter( "debug", "/[01]/" );
 
 $remoteIP = "";
 if( isset( $_SERVER[ "REMOTE_ADDR" ] ) ) {
@@ -125,20 +125,26 @@ if( isset( $_SERVER[ "REMOTE_ADDR" ] ) ) {
 
 
 if( $action == "version" ) {
-    global $lt_version;
-    echo "$lt_version";
+    global $ag_version;
+    echo "$ag_version";
     }
 else if( $action == "get_sequence_number" ) {
-    lt_getSequenceNumber();
+    ag_getSequenceNumber();
     }
-else if( $action == "spend_token" ) {
-    lt_spendToken();
+else if( $action == "check_grant" ) {
+    ag_checkGrant();
     }
-else if( $action == "refund_token" ) {
-    lt_refundToken();
+else if( $action == "grant" ) {
+    ag_grant();
     }
-else if( $action == "get_token_count" ) {
-    lt_getTokenCount();
+else if( $action == "register_vote" ) {
+    ag_registerVote();
+    }
+else if( $action == "register_github" ) {
+    ag_registerGithub();
+    }
+else if( $action == "get_content_leader" ) {
+    ag_getContentLeader();
     }
 else if( $action == "show_log" ) {
     lt_showLog();
@@ -147,25 +153,19 @@ else if( $action == "clear_log" ) {
     lt_clearLog();
     }
 else if( $action == "show_data" ) {
-    lt_showData();
+    ag_showData();
     }
 else if( $action == "show_detail" ) {
-    lt_showDetail();
-    }
-else if( $action == "set_player_tokens" ) {
-    lt_setPlayerTokens();
-    }
-else if( $action == "restore_all_tokens" ) {
-    lt_restoreAllTokens();
+    ag_showDetail();
     }
 else if( $action == "logout" ) {
-    lt_logout();
+    ag_logout();
     }
-else if( $action == "lt_setup" ) {
+else if( $action == "ag_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
 
-    echo "<H2>Life Token Server Web-based Setup</H2>";
+    echo "<H2>AHAP Gate Server Web-based Setup</H2>";
 
     echo "Creating tables:<BR>";
 
@@ -174,7 +174,7 @@ else if( $action == "lt_setup" ) {
           <TABLE BORDER=0 CELLSPACING=0 CELLPADDING=5>
           <TR><TD BGCOLOR=#FFFFFF>";
 
-    lt_setupDatabase();
+    ag_setupDatabase();
 
     echo "</TD></TR></TABLE></TD></TR></TABLE></CENTER><BR><BR>";
     
@@ -191,12 +191,13 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
     
     // check if our tables exist
     $exists =
-        lt_doesTableExist( $tableNamePrefix . "users" ) &&
-        lt_doesTableExist( $tableNamePrefix . "log" );
+        ag_doesTableExist( $tableNamePrefix . "server_globals" ) &&
+        ag_doesTableExist( $tableNamePrefix . "users" ) &&
+        ag_doesTableExist( $tableNamePrefix . "log" );
     
         
     if( $exists  ) {
-        echo "Life Token Server database setup and ready";
+        echo "AHAP Gate Server database setup and ready";
         }
     else {
         // start the setup procedure
@@ -204,13 +205,13 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
         global $setup_header, $setup_footer;
         echo $setup_header; 
 
-        echo "<H2>Life Token Server Web-based Setup</H2>";
+        echo "<H2>AHAP Gate Server Web-based Setup</H2>";
     
-        echo "Life Token Server will walk you through a " .
+        echo "AHAP Gate Server will walk you through a " .
             "brief setup process.<BR><BR>";
         
         echo "Step 1: ".
-            "<A HREF=\"server.php?action=lt_setup\">".
+            "<A HREF=\"server.php?action=ag_setup\">".
             "create the database tables</A>";
 
         echo $setup_footer;
@@ -222,7 +223,7 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
 // done processing
 // only function declarations below
 
-lt_closeDatabase();
+ag_closeDatabase();
 
 
 
@@ -233,11 +234,11 @@ lt_closeDatabase();
 /**
  * Creates the database tables needed by seedBlogs.
  */
-function lt_setupDatabase() {
+function ag_setupDatabase() {
     global $tableNamePrefix;
 
     $tableName = $tableNamePrefix . "log";
-    if( ! lt_doesTableExist( $tableName ) ) {
+    if( ! ag_doesTableExist( $tableName ) ) {
 
         // this table contains general info about the server
         // use INNODB engine so table can be locked
@@ -246,7 +247,7 @@ function lt_setupDatabase() {
             "entry TEXT NOT NULL, ".
             "entry_time DATETIME NOT NULL );";
 
-        $result = lt_queryDatabase( $query );
+        $result = ag_queryDatabase( $query );
 
         echo "<B>$tableName</B> table created<BR>";
         }
@@ -254,10 +255,30 @@ function lt_setupDatabase() {
         echo "<B>$tableName</B> table already exists<BR>";
         }
 
+
     
+    $tableName = $tableNamePrefix . "server_globals";
+    if( ! ag_doesTableExist( $tableName ) ) {
+
+        $query =
+            "CREATE TABLE $tableName(" .
+            "content_leader_email VARCHAR(254) NOT NULL );";
+
+        $result = ag_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+
+        $query = "INSERT INTO $tableName ".
+            "SET content_leader_email = '';";
+        ag_queryDatabase( $query );
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
     
     $tableName = $tableNamePrefix . "users";
-    if( ! lt_doesTableExist( $tableName ) ) {
+    if( ! ag_doesTableExist( $tableName ) ) {
 
         $query =
             "CREATE TABLE $tableName(" .
@@ -265,10 +286,12 @@ function lt_setupDatabase() {
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
             "sequence_number INT NOT NULL," .
-            "token_count INT NOT NULL," .
-            "start_time DATETIME NOT NULL );";
+            "github_email VARCHAR(254) NOT NULL," .
+            "content_leader_email_vote VARCHAR(254) NOT NULL," .
+            "grant_time DATETIME NOT NULL, ".
+            "last_vote_time DATETIME NOT NULL );";
 
-        $result = lt_queryDatabase( $query );
+        $result = ag_queryDatabase( $query );
 
         echo "<B>$tableName</B> table created<BR>";
         }
@@ -279,8 +302,8 @@ function lt_setupDatabase() {
 
 
 
-function lt_showLog() {
-    lt_checkPassword( "show_log" );
+function ag_showLog() {
+    ag_checkPassword( "show_log" );
 
      echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -289,7 +312,7 @@ function lt_showLog() {
 
     $query = "SELECT * FROM $tableNamePrefix"."log ".
         "ORDER BY entry_time DESC;";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
@@ -304,8 +327,8 @@ function lt_showLog() {
         
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $time = lt_mysqli_result( $result, $i, "entry_time" );
-        $entry = htmlspecialchars( lt_mysqli_result( $result, $i, "entry" ) );
+        $time = ag_mysqli_result( $result, $i, "entry_time" );
+        $entry = htmlspecialchars( ag_mysqli_result( $result, $i, "entry" ) );
 
         echo "<b>$time</b>:<br>$entry<hr>\n";
         }
@@ -313,8 +336,8 @@ function lt_showLog() {
 
 
 
-function lt_clearLog() {
-    lt_checkPassword( "clear_log" );
+function ag_clearLog() {
+    ag_checkPassword( "clear_log" );
 
      echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
@@ -322,7 +345,7 @@ function lt_clearLog() {
     global $tableNamePrefix;
 
     $query = "DELETE FROM $tableNamePrefix"."log;";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
     
     if( $result ) {
         echo "Log cleared.";
@@ -351,10 +374,10 @@ function lt_clearLog() {
 
 
 
-function lt_logout() {
-    lt_checkReferrer();
+function ag_logout() {
+    ag_checkReferrer();
     
-    lt_clearPasswordCookie();
+    ag_clearPasswordCookie();
 
     echo "Logged out";
     }
@@ -362,12 +385,12 @@ function lt_logout() {
 
 
 
-function lt_showData( $checkPassword = true ) {
+function ag_showData( $checkPassword = true ) {
     // these are global so they work in embeded function call below
     global $skip, $search, $order_by;
 
     if( $checkPassword ) {
-        lt_checkPassword( "show_data" );
+        ag_checkPassword( "show_data" );
         }
     
     global $tableNamePrefix, $remoteIP;
@@ -383,13 +406,13 @@ function lt_showData( $checkPassword = true ) {
 
 
 
-    $skip = lt_requestFilter( "skip", "/[0-9]+/", 0 );
+    $skip = ag_requestFilter( "skip", "/[0-9]+/", 0 );
     
     global $usersPerPage;
     
-    $search = lt_requestFilter( "search", "/[A-Z0-9_@. \-]+/i" );
+    $search = ag_requestFilter( "search", "/[A-Z0-9_@. \-]+/i" );
 
-    $order_by = lt_requestFilter( "order_by", "/[A-Z_]+/i",
+    $order_by = ag_requestFilter( "order_by", "/[A-Z_]+/i",
                                   "id" );
     
     $keywordClause = "";
@@ -411,8 +434,8 @@ function lt_showData( $checkPassword = true ) {
     $query = "SELECT COUNT(*) FROM $tableNamePrefix".
         "users $keywordClause;";
 
-    $result = lt_queryDatabase( $query );
-    $totalRecords = lt_mysqli_result( $result, 0, 0 );
+    $result = ag_queryDatabase( $query );
+    $totalRecords = ag_mysqli_result( $result, 0, 0 );
 
 
     $orderDir = "DESC";
@@ -426,7 +449,7 @@ function lt_showData( $checkPassword = true ) {
         "FROM $tableNamePrefix"."users $keywordClause".
         "ORDER BY $order_by $orderDir ".
         "LIMIT $skip, $usersPerPage;";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
     
     $numRows = mysqli_num_rows( $result );
 
@@ -507,16 +530,23 @@ function lt_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
-    echo "<td>".orderLink( "token_count", "Token Count" )."</td>\n";
-    echo "<td>".orderLink( "start_time", "Start Time" )."</td>\n";
+    echo "<td>".orderLink( "github_email", "Github Email" )."</td>\n";
+    echo "<td>".orderLink( "content_leader_email_vote",
+                           "Chosen Leader" )."</td>\n";
+    echo "<td>".orderLink( "grant_time", "Grant Time" )."</td>\n";
+    echo "<td>".orderLink( "last_vote_time", "Last Vote Time" )."</td>\n";
     echo "</tr>\n";
 
 
     for( $i=0; $i<$numRows; $i++ ) {
-        $id = lt_mysqli_result( $result, $i, "id" );
-        $email = lt_mysqli_result( $result, $i, "email" );
-        $token_count = lt_mysqli_result( $result, $i, "token_count" );
-        $start_time = lt_mysqli_result( $result, $i, "start_time" );
+        $id = ag_mysqli_result( $result, $i, "id" );
+        $email = ag_mysqli_result( $result, $i, "email" );
+        $github_email = ag_mysqli_result( $result, $i, "github_email" );
+        $content_leader_email_vote =
+            ag_mysqli_result( $result, $i, "content_leader_email_vote" );
+        $grant_time = ag_mysqli_result( $result, $i, "grant_time" );
+        $last_vote_time = ag_mysqli_result( $result, $i, "last_vote_time" );
+
         
         $encodedEmail = urlencode( $email );
 
@@ -527,8 +557,10 @@ function lt_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
-        echo "<td>$token_count</td>\n";
-        echo "<td>$start_time</td>\n";
+        echo "<td>$github_email</td>\n";
+        echo "<td>$content_leader_email_vote</td>\n";
+        echo "<td>$grant_time</td>\n";
+        echo "<td>$last_vote_time</td>\n";
         echo "</tr>\n";
         }
     echo "</table>";
@@ -546,38 +578,12 @@ function lt_showData( $checkPassword = true ) {
 
 
 
-function lt_restoreAllTokens() {
+
+
+
+function ag_showDetail( $checkPassword = true ) {
     if( $checkPassword ) {
-        lt_checkPassword( "restore_all_tokens" );
-        }
-
-    $confirm = lt_requestFilter( "confirm", "/[01]/" );
-
-
-    if( $confirm != 1 ) {
-        
-        echo "You must check the Confirm box to restore tokens<BR><BR>";
-        lt_showData( false );
-        return;
-        }
-    
-    global $tableNamePrefix, $startingLifeTokens;
-    
-        
-    $query = "UPDATE $tableNamePrefix"."users ".
-        "SET token_count = $startingLifeTokens;";
-
-    lt_queryDatabase( $query );
-    
-    lt_showData( false );
-    }
-
-
-
-
-function lt_showDetail( $checkPassword = true ) {
-    if( $checkPassword ) {
-        lt_checkPassword( "show_detail" );
+        ag_checkPassword( "show_detail" );
         }
     
     echo "[<a href=\"server.php?action=show_data" .
@@ -586,78 +592,48 @@ function lt_showDetail( $checkPassword = true ) {
     global $tableNamePrefix;
     
 
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, token_count, start_time ".
+    $query = "SELECT id, github_email, content_leader_email_vote ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
 
-    $id = lt_mysqli_result( $result, 0, "id" );
-    $token_count = lt_mysqli_result( $result, 0, "token_count" );
-    $start_time =
-        lt_mysqli_result( $result, 0, "start_time" );
+    $id = ag_mysqli_result( $result, 0, "id" );
+    $github_email = ag_mysqli_result( $result, 0, "github_email" );
+    $content_leader_email_vote =
+        ag_mysqli_result( $result, 0, "content_leader_email_vote" );
     
-    
-
     echo "<center><table border=0><tr><td>";
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Token Count:</b> ";
-    ?>
-    <FORM ACTION="server.php" METHOD="post">
-    <INPUT TYPE="hidden" NAME="action" VALUE="set_player_tokens">
-    <INPUT TYPE="hidden" NAME="email" VALUE="<?php echo $email;?>">
-    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="token_count"
-             VALUE="<?php echo $token_count;?>">
-    <INPUT TYPE="Submit" VALUE="Set"> <br><br>
-         <?php
-    echo "<b>Start Time:</b> $start_time<br><br>";
+    echo "<b>Github Email:</b> $github_email<br><br>";
+    echo "<b>Content Leader:</b> $content_leader_email_vote<br><br>";
     echo "<br><br>";
     }
 
 
 
-function lt_setPlayerTokens() {
-    lt_checkPassword( "setPlayerToken" );
 
+
+
+
+function ag_getSequenceNumber() {
     global $tableNamePrefix;
     
 
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
-    $token_count = lt_requestFilter( "token_count", "/[0-9]+/i", 0 );
-
-    
-    $query = "UPDATE $tableNamePrefix"."users ".
-        "SET token_count = $token_count WHERE email = '$email';";
-    $result = lt_queryDatabase( $query );
-
-    echo "Updated<br>";
-    lt_showDetail( false );
-    }
-
-
-
-
-
-
-
-function lt_getSequenceNumber() {
-    global $tableNamePrefix;
-    
-
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
     if( $email == "" ) {
-        lt_log( "getSequenceNumber denied for bad email" );
+        ag_log( "getSequenceNumber denied for bad email" );
 
         echo "DENIED";
         return;
         }
     
     
-    $seq = lt_getSequenceNumberForEmail( $email );
+    $seq = ag_getSequenceNumberForEmail( $email );
 
     echo "$seq\n"."OK";
     }
@@ -666,12 +642,12 @@ function lt_getSequenceNumber() {
 
 // assumes already-filtered, valid email
 // returns 0 if not found
-function lt_getSequenceNumberForEmail( $inEmail ) {
+function ag_getSequenceNumberForEmail( $inEmail ) {
     global $tableNamePrefix;
     
     $query = "SELECT sequence_number FROM $tableNamePrefix"."users ".
         "WHERE email = '$inEmail';";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
@@ -679,54 +655,54 @@ function lt_getSequenceNumberForEmail( $inEmail ) {
         return 0;
         }
     else {
-        return lt_mysqli_result( $result, 0, "sequence_number" );
+        return ag_mysqli_result( $result, 0, "sequence_number" );
         }
     }
 
 
 
-function lt_checkSeqHash( $email ) {
+// $concatData will be concatonated with sequence number when
+// computing hash, can be ""
+//
+// If no record exists for email, 0 is returned
+// If record exists for email, a value > 0 will be returned
+function ag_checkSeqHash( $email, $concatData ) {
     global $sharedGameServerSecret;
 
-    // and there's no way to prevent a server from acting on a stale
-    // sequence number if calls for the same email are interleaved
-
-    // however, we only want to support a given email address playing on
-    // one server at a time, so it's okay if some parallel lives are
-    // not logged correctly
 
     global $action;
 
 
-    $sequence_number = lt_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
+    $sequence_number = ag_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
-    $hash_value = lt_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
+    $hash_value = ag_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
 
     $hash_value = strtoupper( $hash_value );
 
 
     if( $email == "" ) {
 
-        lt_log( "$action token denied for bad email" );
+        ag_log( "$action token denied for bad email" );
         
         echo "DENIED";
         die();
         }
     
-    $trueSeq = lt_getSequenceNumberForEmail( $email );
+    $trueSeq = ag_getSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        lt_log( "$action denied for stale sequence number" );
+        ag_log( "$action denied for stale sequence number" );
 
         echo "DENIED";
         die();
         }
 
     $computedHashValue =
-        strtoupper( lt_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
+        strtoupper( ag_hmac_sha1( $sharedGameServerSecret,
+                                  $sequence_number . $concatData ) );
 
     if( $computedHashValue != $hash_value ) {
-        // lt_log( "curse denied for bad hash value" );
+        ag_log( "$action denied for bad hash value" );
 
         echo "DENIED";
         die();
@@ -738,92 +714,277 @@ function lt_checkSeqHash( $email ) {
 
 
 
-function lt_spendToken() {
-    global $tableNamePrefix;
 
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+// copied from steamGate
+//
+// Checks ownership of $steamAppID (from settings.php)
+// returns the steamID of the true owner if they have access to it (may be
+// ID of family member)
+// returns 0 if they don't own it at all.
+function ag_doesSteamUserOwnApp( $inSteamID ) {
+    global $steamAppID, $steamWebAPIKey;
+    
+    $url = "https://partner.steam-api.com/ISteamUser/CheckAppOwnership/V0001".
+        "?format=xml".
+        "&key=$steamWebAPIKey".
+        "&steamid=$inSteamID".
+        "&appid=$steamAppID";
+
+    $result = file_get_contents( $url );
 
     
-    $trueSeq = lt_checkSeqHash( $email );
-    
-    
-    // no locking is done here, because action is asynchronous anyway
+    $matched = preg_match( "#<ownsapp>(\w+)</ownsapp>#",
+                           $result, $matches );
 
-    if( $trueSeq == 0 ) {
-        global $startingLifeTokens;
-        
-        // no record exists, add one
-        $query = "INSERT INTO $tableNamePrefix". "users SET " .
-            "email = '$email', ".
-            "sequence_number = 1, ".
-            "token_count = $startingLifeTokens - 1, ".
-            "start_time = CURRENT_TIMESTAMP ".
-            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1, ".
-            "token_count = token_count - 1;";
+    if( $matched && $matches[1] == "true" ) {
+
+        // make sure we return the true owner
+        $matchedB = preg_match( "#<ownersteamid>(\d+)</ownersteamid>#",
+                                $result, $matchesB );
+
+        if( $matchedB ) {
+            return $matchesB[1];
+            }
+        else {
+            return 0;
+            }
         }
     else {
-        // are there any left
-        list( $count, $secondsLeft ) = lt_getTokenCountEmail( $email );
-
-        if( $count <= 0 ) {
-            echo "DENIED";
-            return;
-            }
-
-        global $lifeTokenCap;
-
-        $timeUpdateClause = "";
-        
-        if( $count == $lifeTokenCap ) {
-            // we are just now spending down below cap
-            // time starts ticking again from here
-            $timeUpdateClause = " start_time = CURRENT_TIMESTAMP, ";
-            }
-        
-        // update the existing one
-        // leave start time alone, because it's absolute
-        $query = "UPDATE $tableNamePrefix"."users SET " .
-            // our values might be stale, increment values in table
-            "sequence_number = sequence_number + 1, ".
-            $timeUpdateClause .
-            "token_count = token_count - 1 " .
-            "WHERE email = '$email'; ";
-        
+        return 0;
         }
+    }
 
-    lt_queryDatabase( $query );
+
+
+// copied from steamGate
+//
+// Uses GrantPackage API to grant
+// returns steamID of app owner on success, 0 on failure
+function ag_grantPackage( $inSteamID ) {
+    global $steamAppID, $steamWebAPIKey, $packageID, $remoteIP;
+
+    /*
+      $url = "https://partner.steam-api.com/ISteamUser/GrantPackage/v1".
+      "?format=xml".
+      "&key=$steamWebAPIKey".
+      "&steamid=$inSteamID".
+      "&packageid=$packageID".
+      "&ipaddress=$remoteIP";
+      
+      $result = file_get_contents( $url );
+    */
+
+
+    $clientIP = $remoteIP;
+
+    // Valve requiers ipv4 address in GrantPackage
+
+    if( ! filter_var( $clientIP, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+        global $defaultClientIP;
+
+        ag_log( "Got non-ipv4 client address $clientIP, ".
+                "replacing with default $defaultClientIP" );
+        $clientIP = $defaultClientIP;
+        }
     
-    echo "OK";
+    
+    // GrantPackage requires POST
+
+    $postData = http_build_query(
+        array(
+            'format' => 'xml',
+            'key' => $steamWebAPIKey,
+            'steamid' => $inSteamID,
+            'packageid' => $packageID,
+            'ipaddress' => $clientIP ) );
+
+    $opts = array(
+        'http' =>
+        array(
+            'method'  => 'POST',
+            'header'  => 'Content-type: application/x-www-form-urlencoded',
+            'content' => $postData ) );
+
+    $context  = stream_context_create( $opts );
+
+    $result = file_get_contents(
+        'https://partner.steam-api.com/ISteamUser/GrantPackage/v1',
+        false, $context );
+
+    // not sure about format of results from GrantPackage
+
+    
+    // instead, just turn around immediately and check for ownership
+    $ownsAppNow = ag_doesSteamUserOwnApp( $inSteamID );
+
+    if( $ownsAppNow == 0 ) {
+        // granting failed
+        echo "Unlocking attempt response:<br>".
+            "<pre>$result</pre><br><pre>";
+        echo $http_response_header[0];
+        echo "</pre><br>";
+
+        $header = $http_response_header[0];
+        ag_log( "GrantPackage failed.  ".
+                "POST data: '$postData'  ".
+                "Result header:  '$header'  ".
+                "Result body:  '$result'" );
+        }
+    else {
+        ag_log( "GrantPackage success for $inSteamID from ".
+                "IP $clientIP ($remoteIP)" );
+        }
+    
+    return $ownsAppNow;
     }
 
 
 
 
-function lt_refundToken() {
+
+
+function ag_grant() {
     global $tableNamePrefix;
 
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
+
+    // concat email with sequence number, to prevent replaying grant
+    // action with seq of 0 for different emails
+    $trueSeq = ag_checkSeqHash( $email, $email );
     
-    $trueSeq = lt_checkSeqHash( $email );
+    
+    if( $trueSeq == 0 ) {
+        // no record exists, grant can go through
+
+
+        
+        // check of OHOL ticket exists
+        global $tableNamePrefixOHOLTicketServer;
+        $query = "SELECT ticket_id, name, email_opt_in, tag, order_number ".
+            "FROM $tableNamePrefixOHOLTicketServer"."tickets " .
+            "WHERE email = '$email';";
+
+
+        $result = ts_queryDatabase( $query );
+        
+        $numRows = mysqli_num_rows( $result );
+        
+        $ticket_id = "";
+        $email_opt_in = 0;
+        $tag = "";
+        $order_number = "";
+        $name = "";
+        
+        // could be more than one with this email
+        // return first only
+        if( $numRows > 0 ) {
+            $ticket_id = ts_mysqli_result( $result, 0, "ticket_id" );
+            $email_opt_in = ts_mysqli_result( $result, 0, "email_opt_in" );
+            $tag = ts_mysqli_result( $result, 0, "tag" );
+            $order_number = ts_mysqli_result( $result, 0, "order_number" );
+            $name = ts_mysqli_result( $result, 0, "name" );
+            }
+        else {
+            echo "DENIED";
+            return;
+            }
+        
+
+        
+        // create AHAP ticket
+        global $tableNamePrefixAHAPTicketServer;
+        
+        $query = "INSERT INTO $tableNamePrefixAHAPTicketServer". "tickets ".
+            "VALUES ( " .
+            "'$ticket_id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
+            "'$name', '$email', '$order_number', ".
+            "'$tag', '', '0', '0', '0', " .
+            "'$email_opt_in' );";
+
+        ts_queryDatabase( $query );
+
+        
+        
+        if( preg_match( "/@steamgames\.com/", $email ) ) {
+            $steamID = preg_replace( '/@steamgames\.com/', '', $email, 1 );
+
+            // grant package on Steam
+
+            $ownerID = ag_grantPackage( $steamID );
+
+
+            if( $ownerID == 0 ) {
+                // failed to grant on Steam
+
+                // clean up AHAP ticket server entry that
+                // we created
+                $query = "DELETE FROM $tableNamePrefixAHAPTicketServer".
+                    "tickets WHERE email = '$email';";
+                ts_queryDatabase( $query );
+
+                echo "DENIED";
+                return;
+                }
+            }
+        
+
+
+        
+
+        
+        // finally, create a record for this user here
+        $query = "INSERT INTO $tableNamePrefix". "users SET " .
+            "email = '$email', ".
+            "github_email = '$email', ".
+            "content_leader_email_vote = '', ".
+            "sequence_number = 1, ".
+            "grant_time = CURRENT_TIMESTAMP ".
+            "last_vote_time = CURRENT_TIMESTAMP ".
+            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
+        ag_queryDatabase( $query );
+
+        echo "OK";
+        return;
+        }
+    else {
+        // record already exists for this email, can't re-grant
+        echo "DENIED";
+        return;
+        }
+    }
+
+
+
+
+function ag_registerVote() {
+    global $tableNamePrefix;
+
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $leader_email = ag_requestFilter( "leader_email",
+                                      "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    // include both emails in hash check, so we can't replay voting
+    // for a given leader, with a given sequence number for a different email
+    $trueSeq = ag_checkSeqHash( $email, $email . $leader_email );
     
     
     if( $trueSeq == 0 ) {
 
-        // no record of this player, can't refund
+        // no record of this player, can't vote
         echo "DENIED";
         return;
         }
     
     // update the existing one
-    // leave start time alone, because it's absolute
     $query = "UPDATE $tableNamePrefix"."users SET " .
-        // our values might be stale, increment values in table
         "sequence_number = sequence_number + 1, ".
-        "token_count = token_count + 1 " .
+        "content_leader_email_vote = '$leader_email', ".
+        "last_vote_time = CURRENT_TIMESTAMP ".
         "WHERE email = '$email'; ";
     
-    lt_queryDatabase( $query );
+    ag_queryDatabase( $query );
     
     echo "OK";
     }
@@ -831,81 +992,128 @@ function lt_refundToken() {
 
 
 
-// email already filtered
-function lt_getTokenCountEmail( $email ) {
-    global $tableNamePrefix, $secondsPerTokenEarned, $lifeTokenCap,
-        $startingLifeTokens;
+// only works for emails that have records already, as created by the
+// grant action
+//
+// returns valid email, on success
+// prints DENIED and dies on failure
+function ag_checkTicketServerSeqHash() {
+    global $action;
 
-    $query =
-        "SELECT token_count, ".
-        "TIMESTAMPDIFF( SECOND, start_time, CURRENT_TIMESTAMP) as sec_passed ".
-        "FROM $tableNamePrefix"."users ".
-        "WHERE email = '$email';";
-    $result = lt_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
     
-    if( $numRows == 0 ) {
-        return array( $startingLifeTokens, -1 );
+    if( $email == "" ) {
+        ag_log( "$action token denied for bad email" );
+        
+        echo "DENIED";
+        die();
         }
-
-    $secondsUntilToken = -1;
     
-    
-    $token_count = lt_mysqli_result( $result, 0, "token_count" );
+    $sequence_number = ag_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
-    $sec_passed = lt_mysqli_result( $result, 0, "sec_passed" );
+    $trueSeq = ag_getSequenceNumberForEmail( $email );
 
-    $tokensEarned = floor( $sec_passed / $secondsPerTokenEarned );
-
-    if( $token_count < $lifeTokenCap &&
-        $tokensEarned > 0 ) {
-        $token_count += $tokensEarned;
-
-        if( $token_count > $lifeTokenCap ) {
-            $token_count = $lifeTokenCap;
-            }
-        }
-
-    $query =
-        "UPDATE $tableNamePrefix"."users ".
-        "SET token_count = $token_count, ".
-        "start_time = DATE_ADD( start_time, ".
-        "  INTERVAL $tokensEarned * $secondsPerTokenEarned SECOND ) ".
-        "WHERE email = '$email';";
-    $result = lt_queryDatabase( $query );
-    
-
-    if( $token_count < $lifeTokenCap ) {
-        $sec_passed -= $tokensEarned * $secondsPerTokenEarned;
-
-        $secondsUntilToken = $secondsPerTokenEarned - $sec_passed;
+    if( $trueSeq == 0 ) {
+        ag_log( "$action token denied because no record exists for email" );
+        
+        echo "DENIED";
+        die();
         }
     
     
-    return array( $token_count, $secondsUntilToken );
+    if( $trueSeq > $sequence_number ) {
+        ag_log( "$action denied for stale sequence number" );
+
+        echo "DENIED";
+        die();
+        }
+    
+    
+    // we check this sequence number against the ticket server API
+    global $ahapTicketServerURL;
+    
+    
+
+    $hash_value = ag_requestFilter( "hash_value", "/[A-F0-9]+/i", "" );
+
+    $hash_value = strtoupper( $hash_value );
+
+    $encodedEmail = urlencode( $email );
+
+    
+    $result = trim( file_get_contents(
+                        "$ahapTicketServerURL".
+                        "?action=check_ticket_hash".
+                        "&email=$encodedEmail".
+                        "&hash_value=$hash_value".
+                        "&string_to_hash=$sequence_number" ) );
+
+    if( $result != "VALID" ) {
+        ag_log( "$action denied for bad hash value" );
+
+        echo "DENIED";
+        die();
+        }
+
+    return $email;
+    }
+
+    
+
+
+function ag_registerGithub() {
+    global $tableNamePrefix;
+
+    $github_email = ag_requestFilter( "github_email",
+                                      "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    // will die on failure
+    $email = ag_checkTicketServerSeqHash();
+    
+    
+    $query = "UPDATE $tableNamePrefix"."users SET " .
+        "sequence_number = sequence_number + 1, ".
+        "github_email = '$github_email' ".
+        "WHERE email = '$email'; ";
+    
+    ag_queryDatabase( $query );
+    
+    echo "OK";
     }
 
 
-function lt_getTokenCount() {
-    
-    $email = lt_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
-    
-    if( $email == "" ) {        
+function ag_getContentLeader() {
+    global $tableNamePrefix;
+
+    // will die on failure
+    $email = ag_checkTicketServerSeqHash();
+
+
+    // got here, hash check succeeded  
+
+    $query = "SELECT content_leader_email " .
+        "FROM$tableNamePrefix"."server_globals ;";
+
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
         echo "DENIED";
         return;
         }
+    $leader = ag_mysqli_result( $result, 0, "content_leader_email" );
 
-    list( $tokenCount, $secondsLeft ) = lt_getTokenCountEmail( $email );
-
-    global $secondsPerTokenEarned, $lifeTokenCap;
+    // update sequence number
+    $query = "UPDATE $tableNamePrefix"."users SET " .
+        "sequence_number = sequence_number + 1 ".
+        "WHERE email = '$email'; ";
     
-    echo "$tokenCount\n".
-        "$secondsPerTokenEarned\n".
-        "$lifeTokenCap\n".
-        "$secondsLeft\n".
-        "OK";
+    ag_queryDatabase( $query );
+    
+    echo "$leader\n";
+    echo "OK";
     }
 
 
@@ -914,7 +1122,7 @@ function lt_getTokenCount() {
 
 
 
-$lt_mysqlLink;
+$ag_mysqlLink;
 
 
 // general-purpose functions down here, many copied from seedBlogs
@@ -922,20 +1130,20 @@ $lt_mysqlLink;
 /**
  * Connects to the database according to the database variables.
  */  
-function lt_connectToDatabase() {
+function ag_connectToDatabase() {
     global $databaseServer,
         $databaseUsername, $databasePassword, $databaseName,
-        $lt_mysqlLink;
+        $ag_mysqlLink;
     
     
-    $lt_mysqlLink =
+    $ag_mysqlLink =
         mysqli_connect( $databaseServer, $databaseUsername, $databasePassword )
-        or lt_operationError( "Could not connect to database server: " .
-                              mysqli_error( $lt_mysqlLink ) );
+        or ag_operationError( "Could not connect to database server: " .
+                              mysqli_error( $ag_mysqlLink ) );
     
-    mysqli_select_db( $lt_mysqlLink, $databaseName )
-        or lt_operationError( "Could not select $databaseName database: " .
-                              mysqli_error( $lt_mysqlLink ) );
+    mysqli_select_db( $ag_mysqlLink, $databaseName )
+        or ag_operationError( "Could not select $databaseName database: " .
+                              mysqli_error( $ag_mysqlLink ) );
     }
 
 
@@ -943,78 +1151,12 @@ function lt_connectToDatabase() {
 /**
  * Closes the database connection.
  */
-function lt_closeDatabase() {
-    global $lt_mysqlLink;
+function ag_closeDatabase() {
+    global $ag_mysqlLink;
     
-    mysqli_close( $lt_mysqlLink );
+    mysqli_close( $ag_mysqlLink );
     }
 
-
-/**
- * Returns human-readable summary of a timespan.
- * Examples:  10.5 hours
- *            34 minutes
- *            45 seconds
- */
-function lt_secondsToTimeSummary( $inSeconds ) {
-    if( $inSeconds < 120 ) {
-        if( $inSeconds == 1 ) {
-            return "$inSeconds second";
-            }
-        return "$inSeconds seconds";
-        }
-    else if( $inSeconds < 3600 ) {
-        $min = number_format( $inSeconds / 60, 0 );
-        return "$min minutes";
-        }
-    else {
-        $hours = number_format( $inSeconds / 3600, 1 );
-        return "$hours hours";
-        }
-    }
-
-
-/**
- * Returns human-readable summary of a distance back in time.
- * Examples:  10 hours
- *            34 minutes
- *            45 seconds
- *            19 days
- *            3 months
- *            2.5 years
- */
-function lt_secondsToAgeSummary( $inSeconds ) {
-    if( $inSeconds < 120 ) {
-        if( $inSeconds == 1 ) {
-            return "$inSeconds second";
-            }
-        return "$inSeconds seconds";
-        }
-    else if( $inSeconds < 3600 * 2 ) {
-        $min = number_format( $inSeconds / 60, 0 );
-        return "$min minutes";
-        }
-    else if( $inSeconds < 24 * 3600 * 2 ) {
-        $hours = number_format( $inSeconds / 3600, 0 );
-        return "$hours hours";
-        }
-    else if( $inSeconds < 24 * 3600 * 60 ) {
-        $days = number_format( $inSeconds / ( 3600 * 24 ), 0 );
-        return "$days days";
-        }
-    else if( $inSeconds < 24 * 3600 * 365 * 2 ) {
-        // average number of days per month
-        // based on 400 year calendar cycle
-        // we skip a leap year every 100 years unless the year is divisible by 4
-        $months = number_format( $inSeconds / ( 3600 * 24 * 30.436875 ), 0 );
-        return "$months months";
-        }
-    else {
-        // same logic behind computing average length of a year
-        $years = number_format( $inSeconds / ( 3600 * 24 * 365.2425 ), 1 );
-        return "$years years";
-        }
-    }
 
 
 
@@ -1025,19 +1167,19 @@ function lt_secondsToAgeSummary( $inSeconds ) {
  *
  * @return a result handle that can be passed to other mysql functions.
  */
-function lt_queryDatabase( $inQueryString ) {
-    global $lt_mysqlLink;
+function ag_queryDatabase( $inQueryString ) {
+    global $ag_mysqlLink;
     
-    if( gettype( $lt_mysqlLink ) != "resource" ) {
+    if( gettype( $ag_mysqlLink ) != "resource" ) {
         // not a valid mysql link?
-        lt_connectToDatabase();
+        ag_connectToDatabase();
         }
     
-    $result = mysqli_query( $lt_mysqlLink, $inQueryString );
+    $result = mysqli_query( $ag_mysqlLink, $inQueryString );
     
     if( $result == FALSE ) {
 
-        $errorNumber = mysqli_errno( $lt_mysqlLink );
+        $errorNumber = mysqli_errno( $ag_mysqlLink );
         
         // server lost or gone?
         if( $errorNumber == 2006 ||
@@ -1049,19 +1191,19 @@ function lt_queryDatabase( $inQueryString ) {
             $errorNumber == 1046 ) {
 
             // connect again?
-            lt_closeDatabase();
-            lt_connectToDatabase();
+            ag_closeDatabase();
+            ag_connectToDatabase();
 
-            $result = mysqli_query( $lt_mysqlLink, $inQueryString )
-                or lt_operationError(
+            $result = mysqli_query( $ag_mysqlLink, $inQueryString )
+                or ag_operationError(
                     "Database query failed:<BR>$inQueryString<BR><BR>" .
-                    mysqli_error( $lt_mysqlLink ) );
+                    mysqli_error( $ag_mysqlLink ) );
             }
         else {
             // some other error (we're still connected, so we can
             // add log messages to database
-            lt_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
-                           mysqli_error( $lt_mysqlLink ) );
+            ag_fatalError( "Database query failed:<BR>$inQueryString<BR><BR>" .
+                           mysqli_error( $ag_mysqlLink ) );
             }
         }
 
@@ -1073,7 +1215,7 @@ function lt_queryDatabase( $inQueryString ) {
 /**
  * Replacement for the old mysql_result function.
  */
-function lt_mysqli_result( $result, $number, $field=0 ) {
+function ag_mysqli_result( $result, $number, $field=0 ) {
     mysqli_data_seek( $result, $number );
     $row = mysqli_fetch_array( $result );
     return $row[ $field ];
@@ -1088,19 +1230,19 @@ function lt_mysqli_result( $result, $number, $field=0 ) {
  *
  * @return 1 if the table exists, or 0 if not.
  */
-function lt_doesTableExist( $inTableName ) {
+function ag_doesTableExist( $inTableName ) {
     // check if our table exists
     $tableExists = 0;
     
     $query = "SHOW TABLES";
-    $result = lt_queryDatabase( $query );
+    $result = ag_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
 
     for( $i=0; $i<$numRows && ! $tableExists; $i++ ) {
 
-        $tableName = lt_mysqli_result( $result, $i, 0 );
+        $tableName = ag_mysqli_result( $result, $i, 0 );
         
         if( $tableName == $inTableName ) {
             $tableExists = 1;
@@ -1111,15 +1253,15 @@ function lt_doesTableExist( $inTableName ) {
 
 
 
-function lt_log( $message ) {
-    global $enableLog, $tableNamePrefix, $lt_mysqlLink;
+function ag_log( $message ) {
+    global $enableLog, $tableNamePrefix, $ag_mysqlLink;
 
     if( $enableLog ) {
-        $slashedMessage = mysqli_real_escape_string( $lt_mysqlLink, $message );
+        $slashedMessage = mysqli_real_escape_string( $ag_mysqlLink, $message );
     
         $query = "INSERT INTO $tableNamePrefix"."log VALUES ( " .
             "'$slashedMessage', CURRENT_TIMESTAMP );";
-        $result = lt_queryDatabase( $query );
+        $result = ag_queryDatabase( $query );
         }
     }
 
@@ -1130,7 +1272,7 @@ function lt_log( $message ) {
  *
  * @param $message the error message to display on the error page.
  */
-function lt_fatalError( $message ) {
+function ag_fatalError( $message ) {
     //global $errorMessage;
 
     // set the variable that is displayed inside error.php
@@ -1143,7 +1285,7 @@ function lt_fatalError( $message ) {
     
     echo( $logMessage );
 
-    lt_log( $logMessage );
+    ag_log( $logMessage );
     
     die();
     }
@@ -1155,7 +1297,7 @@ function lt_fatalError( $message ) {
  *
  * @param $message the error message to display.
  */
-function lt_operationError( $message ) {
+function ag_operationError( $message ) {
     
     // for now, just print error message
     echo( "ERROR:  $message" );
@@ -1172,10 +1314,10 @@ function lt_operationError( $message ) {
  *
  * @return the value or array with slashes added.
  */
-function lt_addslashes_deep( $inValue ) {
+function ag_addslashes_deep( $inValue ) {
     return
         ( is_array( $inValue )
-          ? array_map( 'lt_addslashes_deep', $inValue )
+          ? array_map( 'ag_addslashes_deep', $inValue )
           : addslashes( $inValue ) );
     }
 
@@ -1189,10 +1331,10 @@ function lt_addslashes_deep( $inValue ) {
  *
  * @return the value or array with slashes removed.
  */
-function lt_stripslashes_deep( $inValue ) {
+function ag_stripslashes_deep( $inValue ) {
     return
         ( is_array( $inValue )
-          ? array_map( 'lt_stripslashes_deep', $inValue )
+          ? array_map( 'ag_stripslashes_deep', $inValue )
           : stripslashes( $inValue ) );
     }
 
@@ -1203,12 +1345,12 @@ function lt_stripslashes_deep( $inValue ) {
  *
  * Returns "" (or specified default value) if there is no match.
  */
-function lt_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
+function ag_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
     if( ! isset( $_REQUEST[ $inRequestVariable ] ) ) {
         return $inDefault;
         }
 
-    return lt_filter( $_REQUEST[ $inRequestVariable ], $inRegex, $inDefault );
+    return ag_filter( $_REQUEST[ $inRequestVariable ], $inRegex, $inDefault );
     }
 
 
@@ -1217,7 +1359,7 @@ function lt_requestFilter( $inRequestVariable, $inRegex, $inDefault = "" ) {
  *
  * Returns "" (or specified default value) if there is no match.
  */
-function lt_filter( $inValue, $inRegex, $inDefault = "" ) {
+function ag_filter( $inValue, $inRegex, $inDefault = "" ) {
     
     $numMatches = preg_match( $inRegex,
                               $inValue, $matches );
@@ -1239,7 +1381,7 @@ function lt_filter( $inValue, $inRegex, $inDefault = "" ) {
 // This avoids storing the password itself in the cookie, so a stale cookie
 // (cached by a browser) can't be used to figure out the password and log in
 // later. 
-function lt_checkPassword( $inFunctionName ) {
+function ag_checkPassword( $inFunctionName ) {
     $password = "";
     $password_hash = "";
 
@@ -1259,7 +1401,7 @@ function lt_checkPassword( $inFunctionName ) {
         // already hashed client-side on login form
         // hash again, because hash client sends us is not stored in
         // our settings file
-        $password = lt_hmac_sha1( $passwordHashingPepper,
+        $password = ag_hmac_sha1( $passwordHashingPepper,
                                   $_REQUEST[ "passwordHMAC" ] );
         
         
@@ -1270,7 +1412,7 @@ function lt_checkPassword( $inFunctionName ) {
         $password_hash = $newSalt . "_" . $newHash;
         }
     else if( isset( $_COOKIE[ $cookieName ] ) ) {
-        lt_checkReferrer();
+        ag_checkReferrer();
         $password_hash = $_COOKIE[ $cookieName ];
         
         // check that it's a good hash
@@ -1314,13 +1456,13 @@ function lt_checkPassword( $inFunctionName ) {
             
             echo "Incorrect password.";
 
-            lt_log( "Failed $inFunctionName access with password:  ".
+            ag_log( "Failed $inFunctionName access with password:  ".
                     "$password" );
             }
         else {
             echo "Session expired.";
                 
-            lt_log( "Failed $inFunctionName access with bad cookie:  ".
+            ag_log( "Failed $inFunctionName access with bad cookie:  ".
                     "$password_hash" );
             }
         
@@ -1345,7 +1487,7 @@ function lt_checkPassword( $inFunctionName ) {
                 }
             
             
-            $nonce = lt_hmac_sha1( $passwordHashingPepper, uniqid() );
+            $nonce = ag_hmac_sha1( $passwordHashingPepper, uniqid() );
             
             $callURL =
                 "https://api2.yubico.com/wsapi/2.0/verify?id=$yubicoClientID".
@@ -1412,7 +1554,7 @@ function lt_checkPassword( $inFunctionName ) {
 
 
 
-function lt_clearPasswordCookie() {
+function ag_clearPasswordCookie() {
     global $tableNamePrefix;
 
     $cookieName = $tableNamePrefix . "cookie_password_hash";
@@ -1431,13 +1573,13 @@ function lt_clearPasswordCookie() {
 
 
 
-function lt_hmac_sha1( $inKey, $inData ) {
+function ag_hmac_sha1( $inKey, $inData ) {
     return hash_hmac( "sha1", 
                       $inData, $inKey );
     } 
 
  
-function lt_hmac_sha1_raw( $inKey, $inData ) {
+function ag_hmac_sha1_raw( $inKey, $inData ) {
     return hash_hmac( "sha1", 
                       $inData, $inKey, true );
     } 
@@ -1448,7 +1590,7 @@ function lt_hmac_sha1_raw( $inKey, $inData ) {
  
  
 // decodes a ASCII hex string into an array of 0s and 1s 
-function lt_hexDecodeToBitString( $inHexString ) {
+function ag_hexDecodeToBitString( $inHexString ) {
     $digits = str_split( $inHexString );
 
     $bitString = "";

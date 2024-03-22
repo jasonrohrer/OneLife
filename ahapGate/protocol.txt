@@ -1,3 +1,7 @@
+
+
+FIXME:  do we need this call?
+        grant action is going to create ticket on AHAP-specific ticket server
 == Called by either game client or game server:
 
 server.php

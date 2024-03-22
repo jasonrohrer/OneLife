@@ -3,19 +3,50 @@
 // Basic settings
 // You must set these for the server to work
 
+// note that these MUST be the same credentials for accessing the
+// AHAP and OHOL ticketServer, which must be running on the same host
+// AHAP Gate needs access to both ticketServer databases to function
 $databaseServer = "localhost";
 $databaseUsername = "testUser";
 $databasePassword = "testPassword";
 $databaseName = "test";
 
+$tableNamePrefixOHOLTicketServer = "ticketServer_";
+$tableNamePrefixAHAPTicketServer = "ahapTicketServer_";
+
+
 // The URL of to the server.php script.
-$fullServerURL = "http://localhost/jcr13/lifeTokenServer/server.php";
+$fullServerURL = "http://localhost/jcr13/ahapGate/server.php";
+
+
+// The URL of to the server.php script.
+$ahapTicketServerURL = "http://localhost/jcr13/ahapTicketServer/server.php";
 
 
 
 
 // The URL of the main, public-face website
 $mainSiteURL = "http://localhost/jcr13/";
+
+
+
+// key to prove our publisher identity to Steam API
+// this key must be kept secret.
+$steamWebAPIKey = "REPLACE_ME";
+
+
+// the app ID that we check ownership for
+// example ID is for The Castle Doctrine
+$steamAppID = "2787060";
+
+
+// the package ID for GrantPackage calls
+$packageID = "995867";
+
+
+// client IP to supply to Valve if client IP unknown (or ipv6 only)
+$defaultClientIP = "72.14.184.149";
+
 
 
 
@@ -27,17 +58,12 @@ $mainSiteURL = "http://localhost/jcr13/";
 
 // Adjust these to change the way the server  works.
 
-$startingLifeTokens = 24;
-
-$lifeTokenCap = 12;
-
-$secondsPerTokenEarned = 3600;
 
 
-// secret shared with trusted game servers that allows them to post
-// game stats
+// secret shared with trusted game servers that allows them to grant access
+// to Another Planet to client accounts
 
-// MUST be changed from this default to prevent false game stats reporting.
+// MUST be changed from this default to prevent false grants.
 
 // should not contain spaces
 
@@ -56,7 +82,9 @@ $sharedGameServerSecret = "secret_phrase";
 // Thus, more than one server installation can use the same database
 // (or the server can share a database with another application that uses
 //  similar table names).
-$tableNamePrefix = "lifeTokenServer_";
+$tableNamePrefix = "ahapGateServer_";
+
+
 
 
 
