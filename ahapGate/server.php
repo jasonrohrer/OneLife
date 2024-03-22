@@ -147,10 +147,10 @@ else if( $action == "get_content_leader" ) {
     ag_getContentLeader();
     }
 else if( $action == "show_log" ) {
-    lt_showLog();
+    ag_showLog();
     }
 else if( $action == "clear_log" ) {
-    lt_clearLog();
+    ag_clearLog();
     }
 else if( $action == "show_data" ) {
     ag_showData();
@@ -305,8 +305,8 @@ function ag_setupDatabase() {
 function ag_showLog() {
     ag_checkPassword( "show_log" );
 
-     echo "[<a href=\"server.php?action=show_data" .
-         "\">Main</a>]<br><br><br>";
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br>";
     
     global $tableNamePrefix;
 

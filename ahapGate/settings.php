@@ -19,7 +19,7 @@ $tableNamePrefixAHAPTicketServer = "ahapTicketServer_";
 $fullServerURL = "http://localhost/jcr13/ahapGate/server.php";
 
 
-// The URL of to the server.php script.
+// The URL of to the AHAP-specific ticket server
 $ahapTicketServerURL = "http://localhost/jcr13/ahapTicketServer/server.php";
 
 
