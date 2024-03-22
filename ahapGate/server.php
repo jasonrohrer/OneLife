@@ -1263,7 +1263,7 @@ function ag_updateContentLeader() {
 
 function ag_grantGithub( $inGithubUsername ) {
     global $githubToken, $githubRepo;
-    
+
     /*
     curl -L \
     -X PUT                                 \
@@ -1281,15 +1281,95 @@ function ag_grantGithub( $inGithubUsername ) {
             'header'  => array(
                 'Accept: application/vnd.github+json',
                 "Authorization: Bearer $githubToken",
-                "X-GitHub-Api-Version: 2022-11-28" ),
-            'content' => '{"permission":"triage"}' ) );
+                "X-GitHub-Api-Version: 2022-11-28",
+                "User-Agent: curl/7.35.0" ),
+            'content' => '{"permission":"push"}' ) );
+
+    $context  = stream_context_create( $opts );
+
+
+    $url = "https://api.github.com/repos/$githubRepo".
+        "/collaborators/$inGithubUsername";
+
+    $result = file_get_contents( $url, false, $context );
+    }
+
+
+
+
+function ag_deleteInviteGithub( $inGithubUsername ) {
+    global $githubRepo, $githubToken;
+
+    /*
+    curl -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer <YOUR-TOKEN>" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+        https://api.github.com/repos/OWNER/REPO/invitations
+    */
+
+    // list invitations
+    
+    $opts = array(
+        'http' =>
+        array(
+            'method'  => 'GET',
+            'header'  => array(
+                'Accept: application/vnd.github+json',
+                "Authorization: Bearer $githubToken",
+                "X-GitHub-Api-Version: 2022-11-28",
+                "User-Agent: curl/7.35.0" ) ) );
 
     $context  = stream_context_create( $opts );
 
     $result = file_get_contents(
         "https://api.github.com/repos/$githubRepo".
-        "/collaborators/$inGithubUsername",
+        "/invitations",
         false, $context );
+
+    $a = json_decode( $result, true );
+
+    $inviteID = "";
+    
+    foreach( $a as $invite ) {
+        $username = $invite[ 'invitee' ][ 'login' ];
+
+        if( $username == $inGithubUsername ) {
+            $inviteID = $invite[ 'id' ];
+            break;
+            }
+        }
+
+    
+    if( $inviteID != "" ) {
+
+        /*
+          curl -L \
+          -X DELETE                                    \
+          -H "Accept: application/vnd.github+json"      \
+          -H "Authorization: Bearer <YOUR-TOKEN>"       \
+          -H "X-GitHub-Api-Version: 2022-11-28"                         \
+          https://api.github.com/repos/OWNER/REPO/invitations/INVITATION_ID
+        */
+
+        $opts = array(
+            'http' =>
+            array(
+                'method'  => 'DELETE',
+                'header'  => array(
+                    'Accept: application/vnd.github+json',
+                    "Authorization: Bearer $githubToken",
+                    "X-GitHub-Api-Version: 2022-11-28",
+                    "User-Agent: curl/7.35.0" ) ) );
+
+        $context  = stream_context_create( $opts );
+        
+        $result = file_get_contents(
+            "https://api.github.com/repos/$githubRepo".
+            "/invitations/$inviteID",
+            false, $context );
+        }
+    
     }
 
 
@@ -1313,7 +1393,8 @@ function ag_ungrantGithub( $inGithubUsername ) {
             'header'  => array(
                 'Accept: application/vnd.github+json',
                 "Authorization: Bearer $githubToken",
-                "X-GitHub-Api-Version: 2022-11-28" ) ) );
+                "X-GitHub-Api-Version: 2022-11-28",
+                "User-Agent: curl/7.35.0" ) ) );
 
     $context  = stream_context_create( $opts );
 
@@ -1321,6 +1402,9 @@ function ag_ungrantGithub( $inGithubUsername ) {
         "https://api.github.com/repos/$githubRepo".
         "/collaborators/$inGithubUsername",
         false, $context );
+
+
+    ag_deleteInviteGithub( $inGithubUsername );
     }
 
 
