@@ -1,24 +1,5 @@
 
 
-FIXME:  do we need this call?
-        grant action is going to create ticket on AHAP-specific ticket server
-== Called by either game client or game server:
-
-server.php
-?action=check_grant
-&email=[email address]
-
-Return:
-OK
--or-
-DENIED
-
-
-Check whether a given email has been granted access to Another Planet.
-
-
-
-
 
 == Called by either game client or game server:
 
