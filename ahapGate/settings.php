@@ -49,6 +49,14 @@ $defaultClientIP = "72.14.184.149";
 
 
 
+// for github API
+$githubToken = "REPLACE_ME";
+
+
+$githubRepo = "jasonrohrer/AnotherPlanetData";
+
+
+
 
 // End Basic settings
 

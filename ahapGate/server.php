@@ -286,7 +286,7 @@ function ag_setupDatabase() {
             "email VARCHAR(254) NOT NULL," .
             "UNIQUE KEY( email )," .
             "sequence_number INT NOT NULL," .
-            "github_email VARCHAR(254) NOT NULL," .
+            "github_username VARCHAR(254) NOT NULL," .
             "content_leader_email_vote VARCHAR(254) NOT NULL," .
             "grant_time DATETIME NOT NULL, ".
             "last_vote_time DATETIME NOT NULL );";
@@ -530,7 +530,7 @@ function ag_showData( $checkPassword = true ) {
     echo "<tr>\n";    
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
-    echo "<td>".orderLink( "github_email", "Github Email" )."</td>\n";
+    echo "<td>".orderLink( "github_username", "Github Username" )."</td>\n";
     echo "<td>".orderLink( "content_leader_email_vote",
                            "Chosen Leader" )."</td>\n";
     echo "<td>".orderLink( "grant_time", "Grant Time" )."</td>\n";
@@ -541,7 +541,7 @@ function ag_showData( $checkPassword = true ) {
     for( $i=0; $i<$numRows; $i++ ) {
         $id = ag_mysqli_result( $result, $i, "id" );
         $email = ag_mysqli_result( $result, $i, "email" );
-        $github_email = ag_mysqli_result( $result, $i, "github_email" );
+        $github_username = ag_mysqli_result( $result, $i, "github_username" );
         $content_leader_email_vote =
             ag_mysqli_result( $result, $i, "content_leader_email_vote" );
         $grant_time = ag_mysqli_result( $result, $i, "grant_time" );
@@ -557,7 +557,7 @@ function ag_showData( $checkPassword = true ) {
         echo "<td>".
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
-        echo "<td>$github_email</td>\n";
+        echo "<td>$github_username</td>\n";
         echo "<td>$content_leader_email_vote</td>\n";
         echo "<td>$grant_time</td>\n";
         echo "<td>$last_vote_time</td>\n";
@@ -594,13 +594,13 @@ function ag_showDetail( $checkPassword = true ) {
 
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, github_email, content_leader_email_vote ".
+    $query = "SELECT id, github_username, content_leader_email_vote ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = ag_queryDatabase( $query );
 
     $id = ag_mysqli_result( $result, 0, "id" );
-    $github_email = ag_mysqli_result( $result, 0, "github_email" );
+    $github_username = ag_mysqli_result( $result, 0, "github_username" );
     $content_leader_email_vote =
         ag_mysqli_result( $result, 0, "content_leader_email_vote" );
     
@@ -608,7 +608,7 @@ function ag_showDetail( $checkPassword = true ) {
     
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
-    echo "<b>Github Email:</b> $github_email<br><br>";
+    echo "<b>Github Username:</b> $github_username<br><br>";
     echo "<b>Content Leader:</b> $content_leader_email_vote<br><br>";
     echo "<br><br>";
     }
@@ -937,7 +937,7 @@ function ag_grant() {
         // finally, create a record for this user here
         $query = "INSERT INTO $tableNamePrefix". "users SET " .
             "email = '$email', ".
-            "github_email = '$email', ".
+            "github_username = '', ".
             "content_leader_email_vote = '', ".
             "sequence_number = 1, ".
             "grant_time = CURRENT_TIMESTAMP, ".
@@ -976,6 +976,25 @@ function ag_registerVote() {
         echo "DENIED";
         return;
         }
+
+    // make sure leader exists
+    $query =
+        "SELECT COUNT(*) from $tableNamePrefix"."users ".
+        "WHERE email = '$leader_email';";
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        echo "DENIED";
+        return;
+        }
+
+    if( ag_mysqli_result( $result, 0, 0 ) < 1 ) {
+        // leader they are voting for doesn't exist
+        echo "DENIED";
+        return;
+        }
+    
     
     // update the existing one
     $query = "UPDATE $tableNamePrefix"."users SET " .
@@ -985,6 +1004,8 @@ function ag_registerVote() {
         "WHERE email = '$email'; ";
     
     ag_queryDatabase( $query );
+
+    ag_updateContentLeader();
     
     echo "OK";
     }
@@ -1064,21 +1085,58 @@ function ag_checkTicketServerSeqHash() {
 function ag_registerGithub() {
     global $tableNamePrefix;
 
-    $github_email = ag_requestFilter( "github_email",
-                                      "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $github_username = ag_requestFilter( "github_username",
+                                      "/[A-Z0-9\-]+/i", "" );
 
     // will die on failure
     $email = ag_checkTicketServerSeqHash();
     
+
+    $oldGithubUsername = ag_getGithubUsername( $email );
+
+
+    $leader = ag_getContentLeaderInternal();
+
+    if( $oldGithubUsername != "" &&
+        $oldGithubUsername != $github_username &&
+        $leader == $email ) {
+        // we are the leader
+        // and our github email has changed
+
+        ag_ungrantGithub( $oldGithubUsername );
+
+        ag_grantGithub( $newGithubUsername );
+        }
+        
     
     $query = "UPDATE $tableNamePrefix"."users SET " .
         "sequence_number = sequence_number + 1, ".
-        "github_email = '$github_email' ".
+        "github_username = '$github_username' ".
         "WHERE email = '$email'; ";
     
     ag_queryDatabase( $query );
     
     echo "OK";
+    }
+
+
+
+function ag_getContentLeaderInternal() {
+    global $tableNamePrefix;
+    
+    $query = "SELECT content_leader_email " .
+        "FROM$tableNamePrefix"."server_globals ;";
+
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows < 1 ) {
+        return "";
+        }
+    $leader = ag_mysqli_result( $result, 0, "content_leader_email" );
+
+    return $leader;
     }
 
 
@@ -1089,21 +1147,13 @@ function ag_getContentLeader() {
     // will die on failure
     $email = ag_checkTicketServerSeqHash();
 
+    
+    ag_updateContentLeader();
+    
 
     // got here, hash check succeeded  
 
-    $query = "SELECT content_leader_email " .
-        "FROM$tableNamePrefix"."server_globals ;";
-
-    $result = ag_queryDatabase( $query );
-
-    $numRows = mysqli_num_rows( $result );
-
-    if( $numRows < 1 ) {
-        echo "DENIED";
-        return;
-        }
-    $leader = ag_mysqli_result( $result, 0, "content_leader_email" );
+    $leader = ag_getContentLeaderInternal();
 
     // update sequence number
     $query = "UPDATE $tableNamePrefix"."users SET " .
@@ -1116,6 +1166,162 @@ function ag_getContentLeader() {
     echo "OK";
     }
 
+
+
+
+// returns "" if user for $inEmail does not exist
+function ag_getGithubUsername( $inEmail ) {
+    global $tableNamePrefix;
+    
+    $query =
+        "SELECT github_username ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE email='$inEmail';";
+            
+    $result = ag_queryDatabase( $query );
+            
+    $numRows = mysqli_num_rows( $result );
+    
+    $github_username = "";
+            
+    if( $numRows > 0 ) {
+        $github_username = ag_mysqli_result( $result, 0, "github_username" );
+        }
+            
+    return $github_username;
+    }
+
+
+
+// re-compute vote based on people who voted in past week
+// returns main email of leader
+function ag_updateContentLeader() {
+
+    global $tableNamePrefix;
+    
+    $query =
+        "SELECT COUNT(*), content_leader_email_vote ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 7 DAY ) ".
+        "GROUP BY content_leader_email_vote ".
+        "ORDER BY COUNT(*) DESC;";
+
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    $bestLeader = "";
+
+    // highest votes first
+    for( $i=0; $i<$numRows; $i++ ) {
+
+        $leader_email =
+            ag_mysqli_result( $result, $i, "content_leader_email_vote" );
+
+        if( $leader_email != "" ) {
+            $bestLeader = $leader_email;
+            break;
+            }
+        }
+    
+
+    if( $bestLeader != "" ) {
+
+        $oldLeader = ag_getContentLeaderInternal();
+
+        if( $oldLeader != $bestLeader ) {
+
+            // leader change
+
+            $newGithubUsername = ag_getGithubUsername( $bestLeader );
+
+            $oldGithubUsername = "";
+
+            if( $oldLeader != "" ) {
+                $oldGithubUsername = ag_getGithubUsername( $oldLeader );
+                }
+            
+            if( $newGithubUsername != "" ) {
+
+                // remove old leader from github
+                ag_ungrantGithub( $oldGithubUsername );
+
+                // add new leader to github
+                ag_grantGithub( $newGithubUsername );
+                
+                $query = "UPDATE $tableNamePrefix"."server_globals ".
+                    "SET content_leader_email = '$bestLeader';";
+                ag_queryDatabase( $query );
+                }    
+            }
+        }
+
+    return $bestLeader;
+    }
+
+
+
+function ag_grantGithub( $inGithubUsername ) {
+    global $githubToken, $githubRepo;
+    
+    /*
+    curl -L \
+    -X PUT                                 \
+    -H "Accept: application/vnd.github+json"    \
+    -H "Authorization: Bearer <YOUR-TOKEN>"     \
+    -H "X-GitHub-Api-Version: 2022-11-28"                        \
+    https://api.github.com/repos/OWNER/REPO/collaborators/USERNAME  \
+    -d '{"permission":"triage"}'
+    */
+
+    $opts = array(
+        'http' =>
+        array(
+            'method'  => 'PUT',
+            'header'  => array(
+                'Accept: application/vnd.github+json',
+                "Authorization: Bearer $githubToken",
+                "X-GitHub-Api-Version: 2022-11-28" ),
+            'content' => '{"permission":"triage"}' ) );
+
+    $context  = stream_context_create( $opts );
+
+    $result = file_get_contents(
+        "https://api.github.com/repos/$githubRepo".
+        "/collaborators/$inGithubUsername",
+        false, $context );
+    }
+
+
+
+function ag_ungrantGithub( $inGithubUsername ) {
+    global $githubToken, $githubRepo;
+    
+    /*
+    curl -L \
+    -X DELETE                                                       \
+    -H "Accept: application/vnd.github+json"                        \
+    -H "Authorization: Bearer <YOUR-TOKEN>"                         \
+    -H "X-GitHub-Api-Version: 2022-11-28"                           \
+    https://api.github.com/repos/OWNER/REPO/collaborators/USERNAME
+    */
+
+    $opts = array(
+        'http' =>
+        array(
+            'method'  => 'DELETE',
+            'header'  => array(
+                'Accept: application/vnd.github+json',
+                "Authorization: Bearer $githubToken",
+                "X-GitHub-Api-Version: 2022-11-28" ) ) );
+
+    $context  = stream_context_create( $opts );
+
+    $result = file_get_contents(
+        "https://api.github.com/repos/$githubRepo".
+        "/collaborators/$inGithubUsername",
+        false, $context );
+    }
 
 
 
