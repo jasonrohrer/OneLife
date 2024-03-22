@@ -940,7 +940,7 @@ function ag_grant() {
             "github_email = '$email', ".
             "content_leader_email_vote = '', ".
             "sequence_number = 1, ".
-            "grant_time = CURRENT_TIMESTAMP ".
+            "grant_time = CURRENT_TIMESTAMP, ".
             "last_vote_time = CURRENT_TIMESTAMP ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
         ag_queryDatabase( $query );
