@@ -158,6 +158,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     ag_showDetail();
     }
+else if( $action == "delete_user" ) {
+    ag_deleteUser();
+    }
 else if( $action == "logout" ) {
     ag_logout();
     }
@@ -611,10 +614,60 @@ function ag_showDetail( $checkPassword = true ) {
     echo "<b>Github Username:</b> $github_username<br><br>";
     echo "<b>Content Leader:</b> $content_leader_email_vote<br><br>";
     echo "<br><br>";
+?>
+    <hr>
+    Delete User:<br>
+    <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="delete_user">
+    <INPUT TYPE="hidden" NAME="email" VALUE="<?php echo $email;?>">
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm<br>      
+    <INPUT TYPE="Submit" VALUE="Delete">
+    </FORM>
+    <hr>
+<?php
     }
 
 
 
+function ag_deleteUser() {
+    ag_checkPassword( "delete_user" );
+
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+    $confirm = ag_requestFilter( "confirm", "/[01]/", "0" );
+
+    if( $confirm == 0 ) {
+        echo "Must check confirmation box to delete user<hr>";
+
+        show_detail( false );
+        return;
+        }
+
+    // confirm checked
+
+
+    global $tableNamePrefix;
+    
+    $query = "DELETE FROM $tableNamePrefix". "users " .
+        "WHERE email = '$email';";
+    ag_queryDatabase( $query );
+
+
+    // NOTE:
+    // there is no way to ungrant on Steam
+    
+    
+    global $tableNamePrefixAHAPTicketServer;
+        
+    $query = "DELETE FROM $tableNamePrefixAHAPTicketServer". "tickets ".
+            "WHERE email = '$email'";
+    
+    ag_queryDatabase( $query );
+
+
+    echo "User $email deleted.<hr>";
+
+    show_detail( false );
+    }
 
 
 
