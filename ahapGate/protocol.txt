@@ -40,11 +40,9 @@ DENIED is returned if there are no life tokens left.
 
 hash_value is computed on both ends with:
 
-HMAC_SHA1( $shared_secret, $sequence_number$email )
+  HMAC_SHA1( $shared_secret, $sequence_number$email )
 
-(sequence number concatonated with email)
-
-
+  (sequence number concatonated with email)
 
 Where $shared_secret is a secret string known to both the ahapGate server and
 the game servers that have permission to manipulate the ahapGate.
@@ -82,9 +80,9 @@ DENIED is returned if the user's email isn't known
 
 hash_value is computed on both ends with:
 
-HMAC_SHA1( $shared_secret, $sequence_number$email$leaderEmail )
+  HMAC_SHA1( $shared_secret, $sequence_number$email$leaderEmail )
 
-(sequence number concatonated with both emails)
+  (sequence number concatonated with both emails)
 
 Secure against replay attacks and modification of submitted emails.
 
@@ -98,7 +96,7 @@ Secure against replay attacks and modification of submitted emails.
 server.php
 ?action=register_github
 &email=[email address]
-&github_email=[email address]
+&github_username=[username]
 &sequence_number=[int]
 &hash_value=[hash value]
 
@@ -107,17 +105,18 @@ OK
 -or-
 DENIED
 
-Used by game clients to update user's github account email.
+Used by game clients to update user's github account username.
 
 DENIED is returned if the user's email isn't known
 
 
 hash_value is computed on both ends with:
 
-HMAC_SHA1( $ticket_id, $sequence_number )
+  HMAC_SHA1( $ticket_id, $sequence_number$github_username )
 
-Secure only against replay attacks (a modification attack could change the
-submitted github email).
+  (sequence number concatonated with github username)
+
+Secure against replay attacks and modification of submitted username.
 
 
 
@@ -146,6 +145,6 @@ DENIED is returned if the user's email isn't known
 
 hash_value is computed on both ends with:
 
-HMAC_SHA1( $ticket_id, $sequence_number )
+  HMAC_SHA1( $ticket_id, $sequence_number )
 
 Secure against replay attacks.
