@@ -964,10 +964,52 @@ function ag_grant() {
         ag_queryDatabase( $query );
 
         
+        $steamID = "";
+
+        $justGateMapped = false;
         
         if( preg_match( "/@steamgames\.com/", $email ) ) {
             $steamID = preg_replace( '/@steamgames\.com/', '', $email, 1 );
+            }
+        else {
+            // they don't have a steam-ID placeholder email
 
+            // try looking them up in the steamGate mapping
+            global $tableNamePrefixOHOLSteamGateServer;
+            
+            $query = "SELECT steam_id FROM ".
+                "$tableNamePrefixOHOLSteamGateServer". "mapping ".
+                "WHERE ticket_id = '$ticket_id';";
+
+            $result = ag_queryDatabase( $query );
+
+            $numRows = mysqli_num_rows( $result );
+
+            if( $numRows > 0 ) {
+                $steamID = ag_mysqli_result( $result, 0, "steam_id" );
+
+                // try to make a new mapping for them in the
+                // AHAP-specific steamGate
+                global $tableNamePrefixAHAPSteamGateServer;
+                
+                $query =
+                    "INSERT INTO $tableNamePrefixAHAPSteamGateServer".
+                    "mapping( steam_id, ticket_id, steam_gift_key, ".
+                    "         creation_date ) ".
+                    "VALUES( '$steamID', ".
+                    "        '$ticket_id', '', CURRENT_TIMESTAMP );";
+
+                ag_queryDatabase( $query );
+
+                $justGateMapped = true;
+                }
+            }
+        
+        
+
+        
+            
+        if( $steamID != "" ) {
             // grant package on Steam
 
             $ownerID = ag_grantPackage( $steamID );
@@ -982,6 +1024,20 @@ function ag_grant() {
                     "tickets WHERE email = '$email';";
                 ag_queryDatabase( $query );
 
+                if( $justGateMapped ) {
+                    // clean up AHAP steamGate mapping that we just made
+
+                    global $tableNamePrefixAHAPSteamGateServer;
+                
+                    $query =
+                        "DELETE FROM $tableNamePrefixAHAPSteamGateServer".
+                        "mapping WHERE steam_id = '$steamID';";
+
+                    ag_queryDatabase( $query );
+
+                    }
+                
+                
                 echo "DENIED";
                 return;
                 }
