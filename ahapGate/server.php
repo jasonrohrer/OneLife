@@ -864,8 +864,10 @@ function ag_grantPackage( $inSteamID ) {
 
     $context  = stream_context_create( $opts );
 
+    $url = "https://partner.steam-api.com/ISteamUser/GrantPackage/v1";
+    
     $result = file_get_contents(
-        'https://partner.steam-api.com/ISteamUser/GrantPackage/v1',
+        $url,
         false, $context );
 
     // not sure about format of results from GrantPackage
@@ -876,13 +878,9 @@ function ag_grantPackage( $inSteamID ) {
 
     if( $ownsAppNow == 0 ) {
         // granting failed
-        echo "Unlocking attempt response:<br>".
-            "<pre>$result</pre><br><pre>";
-        echo $http_response_header[0];
-        echo "</pre><br>";
 
         $header = $http_response_header[0];
-        ag_log( "GrantPackage failed.  ".
+        ag_log( "GrantPackage failed.  URL $url  ".
                 "POST data: '$postData'  ".
                 "Result header:  '$header'  ".
                 "Result body:  '$result'" );
@@ -965,8 +963,6 @@ function ag_grant() {
 
         
         $steamID = "";
-
-        $justGateMapped = false;
         
         if( preg_match( "/@steamgames\.com/", $email ) ) {
             $steamID = preg_replace( '/@steamgames\.com/', '', $email, 1 );
@@ -988,28 +984,32 @@ function ag_grant() {
             if( $numRows > 0 ) {
                 $steamID = ag_mysqli_result( $result, 0, "steam_id" );
 
-                // try to make a new mapping for them in the
-                // AHAP-specific steamGate
-                global $tableNamePrefixAHAPSteamGateServer;
-                
-                $query =
-                    "INSERT INTO $tableNamePrefixAHAPSteamGateServer".
-                    "mapping( steam_id, ticket_id, steam_gift_key, ".
-                    "         creation_date ) ".
-                    "VALUES( '$steamID', ".
-                    "        '$ticket_id', '', CURRENT_TIMESTAMP );";
-
-                ag_queryDatabase( $query );
-
-                $justGateMapped = true;
                 }
             }
         
-        
-
-        
             
         if( $steamID != "" ) {
+            // try to make a new mapping for them in the
+            // AHAP-specific steamGate
+            global $tableNamePrefixAHAPSteamGateServer;
+            
+            $query =
+                "INSERT INTO $tableNamePrefixAHAPSteamGateServer".
+                "mapping( steam_id, ticket_id, steam_gift_key, ".
+                "         creation_date ) ".
+                "VALUES( '$steamID', ".
+                "        '$ticket_id', '', CURRENT_TIMESTAMP );";
+        
+            ag_queryDatabase( $query );
+
+            // note that even if granting package on Steam fails, we
+            // can leave this mapping in place
+            
+
+            // FIXME:  GrantPackage API has been removed and no longer works
+            // we need to supply the user with a key somehow
+            
+            
             // grant package on Steam
 
             $ownerID = ag_grantPackage( $steamID );
@@ -1022,21 +1022,7 @@ function ag_grant() {
                 // we created
                 $query = "DELETE FROM $tableNamePrefixAHAPTicketServer".
                     "tickets WHERE email = '$email';";
-                ag_queryDatabase( $query );
-
-                if( $justGateMapped ) {
-                    // clean up AHAP steamGate mapping that we just made
-
-                    global $tableNamePrefixAHAPSteamGateServer;
-                
-                    $query =
-                        "DELETE FROM $tableNamePrefixAHAPSteamGateServer".
-                        "mapping WHERE steam_id = '$steamID';";
-
-                    ag_queryDatabase( $query );
-
-                    }
-                
+                ag_queryDatabase( $query );                
                 
                 echo "DENIED";
                 return;
