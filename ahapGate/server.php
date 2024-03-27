@@ -744,7 +744,8 @@ function ag_checkSeqHash( $email, $concatData ) {
     $trueSeq = ag_getSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        ag_log( "$action denied for stale sequence number" );
+        ag_log( "$action denied for stale sequence number ".
+                "$sequence_number, current = $trueSeq" );
 
         echo "DENIED";
         die();
@@ -755,7 +756,9 @@ function ag_checkSeqHash( $email, $concatData ) {
                                   $sequence_number . $concatData ) );
 
     if( $computedHashValue != $hash_value ) {
-        ag_log( "$action denied for bad hash value (correct = $computedHashValue )" );
+        ag_log( "$action denied for bad hash value on ".
+                "'". $sequence_number . $concatData . "' ".
+                "(correct = $computedHashValue )" );
 
         echo "DENIED";
         die();
@@ -940,6 +943,8 @@ function ag_grant() {
             $name = ag_mysqli_result( $result, 0, "name" );
             }
         else {
+            ag_log( "grant denied because $email not found in ticketServer" );
+            
             echo "DENIED";
             return;
             }
@@ -1003,6 +1008,8 @@ function ag_grant() {
         }
     else {
         // record already exists for this email, can't re-grant
+        ag_log( "grant denied because record already exists for $email" );
+
         echo "DENIED";
         return;
         }
@@ -1026,6 +1033,8 @@ function ag_registerVote() {
     if( $trueSeq == 0 ) {
 
         // no record of this player, can't vote
+        ag_log( "grant denied because no record exists for voter $email" );
+        
         echo "DENIED";
         return;
         }
@@ -1035,15 +1044,22 @@ function ag_registerVote() {
         "SELECT COUNT(*) from $tableNamePrefix"."users ".
         "WHERE email = '$leader_email';";
 
+    $result = ag_queryDatabase( $query );
+
     $numRows = mysqli_num_rows( $result );
 
     if( $numRows < 1 ) {
+        ag_log( "grant denied because counting records failed" );
+
         echo "DENIED";
         return;
         }
 
     if( ag_mysqli_result( $result, 0, 0 ) < 1 ) {
         // leader they are voting for doesn't exist
+        ag_log( "grant denied because no record exists for leader ".
+                $leader_email );
+
         echo "DENIED";
         return;
         }
@@ -1065,13 +1081,15 @@ function ag_registerVote() {
 
 
 
-
+// $concatData will be concatonated with sequence number when
+// computing hash, can be ""
+//
 // only works for emails that have records already, as created by the
 // grant action
 //
 // returns valid email, on success
 // prints DENIED and dies on failure
-function ag_checkTicketServerSeqHash() {
+function ag_checkTicketServerSeqHash( $concatData ) {
     global $action;
 
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
@@ -1114,16 +1132,18 @@ function ag_checkTicketServerSeqHash() {
 
     $encodedEmail = urlencode( $email );
 
+    $stringToHash = $sequence_number . $concatData;
     
     $result = trim( file_get_contents(
                         "$ahapTicketServerURL".
                         "?action=check_ticket_hash".
                         "&email=$encodedEmail".
                         "&hash_value=$hash_value".
-                        "&string_to_hash=$sequence_number" ) );
+                        "&string_to_hash=$stringToHash" ) );
 
     if( $result != "VALID" ) {
-        ag_log( "$action denied for bad hash value" );
+        ag_log( "$action denied for bad hash value $hash_value, ".
+                "string_to_hash = $stringToHash" );
 
         echo "DENIED";
         die();
@@ -1142,7 +1162,7 @@ function ag_registerGithub() {
                                       "/[A-Z0-9\-]+/i", "" );
 
     // will die on failure
-    $email = ag_checkTicketServerSeqHash();
+    $email = ag_checkTicketServerSeqHash( $github_username );
     
 
     $oldGithubUsername = ag_getGithubUsername( $email );
@@ -1158,7 +1178,7 @@ function ag_registerGithub() {
 
         ag_ungrantGithub( $oldGithubUsername );
 
-        ag_grantGithub( $newGithubUsername );
+        ag_grantGithub( $github_username );
         }
         
     
@@ -1178,7 +1198,7 @@ function ag_getContentLeaderInternal() {
     global $tableNamePrefix;
     
     $query = "SELECT content_leader_email " .
-        "FROM$tableNamePrefix"."server_globals ;";
+        "FROM $tableNamePrefix"."server_globals ;";
 
     $result = ag_queryDatabase( $query );
 
@@ -1315,6 +1335,8 @@ function ag_updateContentLeader() {
 
 
 function ag_grantGithub( $inGithubUsername ) {
+    ag_log( "grantGithub on $inGithubUsername" );
+
     global $githubToken, $githubRepo;
 
     /*
@@ -1387,7 +1409,7 @@ function ag_deleteInviteGithub( $inGithubUsername ) {
     foreach( $a as $invite ) {
         $username = $invite[ 'invitee' ][ 'login' ];
 
-        if( $username == $inGithubUsername ) {
+        if( strtolower( $username ) == strtolower( $inGithubUsername ) ) {
             $inviteID = $invite[ 'id' ];
             break;
             }
@@ -1428,6 +1450,8 @@ function ag_deleteInviteGithub( $inGithubUsername ) {
 
 
 function ag_ungrantGithub( $inGithubUsername ) {
+    ag_log( "ungrantGithub on $inGithubUsername" );
+    
     global $githubToken, $githubRepo;
     
     /*
