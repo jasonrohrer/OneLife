@@ -620,7 +620,7 @@ function ag_showDetail( $checkPassword = true ) {
     <FORM ACTION="server.php" METHOD="post">
     <INPUT TYPE="hidden" NAME="action" VALUE="delete_user">
     <INPUT TYPE="hidden" NAME="email" VALUE="<?php echo $email;?>">
-    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm<br>      
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm        
     <INPUT TYPE="Submit" VALUE="Delete">
     </FORM>
     <hr>
@@ -638,7 +638,7 @@ function ag_deleteUser() {
     if( $confirm == 0 ) {
         echo "Must check confirmation box to delete user<hr>";
 
-        show_detail( false );
+        ag_showDetail( false );
         return;
         }
 
@@ -666,7 +666,7 @@ function ag_deleteUser() {
 
     echo "User $email deleted.<hr>";
 
-    show_detail( false );
+    ag_showData( false );
     }
 
 
