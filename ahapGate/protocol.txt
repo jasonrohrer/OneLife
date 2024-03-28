@@ -1,4 +1,14 @@
 
+== Visited by end-user after they have been granted access to AHAP:
+
+server.php
+?action=show_account
+&ticket_id=[ID]
+
+Shows end-user info about their account, including their Steam key and
+off-Steam download links.
+
+
 
 
 == Called by either game client or game server:

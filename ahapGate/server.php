@@ -146,6 +146,9 @@ else if( $action == "register_github" ) {
 else if( $action == "get_content_leader" ) {
     ag_getContentLeader();
     }
+else if( $action == "show_account" ) {
+    ag_showAccount();
+    }
 else if( $action == "show_log" ) {
     ag_showLog();
     }
@@ -698,12 +701,38 @@ function ag_deleteUser() {
     ag_queryDatabase( $query );
 
 
-    // NOTE:
+
     // there is no way to ungrant on Steam
-    
-    
+    // but do un-map them
+
+
+    // find their ticket IDs
     global $tableNamePrefixAHAPTicketServer;
+
+    $query = "SELECT ticket_id FROM ".
+        "$tableNamePrefixAHAPTicketServer". "tickets ".
+        "WHERE email = '$email'";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    for( $i=0; $i<$numRows; $i++ ) {
+
+        $ticket_id = ag_mysqli_result( $result, $i, "ticket_id" );
+
+        global $tableNamePrefixAHAPSteamGateServer;
+            
+        $query =
+            "DELETE FROM $tableNamePrefixAHAPSteamGateServer"."mapping ".
+            "WHERE ticket_id = '$ticket_id';";
         
+        ag_queryDatabase( $query );
+        }
+
+    
+    // now clear their ticketServer tickets
+    
     $query = "DELETE FROM $tableNamePrefixAHAPTicketServer". "tickets ".
             "WHERE email = '$email'";
     
@@ -1307,6 +1336,71 @@ function ag_getContentLeader() {
     
     echo "$leader\n";
     echo "OK";
+    }
+
+
+
+function ag_showAccount() {
+    $ticket_id = ag_requestFilter( "ticket_id", "/[A-HJ-NP-Z2-9\-]+/i" );
+
+
+    $ticket_id = strtoupper( $ticket_id );
+
+    global $tableNamePrefixAHAPTicketServer;
+
+    $query = "SELECT email FROM ".
+        "$tableNamePrefixAHAPTicketServer". "tickets ".
+        "WHERE ticket_id = '$ticket_id'";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        echo "Ticket ID '$ticket_id' not found";
+        return;
+        }
+
+    $email = ag_mysqli_result( $result, 0, "email" );
+
+
+    global $tableNamePrefix;
+
+    $query = "SELECT steam_gift_key FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        echo "Grant record not found for $email";
+        return;
+        }
+
+    $steam_gift_key = ag_mysqli_result( $result, 0, "steam_gift_key" );
+
+    global $header, $footer;
+
+
+    eval( $header );
+
+    echo "<center><br><br>";
+    
+    echo "Your Another Planet Steam key:<br><br>$steam_gift_key<br><br><br>";
+
+    global $ahapTicketServerURL;
+
+    $url =
+        $ahapTicketServerURL . "?action=show_downloads&ticket_id=$ticket_id";
+    
+    
+    echo "Your Another Planet off-Steam downloads:<br><br>".
+        "<a href='$url'>$url</a><br><br><br>";
+    
+    echo "</center>";
+
+    eval( $footer );
     }
 
 
