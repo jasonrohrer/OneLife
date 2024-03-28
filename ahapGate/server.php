@@ -1102,6 +1102,12 @@ function ag_grant() {
         ag_queryDatabase( $query );
 
         echo "$steam_gift_key\n";
+
+        global $fullServerURL;
+        
+        echo "$fullServerURL".
+            "?action=show_account&ticket_id=$ticket_id\n";
+        
         echo "OK";
         return;
         }

@@ -39,12 +39,14 @@ server.php
 
 Return:
 assigned_steam_key
+view_account_url
 OK
 -or-
 DENIED
 
 Used by game servers to indicate that a given email has been granted access to
-Another Planet.  An assigned steam key is returned.
+Another Planet.  An assigned steam key is returned, along with a URL
+that the end-user can use to view their account details.
 
 Note that the assigned steam key can be a blank line if we run out of keys
 
