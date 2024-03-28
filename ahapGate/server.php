@@ -164,6 +164,9 @@ else if( $action == "delete_user" ) {
 else if( $action == "logout" ) {
     ag_logout();
     }
+else if( $action == "add_steam_gift_keys" ) {
+    ag_addSteamGiftKeys();
+    }
 else if( $action == "ag_setup" ) {
     global $setup_header, $setup_footer;
     echo $setup_header; 
@@ -419,10 +422,12 @@ function ag_showData( $checkPassword = true ) {
     
     global $tableNamePrefix, $remoteIP;
     
+    $keysLeftInBank = ag_countKeysInBank();
 
     echo "<table width='100%' border=0><tr>".
         "<td>[<a href=\"server.php?action=show_data" .
             "\">Main</a>]</td>".
+        "<td align=center><b>$keysLeftInBank</b> unassigned keys remain</td>".
         "<td align=right>[<a href=\"server.php?action=logout" .
             "\">Logout</a>]</td>".
         "</tr></table><br><br><br>";
@@ -586,6 +591,25 @@ function ag_showData( $checkPassword = true ) {
 
 
     echo "<hr>";
+
+    
+?>
+    <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="add_steam_gift_keys">
+    Add Steam Gift Keys:<br>
+    (One per line)<br>
+
+         <TEXTAREA NAME="steam_gift_keys" COLS=50 ROWS=10></TEXTAREA><br>
+    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm<br>      
+    <INPUT TYPE="Submit" VALUE="Add">
+    </FORM>
+    <hr>
+
+
+<?php
+
+
+
     
     echo "<a href=\"server.php?action=show_log\">".
         "Show log</a>";
@@ -1541,6 +1565,97 @@ function ag_ungrantGithub( $inGithubUsername ) {
 
     ag_deleteInviteGithub( $inGithubUsername );
     }
+
+
+
+function ag_addSteamGiftKeys() {
+    ag_checkPassword( "add_steam_gift_keys" );
+
+    
+    echo "[<a href=\"server.php?action=show_data" .
+         "\">Main</a>]<br><br><br>";
+    
+    global $tableNamePrefix;
+
+    $confirm = ag_requestFilter( "confirm", "/[01]/" );
+    
+    if( $confirm != 1 ) {
+        echo "You must check the Confirm box to add keys\n";
+        return;
+        }
+    
+
+    $keys =
+        ag_requestFilter( "steam_gift_keys", "/[A-Z0-9\- \n\r]+/" );
+
+    
+
+    $separateKeys = preg_split( "/\s+/", $keys );
+
+
+    $numKeys = count( $separateKeys );
+
+    echo "Adding <b>$numKeys</b> new Steam gift keys...<br>\n";
+
+
+    $query = "INSERT IGNORE INTO $tableNamePrefix"."steam_key_bank ".
+        "VALUES ";
+
+    $firstKey = true;
+    
+    foreach( $separateKeys as $key ) {
+        if( $key != "" ) {
+            
+            if( ! $firstKey ) {
+                $query = $query .", ";
+                }
+            
+            $query = $query . " ('$key', CURRENT_TIMESTAMP )";
+            
+            $firstKey = false;
+            }
+        }
+
+
+    if( $firstKey ) {
+        echo "<br>No valid keys were provided.";
+        return;
+        }
+
+    
+    $query = $query . ";";
+    
+
+    $result = ag_queryDatabase( $query );
+
+    global $ag_mysqlLink;
+    $numInserted = mysqli_affected_rows( $ag_mysqlLink );
+
+    
+    echo "<br>Successfully added <b>$numInserted</b> keys.";
+
+    if( $numInserted < $numKeys ) {
+        $numMissed = $numKeys - $numInserted;
+        echo "<br><br><font color=red>".
+            "(Perhaps <b>$numMissed</b> were duplicates?)</font>";
+        }
+    }
+
+
+
+function ag_countKeysInBank() {
+    
+    global $tableNamePrefix;
+    
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."steam_key_bank;";
+    
+    $result = ag_queryDatabase( $query );
+    
+    $keysLeftInBank = ag_mysqli_result( $result, 0, 0 );
+
+    return $keysLeftInBank;
+    }
+
 
 
 // gets a steam key from the steam_key_bank table atomically
