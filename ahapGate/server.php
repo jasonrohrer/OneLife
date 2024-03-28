@@ -295,6 +295,7 @@ function ag_setupDatabase() {
             "sequence_number INT NOT NULL," .
             "github_username VARCHAR(254) NOT NULL," .
             "content_leader_email_vote VARCHAR(254) NOT NULL," .
+            "steam_gift_key VARCHAR(254) NOT NULL," .
             "grant_time DATETIME NOT NULL, ".
             "last_vote_time DATETIME NOT NULL );";
 
@@ -454,6 +455,7 @@ function ag_showData( $checkPassword = true ) {
             "OR id LIKE '%$search%' ".
             "OR github_username LIKE '%$search%' ".
             "OR content_leader_email_vote LIKE '%$search%' ".
+            "OR steam_gift_key LIKE '%$search%' ".
             " ) ";
 
         $searchDisplay = " matching <b>$search</b>";
@@ -557,6 +559,8 @@ function ag_showData( $checkPassword = true ) {
     echo "<td>".orderLink( "github_username", "Github Username" )."</td>\n";
     echo "<td>".orderLink( "content_leader_email_vote",
                            "Chosen Leader" )."</td>\n";
+    echo "<td>".orderLink( "steam_gift_key",
+                           "Steam Key" )."</td>\n";
     echo "<td>".orderLink( "grant_time", "Grant Time" )."</td>\n";
     echo "<td>".orderLink( "last_vote_time", "Last Vote Time" )."</td>\n";
     echo "</tr>\n";
@@ -568,6 +572,7 @@ function ag_showData( $checkPassword = true ) {
         $github_username = ag_mysqli_result( $result, $i, "github_username" );
         $content_leader_email_vote =
             ag_mysqli_result( $result, $i, "content_leader_email_vote" );
+        $steam_gift_key = ag_mysqli_result( $result, $i, "steam_gift_key" );
         $grant_time = ag_mysqli_result( $result, $i, "grant_time" );
         $last_vote_time = ag_mysqli_result( $result, $i, "last_vote_time" );
 
@@ -583,6 +588,7 @@ function ag_showData( $checkPassword = true ) {
             "$email</a></td>\n";
         echo "<td>$github_username</td>\n";
         echo "<td>$content_leader_email_vote</td>\n";
+        echo "<td>$steam_gift_key</td>\n";
         echo "<td>$grant_time</td>\n";
         echo "<td>$last_vote_time</td>\n";
         echo "</tr>\n";
@@ -990,9 +996,11 @@ function ag_grant() {
 
         
         // create AHAP ticket
+        // IGNORE if it already exists
         global $tableNamePrefixAHAPTicketServer;
         
-        $query = "INSERT INTO $tableNamePrefixAHAPTicketServer". "tickets ".
+        $query = "INSERT IGNORE INTO ".
+            "$tableNamePrefixAHAPTicketServer". "tickets ".
             "VALUES ( " .
             "'$ticket_id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
             "'$name', '$email', '$order_number', ".
@@ -1034,43 +1042,21 @@ function ag_grant() {
             global $tableNamePrefixAHAPSteamGateServer;
             
             $query =
-                "INSERT INTO $tableNamePrefixAHAPSteamGateServer".
+                "INSERT IGNORE INTO $tableNamePrefixAHAPSteamGateServer".
                 "mapping( steam_id, ticket_id, steam_gift_key, ".
                 "         creation_date ) ".
                 "VALUES( '$steamID', ".
                 "        '$ticket_id', '', CURRENT_TIMESTAMP );";
         
             ag_queryDatabase( $query );
-
-            // note that even if granting package on Steam fails, we
-            // can leave this mapping in place
-            
-
-            // FIXME:  GrantPackage API has been removed and no longer works
-            // we need to supply the user with a key somehow
-            
-            
-            // grant package on Steam
-
-            $ownerID = ag_grantPackage( $steamID );
-
-
-            if( $ownerID == 0 ) {
-                // failed to grant on Steam
-
-                // clean up AHAP ticket server entry that
-                // we created
-                $query = "DELETE FROM $tableNamePrefixAHAPTicketServer".
-                    "tickets WHERE email = '$email';";
-                ag_queryDatabase( $query );                
-                
-                echo "DENIED";
-                return;
-                }
             }
         
 
 
+        // get a steam key for them
+        // (this can be "" if we run out of keys)
+
+        $steam_gift_key = ag_getSteamKey();
         
 
         
@@ -1079,12 +1065,14 @@ function ag_grant() {
             "email = '$email', ".
             "github_username = '', ".
             "content_leader_email_vote = '', ".
+            "steam_gift_key = '$steam_gift_key', ".
             "sequence_number = 1, ".
             "grant_time = CURRENT_TIMESTAMP, ".
             "last_vote_time = CURRENT_TIMESTAMP ".
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
         ag_queryDatabase( $query );
 
+        echo "$steam_gift_key\n";
         echo "OK";
         return;
         }
@@ -1667,8 +1655,8 @@ function ag_getSteamKey() {
 
     $query = "SELECT steam_gift_key FROM ".
         "$tableNamePrefix"."steam_key_bank ".
-        "LIMIT 1 ".
         "ORDER BY add_time ASC ".
+        "LIMIT 1 ".
         "FOR UPDATE;";
 
     $result = ag_queryDatabase( $query );
@@ -1693,6 +1681,8 @@ function ag_getSteamKey() {
     ag_queryDatabase( $query );
     ag_queryDatabase( "COMMIT;" );
     ag_queryDatabase( "SET AUTOCOMMIT = 1;" );
+
+    return $steam_gift_key;
     }
 
     

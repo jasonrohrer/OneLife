@@ -28,12 +28,15 @@ server.php
 &hash_value=[hash value]
 
 Return:
+assigned_steam_key
 OK
 -or-
 DENIED
 
 Used by game servers to indicate that a given email has been granted access to
-Another Planet.
+Another Planet.  An assigned steam key is returned.
+
+Note that the assigned steam key can be a blank line if we run out of keys
 
 DENIED is returned if there are no life tokens left.
 
