@@ -196,7 +196,8 @@ else if( preg_match( "/server\.php/", $_SERVER[ "SCRIPT_NAME" ] ) ) {
     $exists =
         ag_doesTableExist( $tableNamePrefix . "server_globals" ) &&
         ag_doesTableExist( $tableNamePrefix . "users" ) &&
-        ag_doesTableExist( $tableNamePrefix . "log" );
+        ag_doesTableExist( $tableNamePrefix . "log" ) &&
+        ag_doesTableExist( $tableNamePrefix . "steam_key_bank" );
     
         
     if( $exists  ) {
@@ -301,6 +302,26 @@ function ag_setupDatabase() {
     else {
         echo "<B>$tableName</B> table already exists<BR>";
         }
+
+
+    $tableName = $tableNamePrefix . "steam_key_bank";
+    if( ! ag_doesTableExist( $tableName ) ) {
+
+        // bank of keys not assigned yet
+        $query =
+            "CREATE TABLE $tableName(" .
+            "steam_gift_key VARCHAR(255) NOT NULL PRIMARY KEY, ".
+            "add_time DATETIME ) ".
+            "ENGINE = INNODB;";
+
+        $result = ag_queryDatabase( $query );
+
+        echo "<B>$tableName</B> table created<BR>";
+        }
+    else {
+        echo "<B>$tableName</B> table already exists<BR>";
+        }
+
     }
 
 
@@ -425,7 +446,10 @@ function ag_showData( $checkPassword = true ) {
         
 
         $keywordClause = "WHERE ( email LIKE '%$search%' " .
-            "OR id LIKE '%$search%' ) ";
+            "OR id LIKE '%$search%' ".
+            "OR github_username LIKE '%$search%' ".
+            "OR content_leader_email_vote LIKE '%$search%' ".
+            " ) ";
 
         $searchDisplay = " matching <b>$search</b>";
         }
@@ -476,14 +500,6 @@ function ag_showData( $checkPassword = true ) {
     <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="search"
              VALUE="<?php echo $search;?>">
     <INPUT TYPE="Submit" VALUE="Search">
-    </FORM>
-             </td>
-             <td align=right>
-             <FORM ACTION="server.php" METHOD="post">
-    <INPUT TYPE="hidden" NAME="action" VALUE="restore_all_tokens">
-    <INPUT TYPE="Submit" VALUE="Restore All Tokens">
-    <INPUT TYPE="checkbox" NAME="confirm" VALUE=1> Confirm      
-    
     </FORM>
              </td>
              </tr>
@@ -1526,6 +1542,45 @@ function ag_ungrantGithub( $inGithubUsername ) {
     ag_deleteInviteGithub( $inGithubUsername );
     }
 
+
+// gets a steam key from the steam_key_bank table atomically
+// removing the key from the table
+function ag_getSteamKey() {
+    global $tableNamePrefix;
+    
+    ag_queryDatabase( "SET AUTOCOMMIT = 0;" );
+
+    $query = "SELECT steam_gift_key FROM ".
+        "$tableNamePrefix"."steam_key_bank ".
+        "LIMIT 1 ".
+        "ORDER BY add_time ASC ".
+        "FOR UPDATE;";
+
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 0 ) {
+        ag_queryDatabase( "COMMIT;" );
+        ag_queryDatabase( "SET AUTOCOMMIT = 1;" );
+
+        ag_log( "There are no Steam keys left." );
+        
+        return "";
+        }
+
+    $steam_gift_key = ag_mysqli_result( $result, 0, 0 );
+            
+    $query = "DELETE FROM ".
+        "$tableNamePrefix"."steam_key_bank ".
+        "WHERE steam_gift_key = '$steam_gift_key';";
+
+    ag_queryDatabase( $query );
+    ag_queryDatabase( "COMMIT;" );
+    ag_queryDatabase( "SET AUTOCOMMIT = 1;" );
+    }
+
+    
 
 
 
