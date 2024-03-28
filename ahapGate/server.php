@@ -1580,18 +1580,44 @@ function ag_addSteamGiftKeys() {
 
     $separateKeys = preg_split( "/\s+/", $keys );
 
+    $goodKeys = array();
+
+    foreach( $separateKeys as $k ) {
+        // make sure key not already assigned to someone
+
+        $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+            "WHERE steam_gift_key = '$k';";
+
+        $result = ag_queryDatabase( $query );
+        
+        $hits = ag_mysqli_result( $result, 0, 0 );
+        
+        if( $hits == 0 ) {
+            // unused
+            $goodKeys[] = $k;
+            }
+        }
+    
 
     $numKeys = count( $separateKeys );
+    $numGoodKeys = count( $goodKeys );
 
-    echo "Adding <b>$numKeys</b> new Steam gift keys...<br>\n";
-
+    if( $numGoodKeys < $numKeys ) {
+        $used = $numKeys - $numGoodKeys;
+        echo "Adding <b>$numGoodKeys</b> (of $numKeys) new Steam gift keys ".
+            "(<b>$used</b> already assigned)...<br>\n";
+        }
+    else {
+        echo "Adding <b>$numGoodKeys</b> new Steam gift keys...<br>\n";
+        }
+    
 
     $query = "INSERT IGNORE INTO $tableNamePrefix"."steam_key_bank ".
         "VALUES ";
 
     $firstKey = true;
     
-    foreach( $separateKeys as $key ) {
+    foreach( $goodKeys as $key ) {
         if( $key != "" ) {
             
             if( ! $firstKey ) {
@@ -1622,8 +1648,8 @@ function ag_addSteamGiftKeys() {
     
     echo "<br>Successfully added <b>$numInserted</b> keys.";
 
-    if( $numInserted < $numKeys ) {
-        $numMissed = $numKeys - $numInserted;
+    if( $numInserted < $numGoodKeys ) {
+        $numMissed = $numGoodKeys - $numInserted;
         echo "<br><br><font color=red>".
             "(Perhaps <b>$numMissed</b> were duplicates?)</font>";
         }
