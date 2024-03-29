@@ -234,6 +234,8 @@ FRAME (FM)
 
 GHOST (GH)
 
+ROCKET_RIDE (RR)
+
 PONG
 
 
@@ -1064,6 +1066,15 @@ p_id#
 
 Indicates that the players associated with listed p_id have become an invisible
 ghosts.
+
+
+
+RR
+p_id o_id#
+
+Indicates that the player associated with listed p_id just started riding
+the rocket represented by object o_id.
+
 
 
 

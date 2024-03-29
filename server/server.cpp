@@ -17928,6 +17928,48 @@ void removeOwnership( int inX, int inY ) {
 
 
 
+
+void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
+    useContentSettings();
+        
+    int rocketObjectID =
+        SettingsManager::getIntSetting( "rocketObject", -1 );
+    
+    useMainSettings();
+
+    if( rocketObjectID == -1 ) {
+        AppLog::errorF( "Player %d rode rocket at %d,%d but no rocketObject "
+                        "set in conentSettings", inPlayer->id, inX, inY );    
+        return;
+        }
+    
+    char *message = autoSprintf( "RR\n%d %d#", inPlayer->id, rocketObjectID );
+    
+    int messageLen = strlen( message );
+
+    int numLive = players.size();
+
+    for( int p=0; p<numLive; p++ ) {
+
+        LiveObject *nextPlayer = players.getElement(p);
+        
+        if( nextPlayer->error ) {
+            continue;
+            }
+
+        sendMessageToPlayer( nextPlayer, message, messageLen );
+        }
+    
+    delete [] message;
+
+    // FIXME
+
+    // start grant call on ahapGate
+    }
+
+
+
+
 int main() {
     useMainSettings();
     
@@ -24109,6 +24151,18 @@ int main() {
                                     else {    
                                         setMapObject( m.x, m.y, r->newTarget );
                                         newGroundObject = r->newTarget;
+                                        
+                                        if( r->newTarget > 0 ) {
+                                            ObjectRecord *newO =
+                                                getObject( r->newTarget );
+                                            
+                                            if( newO != NULL &&
+                                                newO->rideRocket ) {
+                                                
+                                                startAHAPGrant(
+                                                    m.x, m.y, nextPlayer );
+                                                }
+                                            }
                                         }
                                     
                                     if( hungryWorkCost > 0 ) {

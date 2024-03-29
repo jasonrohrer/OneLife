@@ -495,6 +495,11 @@ typedef struct ObjectRecord {
 
         // gives clue whenever player is newly holding this object
         char giveClue;
+
+        
+        // the player that triggers the creation of this transition rides
+        // the rocket
+        char rideRocket;
         
 
         // if enabled, object can only be created if nearPopFraction
