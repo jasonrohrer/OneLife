@@ -67,6 +67,7 @@ specialBiomes.cpp \
 cravings.cpp \
 offspringTracker.cpp \
 ipBanList.cpp \
+ahapGate.cpp \
 
 
 
