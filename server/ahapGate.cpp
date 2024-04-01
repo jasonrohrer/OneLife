@@ -95,7 +95,6 @@ AHAPGrantResult *stepAHAPGate() {
                 r->request = NULL;
                 
                 // start grant request
-                // FIXME
                         
                 /*
                   server.php
