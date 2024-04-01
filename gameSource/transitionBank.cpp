@@ -2745,7 +2745,7 @@ void addTrans( int inActor, int inTarget,
             delete [] t->comment;
             t->comment = stringDuplicate( inComment );
 
-            if( t->authorTag == NULL ) {
+            if( t->authorTag != NULL ) {
                 delete [] t->authorTag;
                 }
             t->authorTag = getAuthorHash();

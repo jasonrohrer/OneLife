@@ -3,6 +3,11 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version ???
+
+--Fixed a memory leak in transitionBank.
+
+
 Server Fixes:
 
 --AHAP Steam Build script now includes snapshot of most recent AHAP content
