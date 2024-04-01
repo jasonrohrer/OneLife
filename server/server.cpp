@@ -45,6 +45,7 @@
 #include "triggers.h"
 #include "playerStats.h"
 #include "lineageLog.h"
+#include "ahapGate.h"
 #include "serverCalls.h"
 #include "failureLog.h"
 #include "names.h"
@@ -2440,6 +2441,8 @@ void quitCleanup() {
         }
     pastPlayers.deleteAll();
     
+    
+    freeAHAPGate();
 
     freeLineageLimit();
     
@@ -17962,9 +17965,9 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
     
     delete [] message;
 
-    // FIXME
-
     // start grant call on ahapGate
+
+    triggerAHAPGrant( inPlayer->email );
     }
 
 
@@ -18266,6 +18269,8 @@ int main() {
     
     initLineageLimit();
     
+    initAHAPGate();
+
     initCurseDB();
     initTrustDB();
 
@@ -18649,6 +18654,33 @@ int main() {
             checkOrderPropagation();
             
             checkCustomGlobalMessage();
+            
+
+            AHAPGrantResult *grantResult = stepAHAPGate();
+            
+            if( grantResult != NULL ) {
+                LiveObject *grantedPlayer = 
+                    getPlayerByEmail( grantResult->email );
+                
+                if( grantedPlayer != NULL && ! grantedPlayer->error ) {
+                    
+                    char *message = autoSprintf( "RA\n%s %s#", 
+                                                 grantResult->steamKey, 
+                                                 grantResult->accountURL );
+    
+                    int messageLen = strlen( message );
+                    
+                    sendMessageToPlayer( grantedPlayer, message, messageLen );
+                
+                    delete [] message;
+                    }
+                
+                delete [] grantResult->email;
+                delete [] grantResult->steamKey;
+                delete [] grantResult->accountURL;
+                
+                delete grantResult;
+                }
             
 
             int lowestCravingID = INT_MAX;

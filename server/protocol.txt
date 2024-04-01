@@ -236,6 +236,8 @@ GHOST (GH)
 
 ROCKET_RIDE (RR)
 
+ROCKET_ACCOUNT (RA)
+
 PONG
 
 
@@ -1073,7 +1075,15 @@ RR
 p_id o_id#
 
 Indicates that the player associated with listed p_id just started riding
-the rocket represented by object o_id.
+the rocket represented by object o_id.  Sent to all players on server.
+
+
+
+RA
+steam_key account_url#
+
+Sent to player who rode the rocket, indicating details of the account that
+has been granted to them.
 
 
 
