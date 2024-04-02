@@ -122,6 +122,7 @@ static char vogPickerOn = false;
     
 
 extern float musicLoudness;
+extern double musicHeadroom;
 
 
 static JenkinsRandomSource randSource( 340403 );
@@ -1300,6 +1301,7 @@ typedef enum messageType {
     FLIP,
     CRAVING,
     GHOST,
+    ROCKET_RIDE,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1473,6 +1475,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "GH" ) == 0 ) {
         returnValue = GHOST;
+        }
+    else if( strcmp( copy, "RR" ) == 0 ) {
+        returnValue = ROCKET_RIDE;
         }
     
     delete [] copy;
@@ -14523,6 +14528,41 @@ void LivingLifePage::step() {
                             break;
                             }
                         }
+                    }
+                delete [] lines[i];
+                }
+            delete [] lines;
+            }
+        else if( type == ROCKET_RIDE ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            for( int i=1; i<numLines; i++ ) {
+                int p_id, o_id;
+                int numRead = sscanf( lines[i], "%d %d",
+                                      &( p_id ), &( o_id ) );
+
+                if( numRead == 2 ) {
+                    ObjectRecord *rocketO = getObject( o_id );
+                    
+                    if( rocketO != NULL &&
+                        rocketO->creationSound.numSubSounds > 0 ) {
+                        
+                        // kick off rocket-riding music
+                        
+                        playSound( rocketO->creationSound.ids[0],
+                                   rocketO->creationSound.volumes[0] *
+                                   musicLoudness * musicHeadroom );
+                        }
+                    
+                    // FIXME
+                    // Show Rocket-Riding animation sequence to everyone
+                    
                     }
                 delete [] lines[i];
                 }
