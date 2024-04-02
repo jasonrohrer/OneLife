@@ -664,7 +664,7 @@ float initSoundBankStep() {
             if( soundData != NULL ) {
                 
                 int numSamples;
-                int16_t *samples;
+                int16_t *samples = NULL;
                 
                 if( strstr( fileName, ".aiff" ) != NULL ) {
                     samples =

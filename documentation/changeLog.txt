@@ -7,6 +7,9 @@ Version ???
 
 --Fixed a memory leak in transitionBank.
 
+--Fixed crash if a soundBank sound is not mono and thus fails to load.
+
+
 
 Server Fixes:
 
