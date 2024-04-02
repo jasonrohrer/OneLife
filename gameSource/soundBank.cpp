@@ -664,10 +664,15 @@ float initSoundBankStep() {
             if( soundData != NULL ) {
                 
                 int numSamples;
-                int16_t *samples = NULL;
-                
+                // mono
+                int16_t *samplesM = NULL;
+
+                // left and right, for stereo OGG files
+                int16_t *samplesL = NULL;
+                int16_t *samplesR = NULL;
+
                 if( strstr( fileName, ".aiff" ) != NULL ) {
-                    samples =
+                    samplesM =
                         readMono16AIFFData( soundData, 
                                             soundDataLength, &numSamples );
                     }
@@ -677,19 +682,38 @@ float initSoundBankStep() {
                     int numChan = getOGGChannels( o );
                     if( numChan == 1 ) {
                         numSamples = getOGGTotalSamples( o );
-                        samples = new int16_t[ numSamples ];
+                        samplesM = new int16_t[ numSamples ];
                         
-                        readAllMonoSamplesOGG( o, samples );
+                        readAllMonoSamplesOGG( o, samplesM );
                         }
-                    // skip non-mono OGG files
+                    else if( numChan == 2 ) {
+                        numSamples = getOGGTotalSamples( o );
+                        samplesL = new int16_t[ numSamples ];
+                        samplesR = new int16_t[ numSamples ];
+                        
+                        readAllStereoSamplesOGG( o, samplesL, samplesR );
+                        
+                        }
+                    
+                    // skip non-mono and non-stereo OGG files
                     
                     closeOGG( o );
                     }
                 
 
-                if( samples != NULL ) {
+                if( samplesM != NULL ||
+                    ( samplesL != NULL && samplesR != NULL ) ) {
                     
-                    r->sound = setSoundSprite( samples, numSamples );
+                    if( samplesM != NULL ) {
+                        r->sound = setSoundSprite( samplesM, numSamples );
+                        delete [] samplesM;
+                        }
+                    else {
+                        r->sound = setSoundSprite( samplesL, samplesR, 
+                                                   numSamples );
+                        delete [] samplesL;
+                        delete [] samplesR;
+                        }
                     
                     if( doComputeSoundHashes ) {
                         recomputeSoundHash( r, soundDataLength, soundData );
@@ -700,8 +724,6 @@ float initSoundBankStep() {
                     if( maxID < r->id ) {
                         maxID = r->id;
                         }
-
-                    delete [] samples;                    
                     }
                 delete [] soundData;
                 }

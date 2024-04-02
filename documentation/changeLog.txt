@@ -9,6 +9,8 @@ Version ???
 
 --Fixed crash if a soundBank sound is not mono and thus fails to load.
 
+--Support for stereo OGG files in soundBank.
+
 
 
 Server Fixes:

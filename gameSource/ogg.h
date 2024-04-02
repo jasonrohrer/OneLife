@@ -32,6 +32,10 @@ int readNextSamplesOGG( OGGHandle inOGG,
 void readAllMonoSamplesOGG( OGGHandle inOGG,
                             int16_t *inMonoBuffer );
 
+void readAllStereoSamplesOGG( OGGHandle inOGG,
+                              int16_t *inLeftBuffer,
+                              int16_t *inRightBuffer );
+
 
 // seeks in the OGG 
 char seekOGG( OGGHandle inOGG, int inNextSample );
