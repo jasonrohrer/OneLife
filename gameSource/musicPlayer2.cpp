@@ -1,6 +1,7 @@
 #include "minorGems/game/game.h"
 #include <math.h>
 
+#include "musicPlayer.h"
 
 
 
@@ -457,4 +458,54 @@ void setMusicLoudness( double inLoudness, char inForce ) {
 
 double getMusicLoudness() {
     return musicLoudnessLive;
+    }
+
+
+
+static double preSuppressionTargetLoudness = -1;
+
+static SimpleVector<const char *> suppressionList;
+
+void addMusicSuppression( const char *inActionName ) {
+    char found = false;
+    for( int i=0; i<suppressionList.size(); i++ ) {
+        const char *actionName = suppressionList.getElementDirect( i );
+        
+        if( strcmp( actionName, inActionName ) == 0 ) {
+            found = true;
+            }
+        }
+    if( !found ) {
+        suppressionList.push_back( inActionName );
+        
+        if( suppressionList.size() == 1 ) {
+            // first suppression
+            preSuppressionTargetLoudness = musicTargetLoudness;
+            
+            // fade music out now
+            setMusicLoudness( 0 );
+            }
+        }
+    }
+
+
+void removeMusicSuppression( const char *inActionName ) {
+    char found = false;
+    
+    for( int i=0; i<suppressionList.size(); i++ ) {
+        const char *actionName = suppressionList.getElementDirect( i );
+        
+        if( strcmp( actionName, inActionName ) == 0 ) {
+            found = true;
+            
+            suppressionList.deleteElement( i );
+            i--;
+            }
+        }
+
+    if( found && suppressionList.size() == 0 ) {
+        // last supression removed
+        // restore volume
+        setMusicLoudness( preSuppressionTargetLoudness );
+        }
     }

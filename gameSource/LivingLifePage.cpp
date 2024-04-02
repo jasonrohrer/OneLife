@@ -21139,9 +21139,9 @@ void LivingLifePage::step() {
                         // only show starving at 2 food or lower
                         // starving means you can nurse/eat
                         if( ourLiveObject->foodStore + mYumBonus <= 2 ) {
-                             setMusicLoudness( 0 );
-                             mHungerSlipVisible = 2;
-                             mPulseHungerSound = true;
+                            addMusicSuppression( "LivingLifeHunger" );
+                            mHungerSlipVisible = 2;
+                            mPulseHungerSound = true;
                             }
                         }
                     else if( ourLiveObject->foodStore == 
@@ -21165,7 +21165,7 @@ void LivingLifePage::step() {
 
 
                         // quiet music so hunger sound can be heard
-                        setMusicLoudness( 0 );
+                        addMusicSuppression( "LivingLifeHunger" );
                         mHungerSlipVisible = 2;
                     
                         if( ourLiveObject->foodStore > 0 ) {
@@ -21198,7 +21198,7 @@ void LivingLifePage::step() {
                     if( ourLiveObject->foodStore + mYumBonus > 4 ||
                         computeCurrentAge( ourLiveObject ) >= 57 ) {
                         // restore music
-                        setMusicLoudness( musicLoudness );
+                        removeMusicSuppression( "LivingLifeHunger" );
                         
                         mPulseHungerSound = false;
                         }

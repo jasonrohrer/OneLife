@@ -11,6 +11,11 @@ Version ???
 
 --Support for stereo OGG files in soundBank.
 
+--Support for suppressing music when a longer (usually OGG) soundBank sound
+  plays.  Hunger chime music suppression also uses this same new supression
+  system now.
+
+
 
 
 Server Fixes:

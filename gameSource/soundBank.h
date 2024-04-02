@@ -32,6 +32,8 @@ typedef struct SoundRecord {
         
 
         int liveUseageCount;
+
+        double lengthInSeconds;
         
     } SoundRecord;
 
