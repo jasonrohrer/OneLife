@@ -1359,6 +1359,18 @@ void playSound( SoundSpriteHandle inSoundSprite,
     }
 
 
+
+double getSoundLengthInSeconds( int inID ) {
+    SoundRecord *r = getSoundRecord( inID );
+    
+    if( r == NULL ) {
+        return 0;
+        }
+
+    return r->lengthInSeconds;
+    }
+
+
     
 char markSoundLive( int inID ) {
     SoundRecord *r = getSoundRecord( inID );

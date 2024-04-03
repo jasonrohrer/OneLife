@@ -118,6 +118,11 @@ void playSound( SoundSpriteHandle inSoundSprite,
 
 
 
+// gets length of a sound in bank
+double getSoundLengthInSeconds( int inID );
+
+
+
 
 // true if started
 char startRecordingSound();

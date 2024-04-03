@@ -28,6 +28,10 @@
 #include "settingsToggle.h"
 
 
+#include "rocketAnimation.h"
+
+
+
 #include "../commonSource/fractalNoise.h"
 #include "../commonSource/sayLimit.h"
 
@@ -267,6 +271,9 @@ static double culvertFractalAmp = 98;
 
 static int usedToolSlots = 0;
 static int totalToolSlots = 0;
+
+
+static char rocketAnimationStarted = false;
 
 
 typedef struct Homeland {
@@ -3383,6 +3390,12 @@ LivingLifePage::~LivingLifePage() {
         delete [] homelands.getElementDirect( i ).familyName;
         }
     homelands.deleteAll();
+
+
+    if( rocketAnimationStarted  ) {
+        freeRocketAnimation();
+        rocketAnimationStarted = false;
+        }
     }
 
 
@@ -9347,6 +9360,13 @@ void LivingLifePage::draw( doublePair inViewCenter,
         // skip gui
         return;
         }    
+
+
+    if( isRocketAnimationRunning() ) {
+        drawRocketAnimation();
+        }
+
+
         
     if( showFPS ) {
             
@@ -14550,6 +14570,9 @@ void LivingLifePage::step() {
                 if( numRead == 2 ) {
                     ObjectRecord *rocketO = getObject( o_id );
                     
+
+                    double lengthInSeconds = 0;
+                    
                     if( rocketO != NULL &&
                         rocketO->creationSound.numSubSounds > 0 ) {
                         
@@ -14558,11 +14581,25 @@ void LivingLifePage::step() {
                         playSound( rocketO->creationSound.ids[0],
                                    rocketO->creationSound.volumes[0] *
                                    musicLoudness * musicHeadroom );
+                        
+                        lengthInSeconds = getSoundLengthInSeconds( 
+                            rocketO->creationSound.ids[0] );
                         }
                     
-                    // FIXME
-                    // Show Rocket-Riding animation sequence to everyone
+                    LiveObject *ridingPlayer = getLiveObject( p_id );
                     
+                    if( ! rocketAnimationStarted &&
+                        lengthInSeconds > 0 && 
+                        rocketO != NULL &&
+                        ridingPlayer != NULL ) {
+                        
+                        // Show Rocket-Riding animation sequence to everyone
+                    
+                        rocketAnimationStarted = true;
+                        initRocketAnimation( this,
+                                             ridingPlayer, rocketO,
+                                             lengthInSeconds );
+                        }                    
                     }
                 delete [] lines[i];
                 }
@@ -22698,6 +22735,17 @@ void LivingLifePage::step() {
 
     if( showFPS ) {
         timeMeasures[1] += game_getCurrentTime() - updateStartTime;
+        }
+
+    
+    if( rocketAnimationStarted  ) {
+        if( isRocketAnimationRunning() ) {
+            stepRocketAnimation();
+            }
+        else {
+            freeRocketAnimation();
+            rocketAnimationStarted = false;
+            }
         }
     
     }
