@@ -49,7 +49,7 @@ typedef struct StarInfo {
 SimpleVector<StarInfo> stars;
 
 // in screen units per frame
-double starSpeed = 0.25;
+double starSpeed = 0.5;
 
 
 
@@ -225,7 +225,7 @@ void drawRocketAnimation() {
     // draw it 2x as big as needed, to be sure there are no
     // edges showing
     drawRect( lastScreenViewCenter,
-              visibleViewWidth / 4, viewHeight / 4 );
+              visibleViewWidth, viewHeight );
 
     
     setDrawColor( &starColor );
