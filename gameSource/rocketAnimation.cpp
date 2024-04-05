@@ -43,6 +43,10 @@ typedef struct StarInfo {
         // relative to screen center
         doublePair pos;
         double fade;
+        
+        double twinkleAmount;
+        double twinkleProgress;
+        double twinkleRate;
     } StarInfo;
 
 
@@ -71,6 +75,17 @@ static double progress = 0;
 
 static char running = false;
 
+
+
+double getTwinkleRate() {
+    return randSource.getRandomBoundedDouble( 0.01, 0.02 );
+    }
+
+
+double getTwinkleAmount( double inFade ) {
+    return randSource.getRandomBoundedDouble( inFade * .25, 
+                                              inFade * .6 );
+    }
 
 
 void initRocketAnimation( LivingLifePage *inPage, 
@@ -109,7 +124,15 @@ void initRocketAnimation( LivingLifePage *inPage,
                                                       5 * viewHeight ) ) };
         double fade = randSource.getRandomBoundedDouble( 0.25, 1 );
         
-        StarInfo s = { posOnScreen, fade };
+        double twinkleAmount = getTwinkleAmount( fade );
+        
+        double twinkleRate = getTwinkleRate();
+        
+        double twinkleProgress = randSource.getRandomBoundedDouble( 0, 1 );
+        
+
+        StarInfo s = { posOnScreen, fade, twinkleAmount, twinkleProgress,
+                       twinkleRate };
         
         stars.push_back( s );
         }
@@ -153,6 +176,25 @@ void stepRocketAnimation() {
             }
         }
     
+    for( int i=0; i<stars.size(); i++ ) {
+        StarInfo *s = stars.getElement( i );
+        
+        double lastProgress = s->twinkleProgress;
+
+        s->twinkleProgress += s->twinkleRate  * 
+            frameRateFactor;
+
+        if( floor( s->twinkleProgress ) > floor( lastProgress ) ) {
+            // every full whole number of progress, re-roll rate
+            s->twinkleRate = getTwinkleRate();
+            
+            // also re-roll amount
+            // note that this will create a discontinuity in the twinkle
+            s->twinkleAmount = getTwinkleAmount( s->fade );
+            }
+        }
+    
+
     double timePassed = game_getCurrentTime() - startTime;
     
     progress = timePassed / animationLengthSeconds;
@@ -237,7 +279,13 @@ void drawRocketAnimation() {
     for( int i=0; i<stars.size(); i++ ) {
         StarInfo *s = stars.getElement( i );
         
-        setDrawFade( starColor.a * s->fade );
+        double fade = s->fade;
+        
+        // twinkle reduces brightness by between 0 and twinkleAmount
+        fade -=  s->twinkleAmount * 
+            0.5 *( sin( s->twinkleProgress * 2 * M_PI ) + 1 );
+
+        setDrawFade( starColor.a * fade );
         
         doublePair pos = add( s->pos, starOffset );
 
