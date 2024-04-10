@@ -324,6 +324,9 @@ void drawRocketAnimation() {
     double animFrameTime = frameRateFactor * frameCount / 60.0;
     
     char used;
+
+    setAnimationEmotion( ridingPlayer->currentEmot );
+    addExtraAnimationEmotions( &( ridingPlayer->permanentEmots ) );
     
     // don't draw rider as moving, b/c they bounce up and down
     drawObjectAnim( ridingPlayer->displayID, 
@@ -346,7 +349,8 @@ void drawRocketAnimation() {
                     ridingPlayer->clothing,
                     ridingPlayer->clothingContained );
     
-
+    setAnimationEmotion( NULL );
+    
 
     drawObjectAnim( rocket->id, 
                     2, 
