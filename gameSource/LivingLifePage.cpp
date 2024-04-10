@@ -5924,6 +5924,37 @@ char *getSmallNumberString( int inNumber,
     }
 
 
+doublePair getSpeechOffset( LiveObject *inPlayer ) {
+    doublePair speechPos = {0, 84};
+    
+    LiveObject *o = inPlayer;
+
+    ObjectRecord *displayObj = getObject( o->displayID );
+    
+    
+    double age = computeCurrentAge( o );
+    
+    doublePair headPos = 
+        displayObj->spritePos[ getHeadIndex( displayObj, age ) ];
+    
+    doublePair bodyPos = 
+        displayObj->spritePos[ getBodyIndex( displayObj, age ) ];
+    
+    doublePair frontFootPos = 
+        displayObj->spritePos[ getFrontFootIndex( displayObj, age ) ];
+    
+    headPos = add( headPos, 
+                   getAgeHeadOffset( age, headPos, 
+                                     bodyPos, frontFootPos ) );
+    headPos = add( headPos,
+                   getAgeBodyOffset( age, bodyPos ) );
+    
+    speechPos.y += headPos.y;
+    
+    return speechPos;
+    }
+
+
 
 
 char *getSpokenNumber( unsigned int inNumber, int inSigFigs = 2 ) {
@@ -8503,32 +8534,7 @@ void LivingLifePage::draw( doublePair inViewCenter,
         
         doublePair pos = speakersPos.getElementDirect( i );
         
-        
-        doublePair speechPos = pos;
-
-        speechPos.y += 84;
-
-        ObjectRecord *displayObj = getObject( o->displayID );
- 
-
-        double age = computeCurrentAge( o );
-        
-        doublePair headPos = 
-            displayObj->spritePos[ getHeadIndex( displayObj, age ) ];
-        
-        doublePair bodyPos = 
-            displayObj->spritePos[ getBodyIndex( displayObj, age ) ];
-
-        doublePair frontFootPos = 
-            displayObj->spritePos[ getFrontFootIndex( displayObj, age ) ];
-        
-        headPos = add( headPos, 
-                       getAgeHeadOffset( age, headPos, 
-                                         bodyPos, frontFootPos ) );
-        headPos = add( headPos,
-                       getAgeBodyOffset( age, bodyPos ) );
-        
-        speechPos.y += headPos.y;
+        doublePair speechPos = add( pos, getSpeechOffset( o ) );
         
         int width = 250;
         int widthLimit = 250;

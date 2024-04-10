@@ -13,8 +13,11 @@ extern double viewHeight;
 
 extern double frameRateFactor;
 
+extern Font *handwritingFont;
 
 extern double computeCurrentAge( LiveObject *inObj );
+
+extern doublePair getSpeechOffset( LiveObject *inPlayer );
 
 
 
@@ -371,6 +374,34 @@ void drawRocketAnimation() {
                     false, false, false,
                     getEmptyClothingSet(),
                     NULL );
+
+
+    if( ridingPlayer->currentSpeech != NULL &&
+        ridingPlayer->speechFade > 0 ) {
+        
+        doublePair speechPos = add( riderPos, getSpeechOffset( ridingPlayer ) );
+
+        int width = 250;
+        int widthLimit = 250;
+        
+        double fullWidth = 
+            handwritingFont->measureString( ridingPlayer->currentSpeech );
+        
+        if( fullWidth < width ) {
+            width = (int)fullWidth;
+            }
+        
+        
+        speechPos.x -= width / 2;
+
+        
+        page->drawChalkBackgroundString( 
+            speechPos, ridingPlayer->currentSpeech, 
+            ridingPlayer->speechFade, widthLimit,
+            ridingPlayer );
+        
+
+        }
     }
 
 

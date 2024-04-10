@@ -562,6 +562,16 @@ class LivingLifePage : public GamePage, public ActionListener {
         virtual void actionPerformed( GUIComponent *inTarget );
         
 
+        // inSpeaker can be NULL
+        void drawChalkBackgroundString( doublePair inPos, 
+                                        const char *inString,
+                                        double inFade,
+                                        double inMaxWidth,
+                                        LiveObject *inSpeaker = NULL,
+                                        int inForceMinChalkBlots = -1,
+                                        FloatColor *inForceBlotColor = NULL,
+                                        FloatColor *inForceTextColor = NULL );
+
     protected:
 
         int mServerSocket;
@@ -1006,15 +1016,6 @@ class LivingLifePage : public GamePage, public ActionListener {
 
         void clearLiveObjects();
         
-        // inSpeaker can be NULL
-        void drawChalkBackgroundString( doublePair inPos, 
-                                        const char *inString,
-                                        double inFade,
-                                        double inMaxWidth,
-                                        LiveObject *inSpeaker = NULL,
-                                        int inForceMinChalkBlots = -1,
-                                        FloatColor *inForceBlotColor = NULL,
-                                        FloatColor *inForceTextColor = NULL );
         
         
         void drawOffScreenSounds();
