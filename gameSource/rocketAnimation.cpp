@@ -14,6 +14,10 @@ extern double viewHeight;
 extern double frameRateFactor;
 
 
+extern double computeCurrentAge( LiveObject *inObj );
+
+
+
 
 // relative to screen center
 static doublePair rocketPos;
@@ -53,7 +57,11 @@ typedef struct StarInfo {
 SimpleVector<StarInfo> stars;
 
 // in screen units per frame
-double starSpeed = 0.5;
+double starSpeed = 0.25;
+
+
+double rocketSpeed = .625;
+
 
 
 
@@ -141,6 +149,10 @@ void initRocketAnimation( LivingLifePage *inPage,
     running = true;
     
     progress = 0;
+
+
+    rocketStartPos.x = 0;
+    rocketStartPos.y = - viewHeight;
     }
 
 
@@ -291,7 +303,70 @@ void drawRocketAnimation() {
 
         drawRect( add( pos, lastScreenViewCenter ), 1.5, 1.5 );
         }
+
+
+    doublePair rocketOffset = 
+        { 0, 
+          rocketSpeed * frameCount * frameRateFactor };
+
+    doublePair rocketPos = add( lastScreenViewCenter,
+                                add( rocketOffset, rocketStartPos ) );
     
+
+
+    doublePair heldOffset = rocket->heldOffset;
+    heldOffset = sub( heldOffset, getObjectCenterOffset( rocket ) );
+
+    doublePair riderPos = sub( rocketPos, heldOffset );
+    
+    
+    
+    double animFrameTime = frameRateFactor * frameCount / 60.0;
+    
+    char used;
+    
+    // don't draw rider as moving, b/c they bounce up and down
+    drawObjectAnim( ridingPlayer->displayID, 
+                    2, 
+                    ground,
+                    animFrameTime,
+                    1,
+                    ground,
+                    animFrameTime,
+                    animFrameTime,
+                    &used,
+                    endAnimType,
+                    endAnimType,
+                    riderPos,
+                    0,
+                    false,
+                    false,
+                    computeCurrentAge( ridingPlayer ),
+                    false, false, false,
+                    ridingPlayer->clothing,
+                    ridingPlayer->clothingContained );
+    
+
+
+    drawObjectAnim( rocket->id, 
+                    2, 
+                    moving,
+                    animFrameTime,
+                    1,
+                    moving,
+                    animFrameTime,
+                    animFrameTime,
+                    &used,
+                    endAnimType,
+                    endAnimType,
+                    rocketPos,
+                    0,
+                    false,
+                    false,
+                    -1,
+                    false, false, false,
+                    getEmptyClothingSet(),
+                    NULL );
     }
 
 

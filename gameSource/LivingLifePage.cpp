@@ -1214,7 +1214,7 @@ static double computeCurrentAgeNoOverride( LiveObject *inObj ) {
 
 
 
-static double computeCurrentAge( LiveObject *inObj ) {
+double computeCurrentAge( LiveObject *inObj ) {
     if( inObj->finalAgeSet ) {
         return inObj->age;
         }
