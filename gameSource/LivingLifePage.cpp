@@ -20259,6 +20259,16 @@ void LivingLifePage::step() {
                                             }
                                         }
                                     }
+                                
+                                if( isRocketAnimationRunning() &&
+                                    existing->currentSpeech != NULL ) {
+                                    // do this down here so that
+                                    // metadata is already processed
+                                    // and stripped off
+                                    addRocketSpeech(
+                                        existing->id,
+                                        existing->currentSpeech );
+                                    }
                                 }
                             
                             break;

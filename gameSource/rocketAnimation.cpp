@@ -376,6 +376,34 @@ void drawRocketAnimation() {
                     NULL );
 
 
+    
+    // draw other's speech above rocket and player
+    for( int i=0; i<extraSpeech.size(); i++ ) {
+        SpeechInfo *s = extraSpeech.getElement( i );
+
+        int width = 250;
+        int widthLimit = 250;
+        
+        double fullWidth = 
+            handwritingFont->measureString( s->speech );
+        
+        if( fullWidth < width ) {
+            width = (int)fullWidth;
+            }
+        
+        doublePair speechPos = s->pos;
+        
+        speechPos.x -= width / 2;
+
+        speechPos = add( speechPos, lastScreenViewCenter );
+
+        page->drawChalkBackgroundString( 
+            speechPos, s->speech, 
+            s->fade, widthLimit );
+        }
+
+    // draw player's speech on top
+
     if( ridingPlayer->currentSpeech != NULL &&
         ridingPlayer->speechFade > 0 ) {
         
@@ -406,7 +434,7 @@ void drawRocketAnimation() {
 
 
 
-void addSpeech( int inSpeakerID, const char *inSpeech ) {
+void addRocketSpeech( int inSpeakerID, const char *inSpeech ) {
     if( inSpeakerID == ridingPlayer->id ) {
         // we handle drawing riding player's speech separately
         return;
@@ -429,7 +457,7 @@ void addSpeech( int inSpeakerID, const char *inSpeech ) {
         inSpeakerID,
         stringDuplicate( inSpeech ),
         posOnScreen,
-        0,
+        1.0,
         game_getCurrentTime() + 3 + strlen( inSpeech ) / 5 };
     
     extraSpeech.push_back( s );

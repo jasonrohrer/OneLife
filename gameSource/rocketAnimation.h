@@ -16,7 +16,7 @@ void stepRocketAnimation();
 void drawRocketAnimation();
 
 
-void addSpeech( int inSpeakerID, const char *inSpeech );
+void addRocketSpeech( int inSpeakerID, const char *inSpeech );
 
 
 char isRocketAnimationRunning();
