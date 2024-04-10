@@ -445,8 +445,8 @@ void addRocketSpeech( int inSpeakerID, const char *inSpeech ) {
     double horExtent = 
         0.666 * visibleViewWidth / 2;
 
-    double vertStart = - 0.9 * viewHeight / 2;
-    double vertEnd = - 0.4 * viewHeight / 2;
+    double vertStart = - 0.6 * viewHeight / 2;
+    double vertEnd = - 0.1 * viewHeight / 2;
         
     doublePair posOnScreen = { 
         randSource.getRandomBoundedDouble( -horExtent, horExtent ),
