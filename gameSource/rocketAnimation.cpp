@@ -63,7 +63,7 @@ SimpleVector<StarInfo> stars;
 double starSpeed = 0.25;
 
 
-double rocketSpeed = .625;
+double rocketSpeed = .5;
 
 
 
@@ -155,7 +155,7 @@ void initRocketAnimation( LivingLifePage *inPage,
 
 
     rocketStartPos.x = 0;
-    rocketStartPos.y = - viewHeight;
+    rocketStartPos.y = - viewHeight * 0.75;
     }
 
 
