@@ -989,7 +989,7 @@ function ag_grant() {
 
 
         
-        // check of OHOL ticket exists
+        // check if OHOL ticket exists
         global $tableNamePrefixOHOLTicketServer;
         $query = "SELECT ticket_id, name, email_opt_in, tag, order_number ".
             "FROM $tableNamePrefixOHOLTicketServer"."tickets " .
@@ -1118,9 +1118,76 @@ function ag_grant() {
         }
     else {
         // record already exists for this email, can't re-grant
-        ag_log( "grant denied because record already exists for $email" );
 
-        echo "DENIED";
+        // but go ahead and return existing info
+
+
+        // check if ahap ticket exists
+        global $tableNamePrefixAHAPTicketServer;
+        $query = "SELECT ticket_id ".
+            "FROM $tableNamePrefixAHAPTicketServer"."tickets " .
+            "WHERE email = '$email';";
+
+
+        $result = ag_queryDatabase( $query );
+        
+        $numRows = mysqli_num_rows( $result );
+        
+        $ticket_id = "";
+        
+        if( $numRows > 0 ) {
+            $ticket_id = ag_mysqli_result( $result, 0, "ticket_id" );
+            }
+        else {
+            ag_log( "repeat grant denied because $email not found in ".
+                    "ahap ticketServer" );
+            
+            echo "DENIED";
+            return;
+            }
+
+        $query = "SELECT steam_gift_key ".
+            "FROM $tableNamePrefix"."users " .
+            "WHERE email = '$email';";
+
+                $result = ag_queryDatabase( $query );
+        
+        $numRows = mysqli_num_rows( $result );
+        
+        $steam_gift_key = "";
+        
+        if( $numRows > 0 ) {
+            $steam_gift_key = ag_mysqli_result( $result, 0, "steam_gift_key" );
+            }
+        else {
+            ag_log( "repeat grant denied because $email not found in ".
+                    "ahap users table" );
+            
+            echo "DENIED";
+            return;
+            }
+
+        // update sequence number
+        $query = "UPDATE $tableNamePrefix"."users SET " .
+            "sequence_number = sequence_number + 1 ".
+            "WHERE email = '$email'; ";
+        
+        ag_queryDatabase( $query );
+
+
+        if( $steam_gift_key == "" ) {
+            echo "NO-KEYS-LEFT\n";
+            }
+        else {
+            echo "$steam_gift_key\n";
+            }
+        
+        global $fullServerURL;
+        
+        echo "$fullServerURL".
+            "?action=show_account&ticket_id=$ticket_id\n";
+        
+        echo "OK";
         return;
         }
     }
