@@ -22803,10 +22803,8 @@ void LivingLifePage::step() {
 
     
     if( rocketAnimationStarted  ) {
-        if( isRocketAnimationRunning() ) {
-            stepRocketAnimation();
-            }
-        else {
+        stepRocketAnimation();
+        if( ! isRocketAnimationRunning() ) {
             freeRocketAnimation();
             rocketAnimationStarted = false;
             
