@@ -74,7 +74,9 @@ AHAPGrantResult *stepAHAPGate() {
         // done, have result
 
         char *webResult = r->request->getResult();
-            
+        
+        printf( "ahapGate got web result:\n%s\n\n", webResult );
+
         if( r->sequenceNumber == -1 ) {
             // still waiting for sequence number response
 
@@ -144,7 +146,7 @@ AHAPGrantResult *stepAHAPGate() {
                 delete [] hash;
                 
                 r->request = defaultTimeoutWebRequest( url );
-                printf( "Starting new web request for %s\n", url );
+                printf( "ahapGate starting new web request for %s\n", url );
                 
                 delete [] url;
                 
@@ -235,7 +237,7 @@ void triggerAHAPGrant( const char *inEmail ) {
     delete [] ahapGateURL;
     
     r.request = defaultTimeoutWebRequest( url );
-    printf( "Starting new web request for %s\n", url );
+    printf( "ahapGate starting new web request for %s\n", url );
         
     delete [] url;
 
