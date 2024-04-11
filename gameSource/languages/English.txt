@@ -585,6 +585,8 @@ ms "MS"
 
 youDied "YOU DIED"
 
+youWin "YOU WIN THE GAME"
+
 deathAgeOne "AGE:  1 YEAR"
 deathAge "AGE:  %d YEARS"
 
