@@ -48,9 +48,8 @@ Used by game servers to indicate that a given email has been granted access to
 Another Planet.  An assigned steam key is returned, along with a URL
 that the end-user can use to view their account details.
 
-Note that the assigned steam key can be a blank line if we run out of keys
+Note that the assigned steam key can be a NO-KEYS-LEFT if we run out of keys
 
-DENIED is returned if there are no life tokens left.
 
 
 hash_value is computed on both ends with:

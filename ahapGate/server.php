@@ -1101,8 +1101,13 @@ function ag_grant() {
             "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
         ag_queryDatabase( $query );
 
-        echo "$steam_gift_key\n";
-
+        if( $steam_gift_key == "" ) {
+            echo "NO-KEYS-LEFT\n";
+            }
+        else {
+            echo "$steam_gift_key\n";
+            }
+        
         global $fullServerURL;
         
         echo "$fullServerURL".
