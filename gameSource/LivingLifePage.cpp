@@ -116,6 +116,10 @@ extern int userTwinCount;
 
 extern char userReconnect;
 
+extern char *ahapAccountURL;
+extern char *ahapSteamKey;
+
+
 static char vogMode = false;
 static char vogModeActuallyOn = false;
 
@@ -1309,6 +1313,7 @@ typedef enum messageType {
     CRAVING,
     GHOST,
     ROCKET_RIDE,
+    ROCKET_ACCOUNT,
     PONG,
     COMPRESSED_MESSAGE,
     UNKNOWN
@@ -1485,6 +1490,9 @@ messageType getMessageType( char *inMessage ) {
         }
     else if( strcmp( copy, "RR" ) == 0 ) {
         returnValue = ROCKET_RIDE;
+        }
+    else if( strcmp( copy, "RA" ) == 0 ) {
+        returnValue = ROCKET_ACCOUNT;
         }
     
     delete [] copy;
@@ -3392,7 +3400,7 @@ LivingLifePage::~LivingLifePage() {
     homelands.deleteAll();
 
 
-    if( rocketAnimationStarted  ) {
+    if( rocketAnimationStarted ) {
         freeRocketAnimation();
         rocketAnimationStarted = false;
         }
@@ -14605,11 +14613,51 @@ void LivingLifePage::step() {
                         initRocketAnimation( this,
                                              ridingPlayer, rocketO,
                                              lengthInSeconds );
+
+                        if( ahapSteamKey != NULL ) {
+                            delete [] ahapSteamKey;
+                            }
+                        ahapSteamKey = NULL;
+                        
+                        if( ahapAccountURL != NULL ) {
+                            delete [] ahapAccountURL;
+                            }
+                        ahapAccountURL = NULL;
                         }                    
                     }
                 delete [] lines[i];
                 }
             delete [] lines;
+            }
+        else if( type == ROCKET_ACCOUNT ) {
+            int numLines;
+            char **lines = split( message, "\n", &numLines );
+            
+            if( numLines > 0 ) {
+                // skip first
+                delete [] lines[0];
+                }
+            
+            for( int i=1; i<numLines; i++ ) {
+                char steamKey[100];
+                char accountURL[200];
+                
+                int numRead = sscanf( lines[i], "%99s %199s",
+                                      steamKey, accountURL );
+
+                if( numRead == 2 ) {
+                    
+                    if( ahapSteamKey != NULL ) {
+                        delete [] ahapSteamKey;
+                        }
+                    ahapSteamKey = stringDuplicate( steamKey );
+                    
+                    if( ahapAccountURL != NULL ) {
+                        delete [] ahapAccountURL;
+                        }
+                    ahapAccountURL = stringDuplicate( accountURL );
+                    }
+                }
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
@@ -22761,6 +22809,20 @@ void LivingLifePage::step() {
         else {
             freeRocketAnimation();
             rocketAnimationStarted = false;
+            
+            if( ahapAccountURL != NULL ) {
+                closeSocket( mServerSocket );
+                mServerSocket = -1;
+                
+                setWaiting( false );
+
+                instantStopMusic();
+                // so sound tails are not still playing when we we get reborn
+                fadeSoundSprites( 0.1 );
+                setSoundLoudness( 0 );
+
+                setSignal( "rodeRocket" );
+                }
             }
         }
     

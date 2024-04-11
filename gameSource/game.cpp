@@ -140,6 +140,11 @@ int userTwinCount = 0;
 char userReconnect = false;
 
 
+char *ahapAccountURL = NULL;
+char *ahapSteamKey = NULL;
+
+
+
 // these are needed by ServerActionPage, but we don't use them
 int userID = -1;
 int serverSequenceNumber = 0;
@@ -880,6 +885,13 @@ void freeFrameDrawer() {
         }
     if( userTwinCode != NULL ) {
         delete [] userTwinCode;
+        }
+
+    if( ahapAccountURL != NULL ) {
+        delete [] ahapAccountURL;
+        }
+    if( ahapSteamKey != NULL ) {
+        delete [] ahapSteamKey;
         }
     }
 
@@ -2377,6 +2389,33 @@ void drawFrame( char inUpdate ) {
                     delete [] detailMessage;
                     }
 
+                currentGamePage->base_makeActive( true );
+                }
+            else if( livingLifePage->checkSignal( "rodeRocket" ) ) {
+                existingAccountPage->setStatus( NULL, false );
+
+                userReconnect = false;
+    
+                lastScreenViewCenter.x = 0;
+                lastScreenViewCenter.y = 0;
+                
+                setViewCenterPosition( lastScreenViewCenter.x, 
+                                       lastScreenViewCenter.y );
+                
+                // FIXME:
+                // need to show special-purpose page here
+                // with copy buttons
+                
+                currentGamePage = extendedMessagePage;
+    
+                extendedMessagePage->setMessageKey( "youWin" );
+    
+                char *subMessage = autoSprintf( "%s##%s",
+                                                ahapAccountURL, ahapSteamKey );
+                extendedMessagePage->setSubMessage( subMessage );    
+                
+                delete [] subMessage;
+                
                 currentGamePage->base_makeActive( true );
                 }
             }
