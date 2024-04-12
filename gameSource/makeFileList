@@ -79,6 +79,7 @@ exporter.cpp \
 importer.cpp \
 settingsToggle.cpp \
 rocketAnimation.cpp \
+AHAPResultPage.cpp \
 
 
 

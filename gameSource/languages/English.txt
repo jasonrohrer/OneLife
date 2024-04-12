@@ -587,6 +587,16 @@ youDied "YOU DIED"
 
 youWin "YOU WIN THE GAME"
 
+ahapAccess "ANOTHER PLANET ACCESS GRANTED"
+
+
+ahapCopyURL "COPY ACCOUNT URL"
+
+
+ahapCopySteamKey "COPY STEAM KEY"
+
+
+
 deathAgeOne "AGE:  1 YEAR"
 deathAge "AGE:  %d YEARS"
 

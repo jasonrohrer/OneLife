@@ -104,6 +104,7 @@ CustomRandomSource randSource( 34957197 );
 #include "PollPage.h"
 #include "GeneticHistoryPage.h"
 #include "ServicesPage.h"
+#include "AHAPResultPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -171,6 +172,7 @@ TwinPage *twinPage;
 PollPage *pollPage;
 GeneticHistoryPage *geneticHistoryPage;
 ServicesPage *servicesPage;
+AHAPResultPage *ahapResultsPage;
 //TestPage *testPage = NULL;
 
 
@@ -754,6 +756,8 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     
     servicesPage = new ServicesPage();
     
+    ahapResultsPage = new AHAPResultPage();
+    
 
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
@@ -837,6 +841,7 @@ void freeFrameDrawer() {
     delete pollPage;
     delete geneticHistoryPage;
     delete servicesPage;
+    delete ahapResultsPage;
 
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -2029,6 +2034,13 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             }
+        else if( currentGamePage == ahapResultsPage ) {
+            if( ahapResultsPage->checkSignal( "done" ) ) {
+                existingAccountPage->setStatus( NULL, false );
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
                 quitGame();
@@ -2402,20 +2414,8 @@ void drawFrame( char inUpdate ) {
                 setViewCenterPosition( lastScreenViewCenter.x, 
                                        lastScreenViewCenter.y );
                 
-                // FIXME:
-                // need to show special-purpose page here
-                // with copy buttons
-                
-                currentGamePage = extendedMessagePage;
+                currentGamePage = ahapResultsPage;
     
-                extendedMessagePage->setMessageKey( "youWin" );
-    
-                char *subMessage = autoSprintf( "%s##%s",
-                                                ahapAccountURL, ahapSteamKey );
-                extendedMessagePage->setSubMessage( subMessage );    
-                
-                delete [] subMessage;
-                
                 currentGamePage->base_makeActive( true );
                 }
             }
