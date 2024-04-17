@@ -27061,6 +27061,10 @@ int main() {
                     }
                 nextPlayer->email = stringDuplicate( "email_cleared" );
 
+
+                
+                if( ! nextPlayer->rodeRocket ) {
+                    
                 int deathID = getRandomDeathMarker();
                     
                 if( nextPlayer->customGraveID > -1 ) {
@@ -27342,6 +27346,9 @@ int main() {
                         nextPlayer->holdingID = 0;
                         }
                     }
+                
+                    }  // end of block:    if( ! nextPlayer->rodeRocket )
+                
                 }
             else if( ! nextPlayer->error ) {
                 // other update checks for living players
