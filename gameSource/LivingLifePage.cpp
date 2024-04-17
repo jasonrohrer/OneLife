@@ -8076,6 +8076,11 @@ void LivingLifePage::draw( doublePair inViewCenter,
             if( drawRec.person ) {
                 LiveObject *o = drawRec.personO;
                 
+                if( o->skipDrawing ) {
+                    continue;
+                    }
+                
+
                 ignoreWatchedObjectDraw( true );
 
 
@@ -14606,6 +14611,9 @@ void LivingLifePage::step() {
                         lengthInSeconds > 0 && 
                         rocketO != NULL &&
                         ridingPlayer != NULL ) {
+
+                        ridingPlayer->skipDrawing = true;
+                        
                         
                         // Show Rocket-Riding animation sequence to everyone
                     
@@ -17035,6 +17043,7 @@ void LivingLifePage::step() {
                 
                 o.isGhost = false;
                 
+                o.skipDrawing = false;
 
                 int forced = 0;
                 int done_moving = 0;

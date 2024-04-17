@@ -384,6 +384,10 @@ typedef struct LiveObject {
         
         char isGhost;
 
+        // for players that shouldn't be drawn for some reason
+        // (like after someone rides the rocket)
+        char skipDrawing;        
+
     } LiveObject;
 
 
