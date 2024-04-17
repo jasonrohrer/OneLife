@@ -969,7 +969,8 @@ typedef struct LiveObject {
         
         char error;
         const char *errorCauseString;
-        
+
+        char rodeRocket;
         
 
         int customGraveID;
@@ -10659,6 +10660,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.error = false;
     newObject.errorCauseString = "";
     
+    newObject.rodeRocket = false;
+    
+
     newObject.customGraveID = -1;
     newObject.deathReason = NULL;
     
@@ -17948,6 +17952,11 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
                         "set in conentSettings", inPlayer->id, inX, inY );    
         return;
         }
+
+    inPlayer->rodeRocket = true;
+    
+    inPlayer->dying = true;
+    inPlayer->dyingETA = Time::getCurrentTime() + rocketAnimationTime;
     
     char *message = autoSprintf( "RR\n%d %d#", inPlayer->id, rocketObjectID );
     
