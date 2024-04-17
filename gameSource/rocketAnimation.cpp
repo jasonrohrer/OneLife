@@ -103,7 +103,8 @@ void initRocketAnimation( LivingLifePage *inPage,
                           LiveObject *inRidingPlayer, ObjectRecord *inRocket,
                           double inAnimationLengthSeconds ) {
 
-    randSource.reseed( game_timeSec() );
+    // same seed every time, everyone sees same sky
+    randSource.reseed( 1977 );
     
     page = inPage;
     ridingPlayer = inRidingPlayer;
