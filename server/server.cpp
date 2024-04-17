@@ -17937,7 +17937,10 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
         
     int rocketObjectID =
         SettingsManager::getIntSetting( "rocketObject", -1 );
-    
+
+    double rocketAnimationTime =
+        SettingsManager::getDoubleSetting( "rocketLaunchLength", 1 );
+
     useMainSettings();
 
     if( rocketObjectID == -1 ) {
@@ -17959,6 +17962,16 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
         if( nextPlayer->error ) {
             continue;
             }
+
+        // add time to their born time, essentially pushing everyone
+        // younger by just enough so that they won't die during the rocket
+        // launch animation
+        nextPlayer->lifeStartTimeSeconds += rocketAnimationTime;
+
+        // push their food decrement time forward too
+        // so they don't starve to death during rocket animation
+        nextPlayer->foodDecrementETASeconds += rocketAnimationTime;
+        
 
         sendMessageToPlayer( nextPlayer, message, messageLen );
         }
