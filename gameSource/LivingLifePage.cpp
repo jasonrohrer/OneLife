@@ -14657,7 +14657,10 @@ void LivingLifePage::step() {
                         }
                     ahapAccountURL = stringDuplicate( accountURL );
                     }
+                
+                delete [] lines[i];
                 }
+            delete [] lines;
             }
         else if( type == SEQUENCE_NUMBER ) {
             // need to respond with LOGIN message
