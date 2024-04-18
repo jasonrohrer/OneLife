@@ -1,6 +1,7 @@
 #include "GamePage.h"
 
 #include "TextButton.h"
+#include "TextField.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -24,6 +25,8 @@ class AHAPResultPage : public GamePage, public ActionListener {
 
     protected:
         TextButton mCopyAccountURLButton;
+        
+        TextField mSteamKeyField;
         TextButton mCopySteamKeyButton;
         
 

@@ -31,6 +31,7 @@ TextField::TextField( Font *inDisplayFont,
         : PageComponent( inX, inY ),
           mActive( true ), 
           mContentsHidden( false ),
+          mCursorHidden( false ),
           mHiddenSprite( loadSprite( "hiddenFieldTexture.tga", false ) ),
           mFont( inDisplayFont ), 
           mCharsWide( inCharsWide ),
@@ -153,6 +154,11 @@ void TextField::setContentsHidden( char inHidden ) {
     mContentsHidden = inHidden;
     }
 
+
+
+void TextField::setCursorHidden( char inHidden ) {
+    mCursorHidden = inHidden;
+    }
 
 
 
@@ -532,7 +538,8 @@ void TextField::draw() {
         drawQuads( 1, verts , vertColors );
         }
     
-    if( mFocused && mCursorDrawPosition > -1 ) {            
+    if( mFocused && mCursorDrawPosition > -1 && ! mCursorHidden ) {
+        
         // make measurement to draw cursor
 
         char *beforeCursorText = stringDuplicate( mDrawnText );

@@ -595,6 +595,7 @@ ahapCopyURL "COPY ACCOUNT URL"
 
 ahapCopySteamKey "COPY STEAM KEY"
 
+steamKey "STEAM KEY:"
 
 
 deathAgeOne "AGE:  1 YEAR"
