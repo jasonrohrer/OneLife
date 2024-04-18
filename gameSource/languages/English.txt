@@ -85,6 +85,14 @@ reviewUpdated "REVIEW HAS BEEN UPDATED"
 reviewRemoved "REVIEW HAS BEEN REMOVED"
 
 
+
+githubAccountName "GITHUB NAME:"
+contentLeaderVote "LEADER EMAIL:"
+
+postAHAPSettingsTip "POST TO SERVER"
+
+
+
 poll "USER POLL:"
 submit "SUBMIT"
 
