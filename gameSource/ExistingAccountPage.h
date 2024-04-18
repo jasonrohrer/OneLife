@@ -79,6 +79,8 @@ class ExistingAccountPage : public GamePage, public ActionListener {
         TextButton mTutorialButton;
         TextButton mServicesButton;
         
+        TextButton mAHAPSettingsButton;
+        
 
         double mPageActiveStartTime;
         int mFramesCounted;

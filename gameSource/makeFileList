@@ -80,6 +80,7 @@ importer.cpp \
 settingsToggle.cpp \
 rocketAnimation.cpp \
 AHAPResultPage.cpp \
+AHAPSettingsPage.cpp \
 
 
 

@@ -24,7 +24,10 @@ extern char *userEmail;
 
 
 AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
-        : ServerActionPage( inAHAPGateServerURL, "register_github", false ),
+        : ServerActionPage( inAHAPGateServerURL, "get_sequence_number", false ),
+          mSequenceNumber( -1 ),
+          mCurrentLeaderEmail( NULL ),
+          mPosting( false ),
           mGithubAccountNameField( mainFont, -242, 250, 10, false,
                                    translate( "githubAccountName"), 
                                    "abcdefghijklmnopqrstuvwxyz"
@@ -64,8 +67,29 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
 
 
 AHAPSettingsPage::~AHAPSettingsPage() {
+    if( mCurrentLeaderEmail != NULL ) {
+        delete [] mCurrentLeaderEmail;
+        }
+    
+    mCurrentLeaderEmail = NULL;
     }
 
+
+
+void AHAPSettingsPage::saveSettings() {
+    char *chosenContentLeader = mContentLeaderVoteField.getText();
+
+    SettingsManager::setSetting( "contentLeaderVote", chosenContentLeader );
+    
+    delete [] chosenContentLeader;
+    
+
+    char *githubAccountName = mGithubAccountNameField.getText();
+
+    SettingsManager::setSetting( "githubUsername", githubAccountName );
+    
+    delete [] githubAccountName;
+    }
 
 
 
@@ -73,120 +97,144 @@ AHAPSettingsPage::~AHAPSettingsPage() {
 
 void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mBackButton ) {        
+        saveSettings();
+        
         setSignal( "back" );
         }
     else if( inTarget == &mPostButton ) {
-        switchFields();
+        saveSettings();
+        
+        mPosting = true;
+        
+        mPostButton.setVisible( false );
+        
+        clearActionParameters();
+        
+        setActionName( "get_sequence_number" );
+        
+        setActionParameter( "email", userEmail );
+        
+        setAttachAccountHmac( false );
+        
+        mSequenceNumber = -1;
+        
+        startRequest();
         }
     }
 
 
 
 void AHAPSettingsPage::draw( doublePair inViewCenter, 
-                         double inViewSize ) {
-
-    doublePair pos = mRecommendChoice->getPosition();
-    
-    pos.y += 32;
-    pos.x += 12;
-    
-    setDrawColor( 1, 1, 1, 1 );
-    mainFont->drawString( translate( "recommend" ), pos, alignRight );
-
-
-    if( mReviewTextArea.isAtLimit() ) {
-        
-        pos.x = 0;
-        pos.y = -193;
-        mainFont->drawString( translate( "charLimit" ), pos, alignCenter );
-        }
-    
-    pos = mSpellcheckButton.getPosition();
-    
-    pos.x -= 24;
-    pos.y -= 2;
-    
-    mainFont->drawString( translate( "spellCheck" ), pos, alignRight );
+                             double inViewSize ) {
     }
 
 
 
 
+void AHAPSettingsPage::setupRequest( const char *inActionName ) {
+    clearActionParameters();
+    
+    setActionName( inActionName );
+                    
+                    
+    char *encodedEmail = URLUtils::urlEncode( userEmail );
+    setActionParameter( "email", encodedEmail );
+    delete [] encodedEmail;
+    
+    setActionParameter( "sequence_number", mSequenceNumber );
+    
+        
+    
+    char *stringToHash = autoSprintf( "%d", mSequenceNumber );
+    
+    
+    char *pureKey = getPureAccountKey();
+    
+    char *hash = hmac_sha1( pureKey, stringToHash );
+    
+    setActionParameter( "hash_value", hash );
+    
+    delete [] hash;
+    
+    
+    delete [] pureKey;
+    delete [] stringToHash;                
+    }
+
+
+
 void AHAPSettingsPage::step() {
     
-    // FIXME
-    // this copied from ReviewPage
-
     ServerActionPage::step();
 
     if( isResponseReady() ) {
 
-        if( ! mGettingSequenceNumber && ! mRemoving ) {
-            
-            int reviewPosted = SettingsManager::getIntSetting( 
-                "reviewPosted", 0 );
-            
-            if( reviewPosted ) {
-                setStatus( "reviewUpdated", false );
-                }
-            else {
-                setStatus( "reviewPosted", false );
-                }
-        
-            SettingsManager::setSetting( "reviewPosted", 1 );
-            }
-        else if( ! mRemoving ) {
+        if( mSequenceNumber == -1 ) {
             
             char *seqString = getResponse( 0 );
             
             if( seqString != NULL ) {
                 int seq = 0;
-                sscanf( seqString, "%d", &seq );
+                int numRead = sscanf( seqString, "%d", &seq );
                 
                 delete [] seqString;
                 
-
-                mResponseReady = false;
-                
-                setActionName( "remove_review" );
-        
-                clearActionParameters();
-        
-        
-                char *encodedEmail = URLUtils::urlEncode( userEmail );
-                setActionParameter( "email", encodedEmail );
-                delete [] encodedEmail;
-        
-                setActionParameter( "sequence_number", seq );
-                
-        
-        
-                char *stringToHash = autoSprintf( "%d", seq );
-
-                
-                char *pureKey = getPureAccountKey();
-                
-                char *hash = hmac_sha1( pureKey, stringToHash );
-                
-                delete [] pureKey;
-                delete [] stringToHash;
-                
-                
-                setActionParameter( "hash_value", hash );
-        
-                delete [] hash;
-        
+                if( numRead == 1 ) {
+                    mSequenceNumber = seq;
+                    }
+                }
 
 
-                mGettingSequenceNumber = false;
-                mRemoving = true;
-                startRequest();
+            if( mSequenceNumber != -1 ) {
+                
+                if( mCurrentLeaderEmail == NULL ) {
+                    /*
+                    server.php
+                        ?action=get_content_leader
+                        &email=[email address]
+                        &sequence_number=[int]
+                        &hash_value=[hash value]
+                    */
+                    setupRequest( "get_content_leader" );
+                    
+                    startRequest();
+                    }
+                else if( mPosting ) {
+
+                    // save settings again here, just in case
+                    // user fiddled with field while sequence number loading
+                    saveSettings();
+                    
+                    setupRequest( "register_github" );
+
+                    char *username = mGithubAccountNameField.getText();
+
+                    setActionParameter( "github_username", username );
+
+                    delete [] username;
+                    
+                    
+                    startRequest();
+                    }
                 }
             }
-        else if( mRemoving ) {
-            setStatus( "reviewRemoved", false );
+        else if( mCurrentLeaderEmail == NULL ) {
+            char *responseString = getResponse( 0 );
             
-            SettingsManager::setSetting( "reviewPosted", 0 );
+            if( responseString != NULL ) {
+                
+                char email[200];
+
+                int numRead = sscanf( responseString, "%199s", email );
+                
+                delete [] responseString;
+                
+                if( numRead == 1 ) {
+                    mCurrentLeaderEmail = stringDuplicate( email );
+                    }
+                }
+            
+            mPostButton.setVisible( true );
             }
         }
     }
@@ -196,98 +244,51 @@ void AHAPSettingsPage::step() {
 
 
 void AHAPSettingsPage::makeActive( char inFresh ) {
-    // FIXME
-    // this copied from ReviewPage
 
-
-    if( inFresh ) {        
-        }
-
-    if( ! isSpellCheckReady() ) {
-        initSpellCheck();
+    if( ! inFresh ) {        
+        return;
         }
     
+
     setStatus( NULL, false );
     mResponseReady = false;
-    
-
-    mReviewNameField.setActive( true );
-    mReviewTextArea.setActive( true );
-    mRecommendChoice->setActive( true );
-    mSpellcheckButton.setActive( true );
-    
-
-    mCopyButton.setActive( true );
-    mPasteButton.setActive( true );
-    mClearButton.setActive( true );
-
-    
-    char spellCheck = SettingsManager::getIntSetting( "spellCheckOn", 1 );
-    
-    mReviewTextArea.enableSpellCheck( spellCheck );
-
-    mSpellcheckButton.setToggled( spellCheck );
-    
-
-    mReviewNameField.focus();
 
 
-    char *reviewName = SettingsManager::getSettingContents( "reviewName", "" );
-    char *reviewText = SettingsManager::getSettingContents( "reviewText", "" );
+    char *username = SettingsManager::getStringSetting( "githubUsername", "" );
     
-    int reviewRecommend = 
-        SettingsManager::getIntSetting( "reviewRecommend", 1 );
+    mGithubAccountNameField.setText( username );
     
-    if( reviewRecommend == 0 ) {    
-        mRecommendChoice->setSelectedItem( 1 );
-        }
-    else {
-        mRecommendChoice->setSelectedItem( 0 );
+    delete [] username;
+    
+
+    char *leaderEmail = 
+        SettingsManager::getStringSetting( "chosenContentLeader", "" );
+    
+    mContentLeaderVoteField.setText( leaderEmail );
+    
+    delete [] leaderEmail;
+    
+    
+    
+    mPosting = false;
+    
+
+    if( mCurrentLeaderEmail != NULL ) {
+        delete [] mCurrentLeaderEmail;
+        mCurrentLeaderEmail = NULL;
         }
     
-    mReviewNameField.setText( reviewName );
-
-    char *oldText = mReviewTextArea.getText();
-    
-    if( strcmp( oldText, reviewText ) != 0 ) {    
-        // keep cursor pos if text hasn't changed
-        mReviewTextArea.setText( reviewText );
-        }
-    
-    delete [] oldText;
-    
-
-    delete [] reviewName;
-    delete [] reviewText;
-
-
+    clearActionParameters();
         
-    int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
+    setActionName( "get_sequence_number" );
     
-    if( reviewPosted ) {
-        mPostButton.setLabelText( translate( "updateButton" ) );
-        mPostButton.setMouseOverTip( translate( "updateReviewTip" ) );
-        mRemoveButton.setVisible( true );
-        }
-    else {
-        mPostButton.setLabelText( translate( "postButton" ) );
-        mPostButton.setMouseOverTip( translate( "postReviewTip" ) );
-        mRemoveButton.setVisible( false );
-        }
-
+    setActionParameter( "email", userEmail );
     
-
-    checkCanPost();
-
+    setAttachAccountHmac( false );
     
-    if( mPostButton.isVisible() ) {
-        // name field has something already
-        // put focus on review text
-        mReviewTextArea.focus();
-        }
+    mSequenceNumber = -1;
     
-
-    checkCanPaste();
+    startRequest();    
     }
 
 
@@ -297,11 +298,11 @@ void AHAPSettingsPage::makeNotActive() {
 
 
 void AHAPSettingsPage::switchFields() {
-    if( mReviewNameField.isFocused() ) {
-        mReviewTextArea.focus();
+    if( mGithubAccountNameField.isFocused() ) {
+        mContentLeaderVoteField.focus();
         }
-    else if( mReviewTextArea.isFocused() ) {
-        mReviewNameField.focus();
+    else if( mContentLeaderVoteField.isFocused() ) {
+        mGithubAccountNameField.focus();
         }
     }
 

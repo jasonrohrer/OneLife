@@ -105,6 +105,7 @@ CustomRandomSource randSource( 34957197 );
 #include "GeneticHistoryPage.h"
 #include "ServicesPage.h"
 #include "AHAPResultPage.h"
+#include "AHAPSettingsPage.h"
 //#include "TestPage.h"
 
 #include "ServerActionPage.h"
@@ -173,6 +174,7 @@ PollPage *pollPage;
 GeneticHistoryPage *geneticHistoryPage;
 ServicesPage *servicesPage;
 AHAPResultPage *ahapResultsPage;
+AHAPSettingsPage *ahapSettingsPage;
 //TestPage *testPage = NULL;
 
 
@@ -759,6 +761,13 @@ void initFrameDrawer( int inWidth, int inHeight, int inTargetFrameRate,
     ahapResultsPage = new AHAPResultPage();
     
 
+    char *gateServerURL =
+        SettingsManager::getStringSetting( "ahapGateServerURL", "" );
+            
+    ahapSettingsPage = new AHAPSettingsPage( gateServerURL );
+    delete [] gateServerURL;
+    
+
     // 0 music headroom needed, because we fade sounds before playing music
     setVolumeScaling( 10, 0 );
     //setSoundSpriteRateRange( 0.95, 1.05 );
@@ -842,6 +851,7 @@ void freeFrameDrawer() {
     delete geneticHistoryPage;
     delete servicesPage;
     delete ahapResultsPage;
+    delete ahapSettingsPage;
 
     //if( testPage != NULL ) {
     //    delete testPage;
@@ -2041,6 +2051,13 @@ void drawFrame( char inUpdate ) {
                 currentGamePage->base_makeActive( true );
                 }
             }
+        else if( currentGamePage == ahapSettingsPage ) {
+            if( ahapSettingsPage->checkSignal( "back" ) ) {
+                existingAccountPage->setStatus( NULL, false );
+                currentGamePage = existingAccountPage;
+                currentGamePage->base_makeActive( true );
+                }
+            }
         else if( currentGamePage == existingAccountPage ) {    
             if( existingAccountPage->checkSignal( "quit" ) ) {
                 quitGame();
@@ -2067,6 +2084,10 @@ void drawFrame( char inUpdate ) {
                 }
             else if( existingAccountPage->checkSignal( "services" ) ) {
                 currentGamePage = servicesPage;
+                currentGamePage->base_makeActive( true );
+                }
+            else if( existingAccountPage->checkSignal( "ahapSettings" ) ) {
+                currentGamePage = ahapSettingsPage;
                 currentGamePage->base_makeActive( true );
                 }
             else if( existingAccountPage->checkSignal( "done" )

@@ -32,6 +32,13 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
 
     protected:
 
+        int mSequenceNumber;
+        char *mCurrentLeaderEmail;
+        
+        char mPosting;
+        
+
+
         TextField mGithubAccountNameField;
         
         TextField mContentLeaderVoteField;        
@@ -45,5 +52,9 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
 
 
         void switchFields();
+        
+        void saveSettings();
+        
+        void setupRequest( const char *inActionName );
         
     };
