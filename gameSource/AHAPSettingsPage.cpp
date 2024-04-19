@@ -29,13 +29,13 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
           mSequenceNumber( -1 ),
           mCurrentLeaderEmail( NULL ),
           mPosting( false ),
-          mGithubAccountNameField( mainFont, 200, 75, 10, false,
+          mGithubAccountNameField( mainFont, 200, 25, 10, false,
                                    translate( "githubAccountName"), 
                                    "abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                    "1234567890"
                                    "._-" ),
-          mContentLeaderVoteField( mainFont, 200, -50, 10, false,
+          mContentLeaderVoteField( mainFont, 200, -100, 10, false,
                                    translate( "contentLeaderVote"), 
                                    NULL,
                                    // forbid only spaces and backslash and 
