@@ -15,6 +15,7 @@
 #include "buttonStyle.h"
 #include "spellCheck.h"
 #include "accountHmac.h"
+#include "message.h"
 
 
 extern Font *mainFont;
@@ -28,20 +29,20 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
           mSequenceNumber( -1 ),
           mCurrentLeaderEmail( NULL ),
           mPosting( false ),
-          mGithubAccountNameField( mainFont, -242, 250, 10, false,
+          mGithubAccountNameField( mainFont, 200, 75, 10, false,
                                    translate( "githubAccountName"), 
                                    "abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                    "1234567890"
                                    "._-" ),
-          mContentLeaderVoteField( mainFont, -242, 125, 10, false,
+          mContentLeaderVoteField( mainFont, 200, -50, 10, false,
                                    translate( "contentLeaderVote"), 
                                    NULL,
                                    // forbid only spaces and backslash and 
                                    // single/double quotes 
                                    "\"' \\" ),
-          mBackButton( mainFont, -526, -140, translate( "backButton" ) ),
-          mPostButton( mainFont, 526, -140, translate( "postButton" ) ),
+          mBackButton( mainFont, -526, -280, translate( "backButton" ) ),
+          mPostButton( mainFont, 526, -280, translate( "postButton" ) ),
           mGettingSequenceNumber( false ) {
 
     setButtonStyle( &mBackButton );
@@ -54,6 +55,13 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     mBackButton.addActionListener( this );
     mPostButton.addActionListener( this );
     
+    mGithubAccountNameField.addActionListener( this );
+    mContentLeaderVoteField.addActionListener( this );
+    
+    mGithubAccountNameField.setFireOnAnyTextChange( true );
+    mContentLeaderVoteField.setFireOnAnyTextChange( true );
+
+
     // add name field after so we can hit return in name field
     // and advance to text area without sending a return key to the text area
     addComponent( &mGithubAccountNameField );    
@@ -61,7 +69,6 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     
 
     mPostButton.setMouseOverTip( translate( "postAHAPSettingsTip" ) );
-    
     }
 
 
@@ -120,18 +127,41 @@ void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
         
         startRequest();
         }
+    else if( inTarget == &mGithubAccountNameField ) {
+        testPostVisible();
+        }
+    else if( inTarget == &mContentLeaderVoteField ) {
+        testPostVisible();
+        }
+    
     }
 
 
 
 void AHAPSettingsPage::draw( doublePair inViewCenter, 
                              double inViewSize ) {
+
+    if( mCurrentLeaderEmail != NULL ) {
+
+        doublePair pos = mGithubAccountNameField.getPosition();
+        
+        pos.x = 0;
+        
+        pos.y += 125;
+
+        pos.y += 64;
+        drawMessage( translate( "contentLeaderExplain" ), pos );
+        
+        pos.y -= 64;
+        drawMessage( mCurrentLeaderEmail, pos );
+        }
     }
 
 
 
 
-void AHAPSettingsPage::setupRequest( const char *inActionName ) {
+void AHAPSettingsPage::setupRequest( const char *inActionName,
+                                     const char *inExtraHmacConcat ) {
     clearActionParameters();
     
     setActionName( inActionName );
@@ -145,7 +175,8 @@ void AHAPSettingsPage::setupRequest( const char *inActionName ) {
     
         
     
-    char *stringToHash = autoSprintf( "%d", mSequenceNumber );
+    char *stringToHash = autoSprintf( "%d%s", mSequenceNumber,
+                                      inExtraHmacConcat );
     
     
     char *pureKey = getPureAccountKey();
@@ -163,6 +194,34 @@ void AHAPSettingsPage::setupRequest( const char *inActionName ) {
 
 
 
+void AHAPSettingsPage::testPostVisible() {
+    mPostButton.setVisible( false );
+    
+    if( mCurrentLeaderEmail == NULL ) {
+        return;
+        }
+    
+    char *github = mGithubAccountNameField.getText();
+    
+    char *leaderVote = mContentLeaderVoteField.getText();
+    
+    if( strlen( github ) > 0 &&
+        strstr( leaderVote, "@" )  != NULL &&
+        strstr( leaderVote, "." )  != NULL ) {
+        
+        // github name not empty, and vote resembles an email
+
+        mPostButton.setVisible( true );
+        
+        setStatus( NULL, false );
+        }
+
+    delete [] github;
+    delete [] leaderVote;
+    }
+
+
+
 void AHAPSettingsPage::step() {
     
     ServerActionPage::step();
@@ -171,30 +230,25 @@ void AHAPSettingsPage::step() {
 
         if( mSequenceNumber == -1 ) {
             
-            char *seqString = getResponse( 0 );
-            
-            if( seqString != NULL ) {
-                int seq = 0;
-                int numRead = sscanf( seqString, "%d", &seq );
+            if( getNumResponseParts() > 0 ) {
                 
-                delete [] seqString;
+                char *seqString = getResponse( 0 );
                 
-                if( numRead == 1 ) {
-                    mSequenceNumber = seq;
+                if( seqString != NULL ) {
+                    int seq = 0;
+                    int numRead = sscanf( seqString, "%d", &seq );
+                    
+                    delete [] seqString;
+                    
+                    if( numRead == 1 ) {
+                        mSequenceNumber = seq;
+                        }
                     }
                 }
-
 
             if( mSequenceNumber != -1 ) {
                 
                 if( mCurrentLeaderEmail == NULL ) {
-                    /*
-                    server.php
-                        ?action=get_content_leader
-                        &email=[email address]
-                        &sequence_number=[int]
-                        &hash_value=[hash value]
-                    */
                     setupRequest( "get_content_leader" );
                     
                     startRequest();
@@ -204,10 +258,11 @@ void AHAPSettingsPage::step() {
                     // save settings again here, just in case
                     // user fiddled with field while sequence number loading
                     saveSettings();
-                    
-                    setupRequest( "register_github" );
 
                     char *username = mGithubAccountNameField.getText();
+                    
+                    setupRequest( "register_github", username );
+
 
                     setActionParameter( "github_username", username );
 
@@ -219,22 +274,31 @@ void AHAPSettingsPage::step() {
                 }
             }
         else if( mCurrentLeaderEmail == NULL ) {
-            char *responseString = getResponse( 0 );
-            
-            if( responseString != NULL ) {
+            if( getNumResponseParts() > 0 ) {
                 
-                char email[200];
-
-                int numRead = sscanf( responseString, "%199s", email );
+                char *responseString = getResponse( 0 );
                 
-                delete [] responseString;
-                
-                if( numRead == 1 ) {
-                    mCurrentLeaderEmail = stringDuplicate( email );
+                if( responseString != NULL ) {
+                    
+                    char email[200];
+                    
+                    int numRead = sscanf( responseString, "%199s", email );
+                    
+                    delete [] responseString;
+                    
+                    if( numRead == 1 ) {
+                        mCurrentLeaderEmail = stringDuplicate( email );
+                        }
                     }
+                
+                testPostVisible();
                 }
+            }
+        else if( mPosting ) {
+            // won't get isResponseReady for posting unless success
+            setStatus( "githubAccountUpdateSuccess", false );
             
-            mPostButton.setVisible( true );
+            mPosting = false;
             }
         }
     }
@@ -252,7 +316,8 @@ void AHAPSettingsPage::makeActive( char inFresh ) {
 
     setStatus( NULL, false );
     mResponseReady = false;
-
+    
+    mPostButton.setVisible( false );
 
     char *username = SettingsManager::getStringSetting( "githubUsername", "" );
     
@@ -262,7 +327,7 @@ void AHAPSettingsPage::makeActive( char inFresh ) {
     
 
     char *leaderEmail = 
-        SettingsManager::getStringSetting( "chosenContentLeader", "" );
+        SettingsManager::getStringSetting( "contentLeaderVote", "" );
     
     mContentLeaderVoteField.setText( leaderEmail );
     

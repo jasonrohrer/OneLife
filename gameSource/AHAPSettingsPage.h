@@ -55,6 +55,10 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
         
         void saveSettings();
         
-        void setupRequest( const char *inActionName );
+        // inExtraHmacConcat is concatonated after sequence number
+        // when making HMAC
+        void setupRequest( const char *inActionName,
+                           const char *inExtraHmacConcat = "" );
         
+        void testPostVisible();
     };

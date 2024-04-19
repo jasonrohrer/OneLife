@@ -88,10 +88,14 @@ reviewRemoved "REVIEW HAS BEEN REMOVED"
 
 ahapSettings "PLANET"
 
-githubAccountName "GITHUB NAME:"
-contentLeaderVote "LEADER EMAIL:"
+githubAccountName "YOUR GITHUB ACCOUNT NAME:"
+contentLeaderVote "LEADER EMAIL (YOUR VOTE):"
+
+contentLeaderExplain "CURRENTLY ELECTED CONTENT LEADER:"
 
 postAHAPSettingsTip "POST TO SERVER"
+
+githubAccountUpdateSuccess "POSTING SUCCEEDED"
 
 
 
