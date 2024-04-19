@@ -2906,6 +2906,7 @@ typedef enum messageType {
     ORDR,
     FLIP,
     MOTH,
+    APVT,
     UNKNOWN
     } messageType;
 
@@ -2928,6 +2929,9 @@ typedef struct ClientMessage {
         // null if type not SAY
         char *saidText;
         
+        // NULL if type not APVT
+        char *voteEmail;
+
         // null if type not BUG
         char *bugText;
         
@@ -2966,6 +2970,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.numExtraPos = 0;
     m.extraPos = NULL;
     m.saidText = NULL;
+    m.voteEmail = NULL;
     m.bugText = NULL;
     m.photoIDString = NULL;
     m.sequenceNumber = -1;
@@ -3257,7 +3262,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     else if( strcmp( nameBuffer, "SAY" ) == 0 ) {
         m.type = SAY;
 
-        // look after second space
+        // look after third space
         char *firstSpace = strstr( inMessage, " " );
         
         if( firstSpace != NULL ) {
@@ -3367,6 +3372,26 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "MOTH" ) == 0 ) {
         m.type = MOTH;
+        }
+    else if( strcmp( nameBuffer, "APVT" ) == 0 ) {
+        m.type = APVT;
+
+        // look after third space
+        char *firstSpace = strstr( inMessage, " " );
+        
+        if( firstSpace != NULL ) {
+            
+            char *secondSpace = strstr( &( firstSpace[1] ), " " );
+            
+            if( secondSpace != NULL ) {
+
+                char *thirdSpace = strstr( &( secondSpace[1] ), " " );
+                
+                if( thirdSpace != NULL ) {
+                    m.voteEmail = stringDuplicate( &( thirdSpace[1] ) );
+                    }
+                }
+            }
         }
     else {
         m.type = UNKNOWN;
@@ -21212,6 +21237,18 @@ int main() {
                         delete [] psMessage;
                         }
                     }
+                else if( m.type == APVT ) {
+                    int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
+                    
+                    // ignore vote if this is not AHAP server
+                    if( isAHAP ) {
+                        
+                        // FIXME:
+                        // pass vote to AHAPGate code, which will
+                        // handle submitting vote to ahapGate server
+
+                        }
+                    }
                 else if( m.type == UNFOL ) {
                     // following no one
                     nextPlayer->followingID = -1;
@@ -26475,6 +26512,9 @@ int main() {
                 
                 if( m.saidText != NULL ) {
                     delete [] m.saidText;
+                    }
+                if( m.voteEmail != NULL ) {
+                    delete [] m.voteEmail;
                     }
                 if( m.bugText != NULL ) {
                     delete [] m.bugText;

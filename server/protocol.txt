@@ -1146,6 +1146,8 @@ PROP x y#
 ORDR x y#
 FLIP x y#
 MOTH X Y#
+APVT x y email#
+
 
 
 KA   is a keep-alive message used to keep the connection alive when the client
@@ -1278,6 +1280,12 @@ FLIP requests flip to player's orientation, new facing toward x y
 
 MOTH requests the player's mother's position as spoken map coordinates.
      x and y are ignored
+
+APVT for Another Planet servers and clients only, specifies this user's vote
+     for content leader.  This call should be made by client after successful
+     login, each and every time client logs in.  Thus, we can tell when
+     a client's vote gets stale if they haven't joined the server in a while.
+     x and y are ignored, and can be 0.
 
 
 

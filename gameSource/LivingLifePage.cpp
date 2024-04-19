@@ -14841,6 +14841,27 @@ void LivingLifePage::step() {
             SettingsManager::setSetting( "loginSuccess", 1 );
 
             delete [] message;
+
+            
+            if( isAHAP ) {
+                // see if we have a vote to submit
+
+                char *voteEmail = 
+                    SettingsManager::getStringSetting( 
+                        "contentLeaderVote", "" );;
+                
+
+                if( strcmp( voteEmail, "" ) != 0 ) {
+
+                    char *message = autoSprintf( "APVT 0 0 %s#",
+                                                 voteEmail );
+                    
+                    sendToServerSocket( message );
+                    
+                    delete [] message;
+                    }
+                delete [] voteEmail;
+                }
             return;
             }
         else if( type == REJECTED ) {
