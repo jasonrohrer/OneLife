@@ -193,7 +193,16 @@ git push -f --tags
 
 if [ $serversToo -gt 0 ]
 then
+
+	echo ""
+	echo "Running server code update step 1 on OHOL servers."
+	echo ""
 	~/checkout/OneLifeWorking/scripts/updateServerCodeStep1.sh
+
+	echo ""
+	echo "Running server code update step 1 on AHAP servers."
+	echo ""
+	~/checkout/OneLifeWorking/scripts/updateServerCodeAHAPStep1.sh
 fi
 
 
@@ -228,5 +237,13 @@ echo -n "<?php \$version=$newVersion; ?>" > ~/www/ahapReflector/requiredVersion.
 
 if [ $serversToo -gt 0 ]
 then
+	echo ""
+	echo "Running server code update step 2 on OHOL servers."
+	echo ""
 	~/checkout/OneLifeWorking/scripts/updateServerCodeStep2.sh
+
+	echo ""
+	echo "Running server code update step 2 on AHAP servers."
+	echo ""
+	~/checkout/OneLifeWorking/scripts/updateServerCodeAHAPStep2.sh
 fi

@@ -52,6 +52,8 @@ Server Fixes:
 --Support for server triggering rocket ride, and stalling all hunger and aging
   while players watch the animation server-wide.
 
+--Support for updating AHAP servers too in postPlatformDiffBundle script.
+
 
 
 
