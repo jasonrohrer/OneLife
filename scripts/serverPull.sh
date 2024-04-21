@@ -6,7 +6,7 @@ cd ~/checkout/OneLife/server
 mkdir settingsTemp
 git ls-files -om --exclude-standard settings | xargs -I '{}' mv '{}' settingsTemp/
 
-git pull --tags
+git pull --tags --force
 
 
 # mv custom settings back in place after pull

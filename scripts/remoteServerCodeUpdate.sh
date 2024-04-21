@@ -31,7 +31,7 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git pull --tags
+git pull --tags --force
 
 
 
