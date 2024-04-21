@@ -264,6 +264,11 @@ SoundSpriteHandle setSoundSprite( int16_t *inSamples, int inNumSamples ) {
     return NULL;
     }
 
+SoundSpriteHandle setSoundSprite( int16_t *inSamplesR, int16_t *inSamplesL,
+                                  int inNumSamples ) {
+    return NULL;
+    }
+
 void setMaxTotalSoundSpriteVolume( double inMaxTotal, 
                                    double inCompressionFraction ) {
     }
@@ -282,6 +287,23 @@ void playSoundSprite( int inNumSprites, SoundSpriteHandle *inHandles,
 
 
 void freeSoundSprite( SoundSpriteHandle inHandle ) {
+    }
+
+
+int getSampleRate() {
+    return 0;
+    }
+
+void addMusicSuppression( const char *inActionName ) {
+    }
+
+
+void removeMusicSuppression( const char *inActionName ) {
+    }
+
+
+double game_getCurrentTime() {
+    return 0;
     }
 
 
