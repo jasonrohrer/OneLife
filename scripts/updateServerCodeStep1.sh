@@ -33,6 +33,7 @@ do
 	if [ $((i % 2)) -eq 0 ];
 	then
 		echo "  Starting update on $server"
+		ssh -n $user@$server '~/checkout/OneLife/scripts/serverPull.sh'
 		ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerCodeUpdate.sh'
 	fi
 	i=$((i + 1))
