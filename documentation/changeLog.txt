@@ -20,12 +20,14 @@ Version ???
   sound (before, if they were too close to hear the distant sound, no arrow
   would be added for them, even if they walked away later).
 
+--Support for showing rocket launch scene to all players, server-wide.
+
 --Support in client for displaying AHAP Grant result to player who rode rocket.
 
 --Support for AHAP settings in client (so that player can specify their github
   account name and vote for content leader).
 
---Support in server protocol for all these things.
+--Support in client/server protocol for all these things.
 
 
 
@@ -46,6 +48,9 @@ Server Fixes:
 
 --New ahapGate web service for granting AHAP to people, passing out Steam keys,
   and tracking content leader votes.
+
+--Support for server triggering rocket ride, and stalling all hunger and aging
+  while players watch the animation server-wide.
 
 
 
