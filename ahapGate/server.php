@@ -1563,11 +1563,11 @@ function ag_updateContentLeader() {
 
                 // add new leader to github
                 ag_grantGithub( $newGithubUsername );
-                
-                $query = "UPDATE $tableNamePrefix"."server_globals ".
-                    "SET content_leader_email = '$bestLeader';";
-                ag_queryDatabase( $query );
-                }    
+                }
+            
+            $query = "UPDATE $tableNamePrefix"."server_globals ".
+                "SET content_leader_email = '$bestLeader';";
+            ag_queryDatabase( $query );
             }
         }
 
