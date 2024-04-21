@@ -13,6 +13,8 @@ $databaseName = "test";
 
 $tableNamePrefixOHOLTicketServer = "ticketServer_";
 $tableNamePrefixAHAPTicketServer = "ahapTicketServer_";
+$tableNamePrefixOHOLSteamGateServer = "steamGate_";
+$tableNamePrefixAHAPSteamGateServer = "ahapSteamGate_";
 
 
 // The URL of to the server.php script.

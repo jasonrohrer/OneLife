@@ -427,11 +427,13 @@ function ag_showData( $checkPassword = true ) {
     global $tableNamePrefix, $remoteIP;
     
     $keysLeftInBank = ag_countKeysInBank();
-
+    $leader = ag_getContentLeaderInternal();
+    
     echo "<table width='100%' border=0><tr>".
         "<td>[<a href=\"server.php?action=show_data" .
             "\">Main</a>]</td>".
-        "<td align=center><b>$keysLeftInBank</b> unassigned keys remain</td>".
+        "<td align=center><b>$keysLeftInBank</b> unassigned keys remain".
+        "<br><br>Current Content Leader: $leader</td>".
         "<td align=right>[<a href=\"server.php?action=logout" .
             "\">Logout</a>]</td>".
         "</tr></table><br><br><br>";
