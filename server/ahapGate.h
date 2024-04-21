@@ -28,3 +28,5 @@ AHAPGrantResult *stepAHAPGate();
 void triggerAHAPGrant( const char *inEmail );
 
 
+void triggerAHAPVote( const char *inVoterEmail, const char *inVoteForEmail );
+

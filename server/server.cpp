@@ -21241,12 +21241,9 @@ int main() {
                     int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
                     
                     // ignore vote if this is not AHAP server
-                    if( isAHAP ) {
+                    if( isAHAP && m.voteEmail != NULL ) {
                         
-                        // FIXME:
-                        // pass vote to AHAPGate code, which will
-                        // handle submitting vote to ahapGate server
-
+                        triggerAHAPVote( nextPlayer->email, m.voteEmail );
                         }
                     }
                 else if( m.type == UNFOL ) {
