@@ -20,6 +20,13 @@ Version ???
   sound (before, if they were too close to hear the distant sound, no arrow
   would be added for them, even if they walked away later).
 
+--Support in client for displaying AHAP Grant result to player who rode rocket.
+
+--Support for AHAP settings in client (so that player can specify their github
+  account name and vote for content leader).
+
+--Support in server protocol for all these things.
+
 
 
 
@@ -36,6 +43,9 @@ Server Fixes:
 --New script for bundling latest AHAP data with most recent base Windows and
   Linux binary distributions (what people first download to play AHAP
   off-Steam).
+
+--New ahapGate web service for granting AHAP to people, passing out Steam keys,
+  and tracking content leader votes.
 
 
 
