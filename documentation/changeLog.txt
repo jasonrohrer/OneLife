@@ -15,6 +15,11 @@ Version ???
   plays.  Hunger chime music suppression also uses this same new supression
   system now.
 
+--Added support for LNCH arrow to rocket site.  Fixed so that monument arrows
+  are displayed even if player is too close to the monument to hear the distant
+  sound (before, if they were too close to hear the distant sound, no arrow
+  would be added for them, even if they walked away later).
+
 
 
 

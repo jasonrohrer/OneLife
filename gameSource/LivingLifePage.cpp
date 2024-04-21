@@ -603,6 +603,7 @@ static void updatePersonHomeLocation( int inPersonID, int inX, int inY ) {
 
 
 char isAncientHomePosHell = false;
+char isAncientHomePosRocket = false;
 
 static void addAncientHomeLocation( int inX, int inY ) {
     removeHomeLocation( inX, inY );
@@ -6238,6 +6239,10 @@ void LivingLifePage::drawHomeSlip( doublePair inSlipPos, int inIndex ) {
             if( isAncientHomePosHell ) {
                 arrowWord = translate( "hell" );
                 }
+            else if( isAncientHomePosRocket ) {
+                arrowWord = translate( "rocket" );
+                }
+
             handwritingFont->drawString( arrowWord, bellPos, alignCenter );
             }
         
@@ -14924,19 +14929,29 @@ void LivingLifePage::step() {
                 if( ourLiveObject != NULL ) {
                     double d = distance( pos, ourLiveObject->currentPos );
                     
+                    addAncientHomeLocation( posX, posY );
+                    
+                    isAncientHomePosHell = false;
+                    isAncientHomePosRocket = false;
+                        
+                    ObjectRecord *monObj = getObject( monumentID );
+                    
+                    if( monObj != NULL ) {    
+                        
+                        if( strstr( monObj->description, "+hellArrow" ) ) {
+                            isAncientHomePosHell = true;
+                            }
+                        else if( strstr( monObj->description, 
+                                         "+rocketArrow" ) ) {
+                            isAncientHomePosRocket = true;
+                            }
+                        }
+
                     if( d > 32 ) {
-                        addAncientHomeLocation( posX, posY );
-                        isAncientHomePosHell = false;
                         
-                        // play sound in distance
-                        ObjectRecord *monObj = getObject( monumentID );
+                        if( monObj->creationSound.numSubSounds > 0 ) {    
                         
-                        if( monObj != NULL && 
-                            monObj->creationSound.numSubSounds > 0 ) {    
-                            
-                            if( strstr( monObj->description, "+hellArrow" ) ) {
-                                isAncientHomePosHell = true;
-                                }
+                            // play sound in distance
 
                             doublePair realVector = 
                                 getVectorFromCamera( lrint( posX ),
