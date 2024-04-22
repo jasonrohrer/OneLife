@@ -71,7 +71,7 @@ double rocketSpeed = .5;
 
 static LivingLifePage *page;
 
-static LiveObject *ridingPlayer;
+static int ridingPlayerID;
 
 static ObjectRecord *rocket;
 
@@ -100,14 +100,14 @@ double getTwinkleAmount( double inFade ) {
 
 
 void initRocketAnimation( LivingLifePage *inPage, 
-                          LiveObject *inRidingPlayer, ObjectRecord *inRocket,
+                          int inRidingPlayerID, ObjectRecord *inRocket,
                           double inAnimationLengthSeconds ) {
 
     // same seed every time, everyone sees same sky
     randSource.reseed( 1977 );
     
     page = inPage;
-    ridingPlayer = inRidingPlayer;
+    ridingPlayerID = inRidingPlayerID;
     rocket = inRocket;
     
     frameCount = 0;
@@ -328,30 +328,36 @@ void drawRocketAnimation() {
     double animFrameTime = frameRateFactor * frameCount / 60.0;
     
     char used;
-
-    setAnimationEmotion( ridingPlayer->currentEmot );
-    addExtraAnimationEmotions( &( ridingPlayer->permanentEmots ) );
     
-    // don't draw rider as moving, b/c they bounce up and down
-    drawObjectAnim( ridingPlayer->displayID, 
-                    2, 
-                    ground,
-                    animFrameTime,
-                    1,
-                    ground,
-                    animFrameTime,
-                    animFrameTime,
-                    &used,
-                    endAnimType,
-                    endAnimType,
-                    riderPos,
-                    0,
-                    false,
-                    false,
-                    computeCurrentAge( ridingPlayer ),
-                    false, false, false,
-                    ridingPlayer->clothing,
-                    ridingPlayer->clothingContained );
+    LiveObject *ridingPlayer = page->getLiveObject( ridingPlayerID );
+
+    
+    if( ridingPlayer != NULL ) {
+        
+        setAnimationEmotion( ridingPlayer->currentEmot );
+        addExtraAnimationEmotions( &( ridingPlayer->permanentEmots ) );
+        
+        // don't draw rider as moving, b/c they bounce up and down
+        drawObjectAnim( ridingPlayer->displayID, 
+                        2, 
+                        ground,
+                        animFrameTime,
+                        1,
+                        ground,
+                        animFrameTime,
+                        animFrameTime,
+                        &used,
+                        endAnimType,
+                        endAnimType,
+                        riderPos,
+                        0,
+                        false,
+                        false,
+                        computeCurrentAge( ridingPlayer ),
+                        false, false, false,
+                        ridingPlayer->clothing,
+                        ridingPlayer->clothingContained );
+        }
     
     setAnimationEmotion( NULL );
     
@@ -405,7 +411,8 @@ void drawRocketAnimation() {
 
     // draw player's speech on top
 
-    if( ridingPlayer->currentSpeech != NULL &&
+    if( ridingPlayer != NULL &&
+        ridingPlayer->currentSpeech != NULL &&
         ridingPlayer->speechFade > 0 ) {
         
         doublePair speechPos = add( riderPos, getSpeechOffset( ridingPlayer ) );
@@ -436,7 +443,7 @@ void drawRocketAnimation() {
 
 
 void addRocketSpeech( int inSpeakerID, const char *inSpeech ) {
-    if( inSpeakerID == ridingPlayer->id ) {
+    if( inSpeakerID == ridingPlayerID ) {
         // we handle drawing riding player's speech separately
         return;
         }

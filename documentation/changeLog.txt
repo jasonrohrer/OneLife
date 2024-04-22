@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 418    ???
+
+--Fixed player swap in rocket animation that was being caused by passing
+  pointer to an item in a mutable vector of players (so that if a player dies
+  or joins and changes the vector, the player being pointed to would change).
+
+
+
+
 Server Fixes:
 
 --New tutorialEnabled setting for server, so AHAP servers can skip tutorial.
@@ -14,6 +23,7 @@ Server Fixes:
 --Fixed updateGate so that error message doesn't divulge content leader email.
 
 --Support for Rode Rocket as cause of death in family tree server.
+
 
 
 

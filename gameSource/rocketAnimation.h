@@ -4,7 +4,7 @@
 
 
 void initRocketAnimation( LivingLifePage *inPage, 
-                          LiveObject *inRidingPlayer, ObjectRecord *inRocket,
+                          int inRidingPlayerID, ObjectRecord *inRocket,
                           double inAnimationLengthSeconds );
 
 void freeRocketAnimation();

@@ -576,6 +576,10 @@ class LivingLifePage : public GamePage, public ActionListener {
                                         FloatColor *inForceBlotColor = NULL,
                                         FloatColor *inForceTextColor = NULL );
 
+        
+        LiveObject *getLiveObject( int inID );
+        
+        
     protected:
 
         int mServerSocket;
@@ -1015,7 +1019,6 @@ class LivingLifePage : public GamePage, public ActionListener {
 
 
         LiveObject *getOurLiveObject();
-        LiveObject *getLiveObject( int inID );
         
 
         void clearLiveObjects();
