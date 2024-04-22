@@ -23,7 +23,7 @@ $challengeNumber = str_replace( $challengePrefix, "", $challenge );
 
 if( $challengeNumber < $nextNumber ) {
 
-    echo "Challenge value $challenge is stale.";
+    echo "<br><br>Challenge value $challenge is stale.<br><br>";
     
     eval( $footer );
     die();
@@ -46,7 +46,7 @@ $result = file_get_contents( $checkURL );
 if( preg_match( "/INVALID/", $result ) ||
     ! preg_match( "/VALID/", $result ) ) {
     
-    echo "Hash check failed, url = $checkURL";
+    echo "<br><br>Hash check failed.<br><br>";
     
     eval( $footer );
     die();
@@ -55,7 +55,7 @@ if( preg_match( "/INVALID/", $result ) ||
 $newNum = $challengeNumber + 1;
 
 if( ! file_put_contents( $serialNumberFilePath, $newNum ) ) {
-    echo "Failed to update serial number after hash check.";
+    echo "<br><br>Failed to update serial number after hash check.<br><br>";
     
     eval( $footer );
     die();
@@ -70,7 +70,7 @@ if( $action == "content_update" ) {
     global $updateTriggerFilePath;
 
     if( ! file_put_contents( $updateTriggerFilePath, "1" ) ) {
-        echo "Failed to write to update trigger file.";
+        echo "<br><br>Failed to write to update trigger file.<br><br>";
     
         eval( $footer );
         die();
