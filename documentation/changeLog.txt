@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 418    ???
+Version 418   2024-April-22
 
 --Fixed player swap in rocket animation that was being caused by passing
   pointer to an item in a mutable vector of players (so that if a player dies
