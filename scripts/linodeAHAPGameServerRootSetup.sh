@@ -135,6 +135,9 @@ git checkout -q AnotherPlanet_v\$lastTaggedDataVersion
 
 cd ../OneLife/server
 
+
+echo "http://onehouronelife.com/ahapGate/server.php" > settings/ahapGateURL.ini
+
 echo "http://onehouronelife.com/ahapTicketServer/server.php" > settings/ticketServerURL.ini
 echo "http://onehouronelife.com/ahapReflector/server.php" > settings/reflectorURL.ini
 
