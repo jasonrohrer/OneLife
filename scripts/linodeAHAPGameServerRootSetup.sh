@@ -160,6 +160,7 @@ ln -s ../../$dataName/categories .
 ln -s ../../$dataName/tutorialMaps .
 ln -s ../../$dataName/dataVersionNumber.txt .
 ln -s ../../$dataName/isAHAP.txt .
+ln -s ../../$dataName/contentSettings .
 
 git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//' > serverCodeVersionNumber.txt
 
