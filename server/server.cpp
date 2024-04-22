@@ -26945,8 +26945,9 @@ int main() {
                     // self id is killer
                     killerID = nextPlayer->id;
                     }
-                
-                
+                else if( nextPlayer->rodeRocket ) {
+                    killerID = -999999999;
+                    }
                 
                 char male = ! getFemale( nextPlayer );
                 

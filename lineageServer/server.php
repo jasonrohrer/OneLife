@@ -2607,6 +2607,9 @@ function ls_getDeathHTML( $inID, $inRelID ) {
                 $deathString = "Starved";
                 }
             }
+        else if( $killer_id == -999999999 ) {
+            $deathString = "Rode Rocket";
+            }
         else {
             global $objectsPath;
 
