@@ -17970,6 +17970,16 @@ void removeOwnership( int inX, int inY ) {
 
 
 void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
+    int rocketEnabled =
+        SettingsManager::getIntSetting( "rocketEnabled", 0 );
+
+    if( ! rocketEnabled ) {
+        AppLog::errorF( "Player %d rode rocket at %d,%d but rocketEnabled not "
+                        "set in settings", inPlayer->id, inX, inY );    
+        return;
+        }
+
+
     useContentSettings();
         
     int rocketObjectID =

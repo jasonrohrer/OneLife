@@ -8,6 +8,9 @@ Server Fixes:
 
 --New tutorialEnabled setting for server, so AHAP servers can skip tutorial.
 
+--Added rocketEnable server setting, to ensure that rockets can only take off
+  from bigserver2.
+
 
 
 Version 416   2024-April-21
