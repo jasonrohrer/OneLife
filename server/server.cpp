@@ -9145,6 +9145,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.isTutorial = false;
     
+    int tutorialEnabled = 
+        SettingsManager::getIntSetting( "tutorialEnabled", 0 );
+
+    if( ! tutorialEnabled ) {
+        inTutorialNumber = 0;
+        }
+
+
     if( inTutorialNumber > 0 ) {
         newObject.isTutorial = true;
         }

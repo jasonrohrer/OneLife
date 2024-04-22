@@ -3,6 +3,13 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes:
+
+--New tutorialEnabled setting for server, so AHAP servers can skip tutorial.
+
+
+
 Version 416   2024-April-21
 
 --Fixed a memory leak in transitionBank.
