@@ -7,7 +7,7 @@ global $header, $footer;
 
 eval( $header );
 
-global $challengePrefix;
+global $challengePrefix, $serialNumberFilePath;
 
 
 $challenge = ug_requestFilter( "challenge",

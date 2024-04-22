@@ -25,6 +25,11 @@ $fullServerURL = "http://localhost/jcr13/ahapGate/server.php";
 $ahapTicketServerURL = "http://localhost/jcr13/ahapTicketServer/server.php";
 
 
+// location of content leader email file (for privacy, should not be web-
+// accessible)
+// Must be writeable by the user that runs this script
+$contentLeaderEmailFilePath = "/home/jasonrohrer2/contentLeaderEmail.txt";
+
 
 
 // The URL of the main, public-face website

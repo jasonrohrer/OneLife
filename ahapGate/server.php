@@ -1571,6 +1571,15 @@ function ag_updateContentLeader() {
             $query = "UPDATE $tableNamePrefix"."server_globals ".
                 "SET content_leader_email = '$bestLeader';";
             ag_queryDatabase( $query );
+
+
+            global $contentLeaderEmailFilePath;
+
+            if( ! file_put_contents( $contentLeaderEmailFilePath,
+                                     $bestLeader ) ) {
+                ag_log( "Failed to write content leader email to file ".
+                        $contentLeaderEmailFilePath );
+                }
             }
         }
 
