@@ -2,6 +2,7 @@
 
 #include "TextButton.h"
 #include "TextField.h"
+#include "KeyEquivalentTextButton.h"
 
 
 #include "minorGems/ui/event/ActionListener.h"
@@ -42,6 +43,9 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
         TextField mGithubAccountNameField;
         
         TextField mContentLeaderVoteField;        
+
+        KeyEquivalentTextButton mPasteGithubButton;
+        KeyEquivalentTextButton mPasteLeaderButton;
 
         TextButton mBackButton;
 

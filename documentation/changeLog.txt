@@ -10,6 +10,8 @@ Version 418    ???
   pointer to an item in a mutable vector of players (so that if a player dies
   or joins and changes the vector, the player being pointed to would change).
 
+--Added support for paste into fields in AHAP Settings (PLANET) screen.
+
 
 
 

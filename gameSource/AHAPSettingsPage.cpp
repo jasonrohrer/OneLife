@@ -29,7 +29,7 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
           mSequenceNumber( -1 ),
           mCurrentLeaderEmail( NULL ),
           mPosting( false ),
-          mGithubAccountNameField( mainFont, 200, 25, 10, false,
+          mGithubAccountNameField( mainFont, 200, 60, 10, false,
                                    translate( "githubAccountName"), 
                                    "abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -41,6 +41,10 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
                                    // forbid only spaces and backslash and 
                                    // single/double quotes 
                                    "\"' \\" ),
+          mPasteGithubButton( mainFont, 200, 0, 
+                              translate( "paste" ), 'v', 'V' ),
+          mPasteLeaderButton( mainFont, 200, -160, 
+                              translate( "paste" ), 'v', 'V' ),
           mBackButton( mainFont, -526, -280, translate( "backButton" ) ),
           mPostButton( mainFont, 526, -280, translate( "postButton" ) ),
           mGettingSequenceNumber( false ) {
@@ -48,13 +52,23 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     setButtonStyle( &mBackButton );
     setButtonStyle( &mPostButton );
     
+    setButtonStyle( &mPasteGithubButton );
+    setButtonStyle( &mPasteLeaderButton );
+
 
     addComponent( &mBackButton );
     addComponent( &mPostButton );
 
+    addComponent( &mPasteGithubButton );
+    addComponent( &mPasteLeaderButton );
+
     mBackButton.addActionListener( this );
     mPostButton.addActionListener( this );
     
+    mPasteGithubButton.addActionListener( this );
+    mPasteLeaderButton.addActionListener( this );
+    
+
     mGithubAccountNameField.addActionListener( this );
     mContentLeaderVoteField.addActionListener( this );
     
@@ -69,6 +83,9 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     
 
     mPostButton.setMouseOverTip( translate( "postAHAPSettingsTip" ) );
+
+    mPasteGithubButton.setVisible( false );
+    mPasteLeaderButton.setVisible( false );
     }
 
 
@@ -133,7 +150,20 @@ void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mContentLeaderVoteField ) {
         testPostVisible();
         }
+    else if( inTarget == &mPasteGithubButton ) {
+        char *clipboardText = getClipboardText();
+        
+        mGithubAccountNameField.setText( clipboardText );
     
+        delete [] clipboardText;
+        }
+    else if( inTarget == &mPasteLeaderButton ) {
+        char *clipboardText = getClipboardText();
+        
+        mContentLeaderVoteField.setText( clipboardText );
+    
+        delete [] clipboardText;
+        }
     }
 
 
@@ -225,6 +255,13 @@ void AHAPSettingsPage::testPostVisible() {
 void AHAPSettingsPage::step() {
     
     ServerActionPage::step();
+
+
+    mPasteGithubButton.setVisible( isClipboardSupported() &&
+                                   mGithubAccountNameField.isFocused() );
+    
+    mPasteLeaderButton.setVisible( isClipboardSupported() &&
+                                   mContentLeaderVoteField.isFocused() );
 
     if( isResponseReady() ) {
 
