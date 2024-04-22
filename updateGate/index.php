@@ -21,7 +21,7 @@ $challenge = $challengePrefix . $nextNumber;
 echo "This will trigger a content update for Another Planet based on the latest content in the Github repository AnotherPlanetData.<br><br><br>";
 
 echo "NOTE: this will only work if you are currently elected as ".
-"Content Leader.<br><br><br>"
+"Content Leader.<br><br><br>";
 
 
 echo "Use game client SERVICES area to generate hash response:<br>";
