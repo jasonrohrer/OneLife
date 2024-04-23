@@ -458,8 +458,10 @@ int main( int inNumArgs, char **inArgs ) {
                 
                 char *name = childFiles[i]->getFileName();
                 
-                if( strstr( name, "lifeLog" ) == name ) {
-                    // file name starts with lifeLog
+                if( strstr( name, "lifeLog" ) == name &&
+                    strstr( name, "ahap" ) == NULL ) {
+                    // file name starts with lifeLog 
+                    // and doesn't contain ahap
                     numFilesProcessed += processLifeLogFolder( childFiles[i] );
                     }
                 delete [] name;
