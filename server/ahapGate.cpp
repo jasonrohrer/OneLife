@@ -31,7 +31,7 @@ static SimpleVector<GrantActionRecord> grantRecords;
 
 typedef struct VoteActionRecord {
         char *voterEmail;
-        char *voteForEmail;
+        char *voteForGithubUsername;
 
         WebRequest *request;
         
@@ -56,7 +56,7 @@ static void freeRecord( GrantActionRecord *inR ) {
 
 static void freeRecord( VoteActionRecord *inR ) {
     delete [] inR->voterEmail;
-    delete [] inR->voteForEmail;
+    delete [] inR->voteForGithubUsername;
     delete inR->request;
     }
 
@@ -312,16 +312,17 @@ static void stepVoteRecords() {
                     char *encodedVoterEmail = 
                         URLUtils::urlEncode( r->voterEmail );
                     
-                    char *encodedVoteForEmail = 
-                        URLUtils::urlEncode( r->voteForEmail );
+                    char *encodedVoteForGithub = 
+                        URLUtils::urlEncode( r->voteForGithubUsername );
                 
                     //  HMAC_SHA1( $shared_secret, 
                     //             $sequence_number$email$leaderEmaiil )
-                
-                    char *stringToHash = autoSprintf( "%d%s%s", 
-                                                      r->sequenceNumber,
-                                                      r->voterEmail,
-                                                      r->voteForEmail );
+
+                    char *stringToHash = 
+                        autoSprintf( "%d%s%s", 
+                                     r->sequenceNumber,
+                                     r->voterEmail,
+                                     r->voteForGithubUsername );
                 
                     char *hash = hmac_sha1( ahapGateSharedSecret,
                                             stringToHash );
@@ -333,17 +334,17 @@ static void stepVoteRecords() {
                     char *url = autoSprintf( 
                         "%s?action=register_vote"
                         "&email=%s"
-                        "&leader_email=%s"
+                        "&leader_github=%s"
                         "&sequence_number=%d"
                         "&hash_value=%s",
                         ahapGateURL,
                         encodedVoterEmail,
-                        encodedVoteForEmail,
+                        encodedVoteForGithub,
                         r->sequenceNumber,
                         hash );
                 
                     delete [] encodedVoterEmail;
-                    delete [] encodedVoteForEmail;
+                    delete [] encodedVoteForGithub;
                     delete [] ahapGateURL;
                     delete [] hash;
                 
@@ -431,11 +432,12 @@ void triggerAHAPGrant( const char *inEmail ) {
 
 
 
-void triggerAHAPVote( const char *inVoterEmail, const char *inVoteForEmail ) {
+void triggerAHAPVote( const char *inVoterEmail, 
+                      const char *inVoteForGithubUsername ) {
     VoteActionRecord r;
         
     r.voterEmail = stringDuplicate( inVoterEmail );
-    r.voteForEmail = stringDuplicate( inVoteForEmail );
+    r.voteForGithubUsername = stringToLowerCase( inVoteForGithubUsername );
     
     r.sequenceNumber = -1;
     

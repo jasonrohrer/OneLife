@@ -2930,7 +2930,7 @@ typedef struct ClientMessage {
         char *saidText;
         
         // NULL if type not APVT
-        char *voteEmail;
+        char *voteGithubUsername;
 
         // null if type not BUG
         char *bugText;
@@ -2970,7 +2970,7 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
     m.numExtraPos = 0;
     m.extraPos = NULL;
     m.saidText = NULL;
-    m.voteEmail = NULL;
+    m.voteGithubUsername = NULL;
     m.bugText = NULL;
     m.photoIDString = NULL;
     m.sequenceNumber = -1;
@@ -3388,7 +3388,8 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
                 char *thirdSpace = strstr( &( secondSpace[1] ), " " );
                 
                 if( thirdSpace != NULL ) {
-                    m.voteEmail = stringDuplicate( &( thirdSpace[1] ) );
+                    m.voteGithubUsername = 
+                        stringDuplicate( &( thirdSpace[1] ) );
                     }
                 }
             }
@@ -21259,9 +21260,10 @@ int main() {
                     int isAHAP = readIntFromFile( "isAHAP.txt", 0 );
                     
                     // ignore vote if this is not AHAP server
-                    if( isAHAP && m.voteEmail != NULL ) {
+                    if( isAHAP && m.voteGithubUsername != NULL ) {
                         
-                        triggerAHAPVote( nextPlayer->email, m.voteEmail );
+                        triggerAHAPVote( nextPlayer->email, 
+                                         m.voteGithubUsername );
                         }
                     }
                 else if( m.type == UNFOL ) {
@@ -26528,8 +26530,8 @@ int main() {
                 if( m.saidText != NULL ) {
                     delete [] m.saidText;
                     }
-                if( m.voteEmail != NULL ) {
-                    delete [] m.voteEmail;
+                if( m.voteGithubUsername != NULL ) {
+                    delete [] m.voteGithubUsername;
                     }
                 if( m.bugText != NULL ) {
                     delete [] m.bugText;

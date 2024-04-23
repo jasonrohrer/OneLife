@@ -14851,21 +14851,21 @@ void LivingLifePage::step() {
             if( isAHAP ) {
                 // see if we have a vote to submit
 
-                char *voteEmail = 
+                char *voteGithub = 
                     SettingsManager::getStringSetting( 
-                        "contentLeaderVote", "" );;
+                        "contentLeaderVote", "" );
                 
 
-                if( strcmp( voteEmail, "" ) != 0 ) {
+                if( strcmp( voteGithub, "" ) != 0 ) {
 
                     char *message = autoSprintf( "APVT 0 0 %s#",
-                                                 voteEmail );
+                                                 voteGithub );
                     
                     sendToServerSocket( message );
                     
                     delete [] message;
                     }
-                delete [] voteEmail;
+                delete [] voteGithub;
                 }
             return;
             }

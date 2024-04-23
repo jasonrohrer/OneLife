@@ -27,7 +27,7 @@ extern char *userEmail;
 AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
         : ServerActionPage( inAHAPGateServerURL, "get_sequence_number", false ),
           mSequenceNumber( -1 ),
-          mCurrentLeaderEmail( NULL ),
+          mCurrentLeaderGithub( NULL ),
           mPosting( false ),
           mGithubAccountNameField( mainFont, 200, 60, 10, false,
                                    translate( "githubAccountName"), 
@@ -91,11 +91,11 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
 
 
 AHAPSettingsPage::~AHAPSettingsPage() {
-    if( mCurrentLeaderEmail != NULL ) {
-        delete [] mCurrentLeaderEmail;
+    if( mCurrentLeaderGithub != NULL ) {
+        delete [] mCurrentLeaderGithub;
         }
     
-    mCurrentLeaderEmail = NULL;
+    mCurrentLeaderGithub = NULL;
     }
 
 
@@ -171,7 +171,7 @@ void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
 void AHAPSettingsPage::draw( doublePair inViewCenter, 
                              double inViewSize ) {
 
-    if( mCurrentLeaderEmail != NULL ) {
+    if( mCurrentLeaderGithub != NULL ) {
 
         doublePair pos = mGithubAccountNameField.getPosition();
         
@@ -183,7 +183,7 @@ void AHAPSettingsPage::draw( doublePair inViewCenter,
         drawMessage( translate( "contentLeaderExplain" ), pos );
         
         pos.y -= 64;
-        drawMessage( mCurrentLeaderEmail, pos );
+        drawMessage( mCurrentLeaderGithub, pos );
         }
     }
 
@@ -227,19 +227,14 @@ void AHAPSettingsPage::setupRequest( const char *inActionName,
 void AHAPSettingsPage::testPostVisible() {
     mPostButton.setVisible( false );
     
-    if( mCurrentLeaderEmail == NULL ) {
+    if( mCurrentLeaderGithub == NULL ) {
         return;
         }
     
     char *github = mGithubAccountNameField.getText();
     
-    char *leaderVote = mContentLeaderVoteField.getText();
-    
-    if( strlen( github ) > 0 &&
-        strstr( leaderVote, "@" )  != NULL &&
-        strstr( leaderVote, "." )  != NULL ) {
-        
-        // github name not empty, and vote resembles an email
+    if( strlen( github ) > 0 ) {
+        // github name not empty
 
         mPostButton.setVisible( true );
         
@@ -247,7 +242,6 @@ void AHAPSettingsPage::testPostVisible() {
         }
 
     delete [] github;
-    delete [] leaderVote;
     }
 
 
@@ -285,7 +279,7 @@ void AHAPSettingsPage::step() {
 
             if( mSequenceNumber != -1 ) {
                 
-                if( mCurrentLeaderEmail == NULL ) {
+                if( mCurrentLeaderGithub == NULL ) {
                     setupRequest( "get_content_leader" );
                     
                     startRequest();
@@ -310,21 +304,21 @@ void AHAPSettingsPage::step() {
                     }
                 }
             }
-        else if( mCurrentLeaderEmail == NULL ) {
+        else if( mCurrentLeaderGithub == NULL ) {
             if( getNumResponseParts() > 0 ) {
                 
                 char *responseString = getResponse( 0 );
                 
                 if( responseString != NULL ) {
                     
-                    char email[200];
+                    char github[200];
                     
-                    int numRead = sscanf( responseString, "%199s", email );
+                    int numRead = sscanf( responseString, "%199s", github );
                     
                     delete [] responseString;
                     
                     if( numRead == 1 ) {
-                        mCurrentLeaderEmail = stringDuplicate( email );
+                        mCurrentLeaderGithub = stringDuplicate( github );
                         }
                     }
                 
@@ -375,9 +369,9 @@ void AHAPSettingsPage::makeActive( char inFresh ) {
     mPosting = false;
     
 
-    if( mCurrentLeaderEmail != NULL ) {
-        delete [] mCurrentLeaderEmail;
-        mCurrentLeaderEmail = NULL;
+    if( mCurrentLeaderGithub != NULL ) {
+        delete [] mCurrentLeaderGithub;
+        mCurrentLeaderGithub = NULL;
         }
     
     clearActionParameters();

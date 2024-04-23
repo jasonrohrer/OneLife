@@ -4,10 +4,20 @@ http://onehouronelife.com/updateLog.php
 
 
 
+
+Version ???
+
+--Client displays current leader, and accepts leader vote, as github account
+  name instead of email.
+
+
+
 Server Fixes:
 
 --ahapGate now receives leader votes, and returns current leader, using
-  leader's Github account name instead of email.
+  leader's Github account name instead of email.  Game server does the same.
+
+
 
 
 Version 418   2024-April-22

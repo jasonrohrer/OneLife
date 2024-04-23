@@ -34,7 +34,7 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
     protected:
 
         int mSequenceNumber;
-        char *mCurrentLeaderEmail;
+        char *mCurrentLeaderGithub;
         
         char mPosting;
         
