@@ -75,7 +75,7 @@ Secure against replay attacks and modification of submitted email.
 server.php
 ?action=register_vote
 &email=[email address]
-&leader_email=[email address]
+&leader_github=[account_name]
 &sequence_number=[int]
 &hash_value=[hash value]
 
@@ -94,11 +94,12 @@ DENIED is returned if the user's email isn't known
 
 hash_value is computed on both ends with:
 
-  HMAC_SHA1( $shared_secret, $sequence_number$email$leaderEmail )
+  HMAC_SHA1( $shared_secret, $sequence_number$email$leaderGithub )
 
-  (sequence number concatonated with both emails)
+  (sequence number concatonated with email and github)
+  (both email and github forced to all lower-case for hashing)
 
-Secure against replay attacks and modification of submitted emails.
+Secure against replay attacks and modification of submitted github vote.
 
 
 
@@ -129,6 +130,7 @@ hash_value is computed on both ends with:
   HMAC_SHA1( $ticket_id, $sequence_number$github_username )
 
   (sequence number concatonated with github username)
+  (github forced to all lower-case for hashing)
 
 Secure against replay attacks and modification of submitted username.
 
@@ -145,12 +147,12 @@ server.php
 &hash_value=[hash value]
 
 Return:
-leader_email
+leader_github
 OK
 -or-
 DENIED
 
-Used by game clients to get the current content leader's email.
+Used by game clients to get the current content leader's github account name.
 This is not who they are currently voting for, but who is the current winner
 of the vote.
 

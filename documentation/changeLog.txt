@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--ahapGate now receives leader votes, and returns current leader, using
+  leader's Github account name instead of email.
+
+
 Version 418   2024-April-22
 
 --Fixed player swap in rocket animation that was being caused by passing

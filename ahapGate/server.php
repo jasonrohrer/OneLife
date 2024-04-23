@@ -428,13 +428,16 @@ function ag_showData( $checkPassword = true ) {
     
     $keysLeftInBank = ag_countKeysInBank();
     $leader = ag_getContentLeaderInternal();
+
+    $leader_github = ag_getGithubUsername( $leader_email );
     
     echo "<table width='100%' border=0><tr>".
         "<td valign=top>[<a href=\"server.php?action=show_data" .
             "\">Main</a>]</td>".
         "<td  valign=top align=center>".
           "<b>$keysLeftInBank</b> unassigned keys remain".
-          "<br><br>Current Content Leader: $leader</td>".
+          "<br><br>Current Content Leader: $leader<br>".
+                  "(Github: $leader_github)</td>".
         "<td valign=top align=right>[<a href=\"server.php?action=logout" .
             "\">Logout</a>]</td>".
         "</tr></table><br><br><br>";
@@ -984,7 +987,7 @@ function ag_grant() {
 
     // concat email with sequence number, to prevent replaying grant
     // action with seq of 0 for different emails
-    $trueSeq = ag_checkSeqHash( $email, $email );
+    $trueSeq = ag_checkSeqHash( $email, strtolower( $email ) );
     
     
     if( $trueSeq == 0 ) {
@@ -1202,12 +1205,15 @@ function ag_registerVote() {
     global $tableNamePrefix;
 
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
-    $leader_email = ag_requestFilter( "leader_email",
-                                      "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+    $leader_github = ag_requestFilter( "leader_github",
+                                       "/[A-Z0-9\-]+/i", "" );
 
-    // include both emails in hash check, so we can't replay voting
+    $leader_github = strtolower( $leader_github );
+    
+    // include both email and github in hash check, so we can't replay voting
     // for a given leader, with a given sequence number for a different email
-    $trueSeq = ag_checkSeqHash( $email, $email . $leader_email );
+    $trueSeq = ag_checkSeqHash( $email,
+                                strtolower( $email ) . $leader_github );
     
     
     if( $trueSeq == 0 ) {
@@ -1222,7 +1228,7 @@ function ag_registerVote() {
     // make sure leader exists
     $query =
         "SELECT COUNT(*) from $tableNamePrefix"."users ".
-        "WHERE email = '$leader_email';";
+        "WHERE github_username = '$leader_github';";
 
     $result = ag_queryDatabase( $query );
 
@@ -1237,13 +1243,15 @@ function ag_registerVote() {
 
     if( ag_mysqli_result( $result, 0, 0 ) < 1 ) {
         // leader they are voting for doesn't exist
-        ag_log( "grant denied because no record exists for leader ".
-                $leader_email );
+        ag_log( "grant denied because no record exists for leader w/ github ".
+                $leader_github );
 
         echo "DENIED";
         return;
         }
     
+
+    $leader_email = ag_getEmailForGithubUsername( $leader_github );
     
     // update the existing one
     $query = "UPDATE $tableNamePrefix"."users SET " .
@@ -1280,6 +1288,8 @@ function ag_checkTicketServerSeqHash( $concatData ) {
         echo "DENIED";
         die();
         }
+
+    $email = strtolower( $email );
     
     $sequence_number = ag_requestFilter( "sequence_number", "/[0-9]+/i", "0" );
 
@@ -1338,8 +1348,8 @@ function ag_checkTicketServerSeqHash( $concatData ) {
 function ag_registerGithub() {
     global $tableNamePrefix;
 
-    $github_username = ag_requestFilter( "github_username",
-                                      "/[A-Z0-9\-]+/i", "" );
+    $github_username = strtolower( ag_requestFilter( "github_username",
+                                                     "/[A-Z0-9\-]+/i", "" ) );
 
     // will die on failure
     $email = ag_checkTicketServerSeqHash( $github_username );
@@ -1406,8 +1416,11 @@ function ag_getContentLeader() {
 
     // got here, hash check succeeded  
 
-    $leader = ag_getContentLeaderInternal();
+    $leader_email = ag_getContentLeaderInternal();
 
+    $leader_github = ag_getGithubUsername( $leader_email );
+    
+    
     // update sequence number
     $query = "UPDATE $tableNamePrefix"."users SET " .
         "sequence_number = sequence_number + 1 ".
@@ -1415,7 +1428,7 @@ function ag_getContentLeader() {
     
     ag_queryDatabase( $query );
     
-    echo "$leader\n";
+    echo "$leader_github\n";
     echo "OK";
     }
 
@@ -1507,6 +1520,29 @@ function ag_getGithubUsername( $inEmail ) {
         }
             
     return $github_username;
+    }
+
+
+// returns "" if user for $inGithub does not exist
+function ag_getEmailForGithubUsername( $inGithub ) {
+    global $tableNamePrefix;
+    
+    $query =
+        "SELECT email ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE github_username='$inGithub';";
+            
+    $result = ag_queryDatabase( $query );
+            
+    $numRows = mysqli_num_rows( $result );
+    
+    $email = "";
+            
+    if( $numRows > 0 ) {
+        $email = ag_mysqli_result( $result, 0, "email" );
+        }
+            
+    return $email;
     }
 
 
