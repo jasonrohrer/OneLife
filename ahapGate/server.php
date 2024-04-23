@@ -429,7 +429,7 @@ function ag_showData( $checkPassword = true ) {
     $keysLeftInBank = ag_countKeysInBank();
     $leader = ag_getContentLeaderInternal();
 
-    $leader_github = ag_getGithubUsername( $leader_email );
+    $leader_github = ag_getGithubUsername( $leader );
     
     echo "<table width='100%' border=0><tr>".
         "<td valign=top>[<a href=\"server.php?action=show_data" .
