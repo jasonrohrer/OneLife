@@ -8,6 +8,7 @@
 #include "lifeTokens.h"
 #include "fitnessScore.h"
 
+#include "settingsToggle.h"
 
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
@@ -236,11 +237,25 @@ void ExistingAccountPage::makeActive( char inFresh ) {
 
     mAHAPSettingsButton.setVisible( isAHAP );
 
-    if( SettingsManager::getIntSetting( "tutorialDone", 0 ) ) {
+
+    useContentSettings();
+    
+    int tutorialEnabled = 
+        SettingsManager::getIntSetting( "tutorialEnabled", 0 );
+    
+    useMainSettings();
+    
+    
+    if( tutorialEnabled && 
+        SettingsManager::getIntSetting( "tutorialDone", 0 ) ) {
+        
         mTutorialButton.setVisible( true );
         }
     else {
-        // tutorial forced anyway
+        // tutorial disabled,
+        // or 
+        // tutorial enabled, and they haven't completed it yet, so
+        // tutorial forced anyway (don't need to show button for it)
         mTutorialButton.setVisible( false );
         }
     

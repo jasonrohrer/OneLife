@@ -10,6 +10,8 @@ Version ???
 --Client displays current leader, and accepts leader vote, as github account
   name instead of email.
 
+--tutorialEnabled setting now in contentSettings, and obeyed by client too.
+
 
 
 Server Fixes:

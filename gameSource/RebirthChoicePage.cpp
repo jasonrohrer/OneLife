@@ -6,6 +6,8 @@
 #include "lifeTokens.h"
 #include "fitnessScore.h"
 
+#include "settingsToggle.h"
+
 #include "minorGems/game/Font.h"
 #include "minorGems/game/game.h"
 
@@ -172,16 +174,25 @@ void RebirthChoicePage::makeActive( char inFresh ) {
 
     int tutorialDone = SettingsManager::getIntSetting( "tutorialDone", 0 );
     
+    useContentSettings();
+    
+    int tutorialEnabled = 
+        SettingsManager::getIntSetting( "tutorialEnabled", 0 );
+    
+    useMainSettings();
 
-    if( !tutorialDone ) {
+    if( tutorialEnabled && !tutorialDone ) {
         mRebornButton.setVisible( false );
         doublePair rebornPos = mRebornButton.getPosition();
         mTutorialButton.setPosition( rebornPos.x, rebornPos.y );
         mTutorialButton.setLabelText( translate( "restartTutorial" ) );
+        mTutorialButton.setVisible( true );
         }
     else {
         mRebornButton.setVisible( true );
         mTutorialButton.setPosition( tutorialButtonPos.x, tutorialButtonPos.y );
         mTutorialButton.setLabelText( translate( "tutorial" ) );
+        
+        mTutorialButton.setVisible( tutorialEnabled );
         }
     }
