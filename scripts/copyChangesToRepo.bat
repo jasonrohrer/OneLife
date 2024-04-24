@@ -90,6 +90,10 @@ goto :eof
 
 :folderCopy
   echo copying %~2 files found in %~1
-  del AnotherPlanetData\%~1\*.%~2
-  copy %~1\*.%~2 AnotherPlanetData\%~1\ >NUL
+  if exist AnotherPlanetData\%~1\*.%~2 (
+    del AnotherPlanetData\%~1\*.%~2
+  )
+  if exist %~1\*.%~2 (
+    copy %~1\*.%~2 AnotherPlanetData\%~1\ >NUL
+  )
 goto :eof
