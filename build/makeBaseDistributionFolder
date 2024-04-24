@@ -69,6 +69,8 @@ cp ../../OneLifeData7/dataVersionNumber.txt $baseFolder/
 
 rm -f $baseFolder/settings/email.ini
 rm -f $baseFolder/settings/accountKey.ini
+rm -f $baseFolder/settings/countingOnVsync.ini
+rm -f $baseFolder/settings/targetFrameRate.ini
 
 
 # remove all editor backup files

@@ -20,6 +20,10 @@ Version ???
 --Fixed frame-rate re-detect butto to actually show quit screen (when relaunch
   fails) on platforms like Windows that don't support auto-relaunch.
 
+--Whoops, rogue countingOnVsync and targetFrameRate settings files were getting
+  included in windows client builds by accident.  Build scripts now make sure
+  those settings get removed.
+
 
 
 
