@@ -48,6 +48,9 @@ echo:
 
 call :folderCreate faces
 
+call :folderCreate scenes
+
+
 echo:
 
 call :folderCopy animations txt
