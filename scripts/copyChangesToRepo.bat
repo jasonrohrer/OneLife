@@ -62,6 +62,8 @@ call :folderCopy sounds aiff
 
 call :folderCopy sounds ogg
 
+call :folderCopy sounds fcz
+
 call :folderCopy sprites tga
 
 call :folderCopy sprites txt

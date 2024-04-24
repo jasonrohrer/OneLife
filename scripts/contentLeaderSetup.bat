@@ -71,6 +71,8 @@ call :folderCopy sounds aiff
 
 call :folderCopy sounds ogg
 
+call :folderCopy sounds txt
+
 call :folderCopy sprites tga
 
 call :folderCopy sprites txt
@@ -115,6 +117,9 @@ goto :eof
   echo copying %~2 files found in AnotherPlanetData\%~1
   if exist %~1\*.%~2 (
     del %~1\*.%~2
+  )
+  if exist %~1\*.fcz (
+    del %~1\*.fcz
   )
   if exist AnotherPlanetData\%~1\*.%~2 (
     copy AnotherPlanetData\%~1\*.%~2 %~1\ >NUL
