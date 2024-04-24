@@ -48,6 +48,11 @@ fi
 make
 ./makeEditor.sh
 
+cd ../server
+./configure 3
+make
+
+
 cd ../build
 
 

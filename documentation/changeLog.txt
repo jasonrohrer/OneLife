@@ -12,6 +12,11 @@ Version ???
 
 --tutorialEnabled setting now in contentSettings, and obeyed by client too.
 
+--Windows client bundles now include OneLifeServer.
+
+--Windows client bundles now included helper BAT scripts for AHAP Content
+  Leader.
+
 
 
 Server Fixes:

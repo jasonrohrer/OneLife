@@ -42,6 +42,12 @@ cd ../..
 cp ../gameSource/OneLife.exe windows/OneLife_$1/
 cp ../gameSource/EditOneLife.exe windows/OneLife_$1/
 
+cp ../server/OneLifeServer.exe windows/OneLife_$1/
+cp ../server/runServer.bat windows/OneLife_$1/
+
+cp ../scripts/contentLeaderSetup.bat windows/OneLife_$1/
+cp ../scripts/copyChangesToRepo.bat windows/OneLife_$1/
+
 cp win32/*.dll windows/OneLife_$1/
 
 
