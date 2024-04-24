@@ -17,6 +17,10 @@ Version ???
 --Windows client bundles now included helper BAT scripts for AHAP Content
   Leader.
 
+--Fixed frame-rate re-detect butto to actually show quit screen (when relaunch
+  fails) on platforms like Windows that don't support auto-relaunch.
+
+
 
 
 Server Fixes:
