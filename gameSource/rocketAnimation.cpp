@@ -23,7 +23,6 @@ extern doublePair getSpeechOffset( LiveObject *inPlayer );
 
 
 // relative to screen center
-static doublePair rocketPos;
 static doublePair rocketStartPos;
 static doublePair rocketEndPos;
 
@@ -110,16 +109,8 @@ void initRocketAnimation( LivingLifePage *inPage,
     ridingPlayerID = inRidingPlayerID;
     rocket = inRocket;
     
-    frameCount = 0;
-
-    rocketStartPos.x = 0;
-    rocketStartPos.y = - viewHeight;
+    frameCount = 0;    
     
-    rocketEndPos.x = 0;
-    rocketEndPos.y = viewHeight;
-    
-    rocketPos = rocketStartPos;
-
     startTime = game_getCurrentTime();
     animationLengthSeconds = inAnimationLengthSeconds;
 
@@ -155,8 +146,11 @@ void initRocketAnimation( LivingLifePage *inPage,
     progress = 0;
 
 
+    rocketEndPos.x = 0;
+    rocketEndPos.y = viewHeight;
+
     rocketStartPos.x = 0;
-    rocketStartPos.y = - viewHeight * 0.75;
+    rocketStartPos.y = - 1.0625 * viewHeight;
     }
 
 
@@ -214,9 +208,6 @@ void stepRocketAnimation() {
     double timePassed = game_getCurrentTime() - startTime;
     
     progress = timePassed / animationLengthSeconds;
-
-    rocketPos = add( mult( rocketEndPos, progress ),
-                     mult( rocketStartPos, 1.0 - progress ) );
     }
 
 
