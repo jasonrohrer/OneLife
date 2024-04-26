@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version ???
+Version 419   2024-April-26
 
 --Client displays current leader, and accepts leader vote, as github account
   name instead of email.
