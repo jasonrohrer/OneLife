@@ -328,6 +328,32 @@ void drawRocketAnimation() {
     double animFrameTime = frameRateFactor * frameCount / 60.0;
     
     char used;
+
+    // first draw parts of rocket behind player
+    prepareToSkipSprites( rocket, true );
+
+    drawObjectAnim( rocket->id, 
+                    2, 
+                    moving,
+                    animFrameTime,
+                    1,
+                    moving,
+                    animFrameTime,
+                    animFrameTime,
+                    &used,
+                    endAnimType,
+                    endAnimType,
+                    rocketPos,
+                    0,
+                    false,
+                    false,
+                    -1,
+                    false, false, false,
+                    getEmptyClothingSet(),
+                    NULL );
+        
+    restoreSkipDrawing( rocket );
+
     
     LiveObject *ridingPlayer = page->getLiveObject( ridingPlayerID );
 
@@ -362,6 +388,10 @@ void drawRocketAnimation() {
     setAnimationEmotion( NULL );
     
 
+    
+    // now draw parts of rocket in front of player
+    prepareToSkipSprites( rocket, false );
+
     drawObjectAnim( rocket->id, 
                     2, 
                     moving,
@@ -381,6 +411,8 @@ void drawRocketAnimation() {
                     false, false, false,
                     getEmptyClothingSet(),
                     NULL );
+        
+    restoreSkipDrawing( rocket );
 
 
     

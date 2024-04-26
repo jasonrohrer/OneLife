@@ -24,6 +24,8 @@ Version ???
   included in windows client builds by accident.  Build scripts now make sure
   those settings get removed.
 
+--Fixed so that parts of rocket can be drawn behind player during take-off.
+
 
 
 
