@@ -25,6 +25,8 @@ typedef struct PeriodicPlacementRecord {
     } PeriodicPlacementRecord;
 
 
+static char enabled = false;
+
 
 static SimpleVector <PeriodicPlacementRecord> records;
 
@@ -32,8 +34,8 @@ static SimpleVector <PeriodicPlacementRecord> records;
 
 static double lastSettingReloadTime = 0;
 
-// every 5 minutes
-static double settingReloadInterval = 300;
+// every 30 seconds
+static double settingReloadInterval = 30;
 
 // updates and marks live, or creates new
 static void updateRecord( int inID, int inRadius, double inInterval,
@@ -78,6 +80,8 @@ static void clearSettings() {
 
 
 static void reloadSettings() {
+    enabled = 
+        SettingsManager::getIntSetting( "allowPeriodicPlacements", 0 );
     
     // mark all existing ones as not live
     for( int i=0; i<records.size(); i++ ) {
@@ -171,6 +175,10 @@ void freePeriodicPlacements() {
 
 
 PeriodicPlacementAction *stepPeriodicPlacements() {
+    if( ! enabled ) {
+        return NULL;
+        }
+
     double curTime = Time::getCurrentTime();
     
     if( curTime - settingReloadInterval > 
