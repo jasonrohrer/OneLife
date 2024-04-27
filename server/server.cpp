@@ -63,6 +63,7 @@
 #include "cravings.h"
 #include "offspringTracker.h"
 #include "ipBanList.h"
+#include "periodicPlacements.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -2479,6 +2480,8 @@ void quitCleanup() {
     
     freeIPBanList();
 
+    freePeriodicPlacements();
+    
 
     freeMap();
 
@@ -18042,6 +18045,28 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
 
 
 
+static GridPos getAveragePopulationPos( 
+    SimpleVector<LiveObject *> *inPopulation ) {
+    
+    GridPos avePopPos = {0,0};
+    
+    int s = inPopulation->size();
+    
+    for( int i=0; i< s; i++ ) {
+        GridPos p = getPlayerPos( inPopulation->getElementDirect( i ) );
+        
+        avePopPos.x += p.x;
+        avePopPos.y += p.y;
+        }
+
+    avePopPos.x /= s;
+    avePopPos.y /= s;
+    
+    return avePopPos;
+    }
+
+
+
 
 int main() {
     useMainSettings();
@@ -18347,6 +18372,8 @@ int main() {
     initOffspringTracker();
     
     initIPBanList();
+    
+    initPeriodicPlacements();
 
 
     char rebuilding;
@@ -18752,6 +18779,84 @@ int main() {
                 delete grantResult;
                 }
             
+            
+            PeriodicPlacementAction *placement = stepPeriodicPlacements();
+            
+            if( placement != NULL ) {
+
+                SimpleVector <LiveObject*> population;
+
+                for( int i=0; i<players.size(); i++ ) {
+                    LiveObject *o = players.getElement( i );
+        
+                    if( ! o->error &&
+                        ! o->isTutorial &&
+                        o->curseStatus.curseLevel == 0 ) {
+                        
+                        population.push_back( o );
+                        }
+                    }
+                
+                double maxDist = 2 * placement->populationRadius;
+                
+                // remove outliers until we find cluster in radius
+                while( population.size() > 0 && 
+                       maxDist > placement->populationRadius ) {
+                    
+                    GridPos avePos = getAveragePopulationPos( &population );
+
+                    maxDist = 0;
+                    int maxI = -1;
+
+                    for( int i=0; i<population.size(); i++ ) {
+                        LiveObject *o = population.getElementDirect( i );
+                        
+                        GridPos p = getPlayerPos( o );
+                        
+                        double d = distance( p, avePos );
+                        
+                        if( d > maxDist ) {
+                            maxDist = d;
+                            maxI = i;
+                            }
+                        }
+                    
+                    if( maxDist > placement->populationRadius ) {
+                        population.deleteElement( maxI );
+                        }
+                    }
+                
+                
+                if( population.size() > 0 ) {
+                    
+                    GridPos avePos = getAveragePopulationPos( &population );
+                    
+                    int xRad = 
+                        randSource.getRandomBoundedInt( 
+                            -placement->populationRadius,
+                            placement->populationRadius );
+                    int yRad = 
+                        randSource.getRandomBoundedInt( 
+                            -placement->populationRadius,
+                            placement->populationRadius );
+                    
+                    GridPos placePos = { avePos.x + xRad,
+                                         avePos.y + yRad };
+                    
+
+                    setMapObject( placePos.x, placePos.y, 
+                                  placement->objectID );
+                    
+                    if( strcmp( placement->globalMessage, "" ) != 0 ) {
+                        sendGlobalMessage( placement->globalMessage );
+                        }
+                    }
+                
+                delete [] placement->globalMessage;
+                delete placement;
+                }
+            
+
 
             int lowestCravingID = INT_MAX;
             

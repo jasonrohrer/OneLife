@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Support for periodic placements, to allow AHAP orbital locations to spawn
+  every eleven hours.
+
+
+
 
 Version 419   2024-April-26
 
