@@ -175,9 +175,6 @@ void freePeriodicPlacements() {
 
 
 PeriodicPlacementAction *stepPeriodicPlacements() {
-    if( ! enabled ) {
-        return NULL;
-        }
 
     double curTime = Time::getCurrentTime();
     
@@ -185,6 +182,10 @@ PeriodicPlacementAction *stepPeriodicPlacements() {
         lastSettingReloadTime ){
     
         reloadSettings();
+        }
+
+    if( ! enabled ) {
+        return NULL;
         }
     
     for( int i=0; i<records.size(); i++ ) {
