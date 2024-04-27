@@ -188,6 +188,26 @@ Holding this object gives a clue in the Headless Hunt contest.
 
 
 
+
+(this one has no + sign):
+
+gridPlacement20,30,p3,p0
+
+Specifies object should occur naturally on grid every 20 x and every 30 y, 
+with an x phase of 3 (at 23, 43, 63, etc in x direction).
+
+gridPlacement20,30
+
+Specifies grid placement with no phase offsets.
+
+gridPlacement40
+
+Specifies a square grid placment (every 40 in both x and y)
+
+
+
+
+
 +hellArrow
 
 This object's monumentCall arrow points to HELL instead of BELL.
@@ -351,6 +371,12 @@ primary homeland.
 
 This road is part of a class of roads, defined by parent road object with ID
 D.  Example:  +road4426
+
+
+
++rocketArrow
+
+This object's monumentCall arrow points to LNCH instead of BELL.
 
 
 

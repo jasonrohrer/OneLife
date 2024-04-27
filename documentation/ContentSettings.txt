@@ -1,0 +1,8 @@
+
+periodicPlacements.ini
+
+39600.0 4998 2000 ORBITAL ALIGNMENT WITH ANOTHER PLANET DETECTED.**ROCKET CONSTRUCTION LOCATION IDENTIFIED.
+
+Every 39600 seconds, object 4998 will be force-spawned by server at a random
+location within 2000 tiles of the average population center (ignoring outliers).
+The rest of the line is a global DING message.
