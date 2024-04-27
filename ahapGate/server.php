@@ -1000,6 +1000,9 @@ function ag_manualGrant() {
     
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br>";
+    
     $seq = ag_getSequenceNumberForEmail( $email );
 
     if( $seq != 0 ) {
@@ -1007,8 +1010,7 @@ function ag_manualGrant() {
         return;
         }
 
-    echo "[<a href=\"server.php?action=show_data" .
-        "\">Main</a>]<br><br><br><pre>";
+    echo "<pre>";
     
     ag_grantForNew( $email );
     
