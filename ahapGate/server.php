@@ -1000,7 +1000,7 @@ function ag_manualGrant() {
     
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
 
-    $seq = ag_getSequenceNumberForEmail( $inEmail );
+    $seq = ag_getSequenceNumberForEmail( $email );
 
     if( $seq != 0 ) {
         echo "Grant for $email already exists.";
