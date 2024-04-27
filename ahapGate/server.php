@@ -137,6 +137,9 @@ else if( $action == "check_grant" ) {
 else if( $action == "grant" ) {
     ag_grant();
     }
+else if( $action == "manual_grant" ) {
+    ag_manualGrant();
+    }
 else if( $action == "register_vote" ) {
     ag_registerVote();
     }
@@ -624,6 +627,22 @@ function ag_showData( $checkPassword = true ) {
 <?php
 
 
+echo "<hr>";
+
+    
+?>
+    <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="manual_grant">
+    Grant for email:<br>
+    <INPUT TYPE="text" NAME="email" size=40>
+    <INPUT TYPE="Submit" VALUE="Grant">
+    </FORM>
+    <hr>
+
+
+<?php
+
+
 
     
     echo "<a href=\"server.php?action=show_log\">".
@@ -976,6 +995,159 @@ function ag_grantPackage( $inSteamID ) {
 
 
 
+function ag_manualGrant() {
+    ag_checkPassword( "manual_grant" );
+    
+    $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
+
+    $seq = ag_getSequenceNumberForEmail( $inEmail );
+
+    if( $seq != 0 ) {
+        echo "Grant for $email already exists.";
+        return;
+        }
+
+    echo "[<a href=\"server.php?action=show_data" .
+        "\">Main</a>]<br><br><br><pre>";
+    
+    ag_grantForNew( $email );
+    
+    echo "</pre>";
+    }
+
+
+
+
+function ag_grantForNew( $email ) {
+    global $tableNamePrefix;
+    
+    // check if OHOL ticket exists
+    global $tableNamePrefixOHOLTicketServer;
+    $query = "SELECT ticket_id, name, email_opt_in, tag, order_number ".
+        "FROM $tableNamePrefixOHOLTicketServer"."tickets " .
+        "WHERE email = '$email';";
+
+
+    $result = ag_queryDatabase( $query );
+        
+    $numRows = mysqli_num_rows( $result );
+        
+    $ticket_id = "";
+    $email_opt_in = 0;
+    $tag = "";
+    $order_number = "";
+    $name = "";
+        
+    // could be more than one with this email
+    // return first only
+    if( $numRows > 0 ) {
+        $ticket_id = ag_mysqli_result( $result, 0, "ticket_id" );
+        $email_opt_in = ag_mysqli_result( $result, 0, "email_opt_in" );
+        $tag = ag_mysqli_result( $result, 0, "tag" );
+        $order_number = ag_mysqli_result( $result, 0, "order_number" );
+        $name = ag_mysqli_result( $result, 0, "name" );
+        }
+    else {
+        ag_log( "grant denied because $email not found in ticketServer" );
+            
+        echo "DENIED";
+        return;
+        }
+        
+
+        
+    // create AHAP ticket
+    // IGNORE if it already exists
+    global $tableNamePrefixAHAPTicketServer;
+        
+    $query = "INSERT IGNORE INTO ".
+        "$tableNamePrefixAHAPTicketServer". "tickets ".
+        "VALUES ( " .
+        "'$ticket_id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
+        "'$name', '$email', '$order_number', ".
+        "'$tag', '', '0', '0', '0', " .
+        "'$email_opt_in' );";
+
+    ag_queryDatabase( $query );
+
+        
+    $steamID = "";
+        
+    if( preg_match( "/@steamgames\.com/", $email ) ) {
+        $steamID = preg_replace( '/@steamgames\.com/', '', $email, 1 );
+        }
+    else {
+        // they don't have a steam-ID placeholder email
+
+        // try looking them up in the steamGate mapping
+        global $tableNamePrefixOHOLSteamGateServer;
+            
+        $query = "SELECT steam_id FROM ".
+            "$tableNamePrefixOHOLSteamGateServer". "mapping ".
+            "WHERE ticket_id = '$ticket_id';";
+
+        $result = ag_queryDatabase( $query );
+
+        $numRows = mysqli_num_rows( $result );
+
+        if( $numRows > 0 ) {
+            $steamID = ag_mysqli_result( $result, 0, "steam_id" );
+
+            }
+        }
+        
+            
+    if( $steamID != "" ) {
+        // try to make a new mapping for them in the
+        // AHAP-specific steamGate
+        global $tableNamePrefixAHAPSteamGateServer;
+            
+        $query =
+            "INSERT IGNORE INTO $tableNamePrefixAHAPSteamGateServer".
+            "mapping( steam_id, ticket_id, steam_gift_key, ".
+            "         creation_date ) ".
+            "VALUES( '$steamID', ".
+            "        '$ticket_id', '', CURRENT_TIMESTAMP );";
+        
+        ag_queryDatabase( $query );
+        }
+        
+
+
+    // get a steam key for them
+    // (this can be "" if we run out of keys)
+
+    $steam_gift_key = ag_getSteamKey();
+        
+
+        
+    // finally, create a record for this user here
+    $query = "INSERT INTO $tableNamePrefix". "users SET " .
+        "email = '$email', ".
+        "github_username = '', ".
+        "content_leader_email_vote = '', ".
+        "steam_gift_key = '$steam_gift_key', ".
+        "sequence_number = 1, ".
+        "grant_time = CURRENT_TIMESTAMP, ".
+        "last_vote_time = CURRENT_TIMESTAMP ".
+        "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
+    ag_queryDatabase( $query );
+
+    if( $steam_gift_key == "" ) {
+        echo "NO-KEYS-LEFT\n";
+        }
+    else {
+        echo "$steam_gift_key\n";
+        }
+        
+    global $fullServerURL;
+        
+    echo "$fullServerURL".
+        "?action=show_account&ticket_id=$ticket_id\n";
+        
+    }
+
+
 
 
 
@@ -993,131 +1165,7 @@ function ag_grant() {
     if( $trueSeq == 0 ) {
         // no record exists, grant can go through
 
-
-        
-        // check if OHOL ticket exists
-        global $tableNamePrefixOHOLTicketServer;
-        $query = "SELECT ticket_id, name, email_opt_in, tag, order_number ".
-            "FROM $tableNamePrefixOHOLTicketServer"."tickets " .
-            "WHERE email = '$email';";
-
-
-        $result = ag_queryDatabase( $query );
-        
-        $numRows = mysqli_num_rows( $result );
-        
-        $ticket_id = "";
-        $email_opt_in = 0;
-        $tag = "";
-        $order_number = "";
-        $name = "";
-        
-        // could be more than one with this email
-        // return first only
-        if( $numRows > 0 ) {
-            $ticket_id = ag_mysqli_result( $result, 0, "ticket_id" );
-            $email_opt_in = ag_mysqli_result( $result, 0, "email_opt_in" );
-            $tag = ag_mysqli_result( $result, 0, "tag" );
-            $order_number = ag_mysqli_result( $result, 0, "order_number" );
-            $name = ag_mysqli_result( $result, 0, "name" );
-            }
-        else {
-            ag_log( "grant denied because $email not found in ticketServer" );
-            
-            echo "DENIED";
-            return;
-            }
-        
-
-        
-        // create AHAP ticket
-        // IGNORE if it already exists
-        global $tableNamePrefixAHAPTicketServer;
-        
-        $query = "INSERT IGNORE INTO ".
-            "$tableNamePrefixAHAPTicketServer". "tickets ".
-            "VALUES ( " .
-            "'$ticket_id', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, ".
-            "'$name', '$email', '$order_number', ".
-            "'$tag', '', '0', '0', '0', " .
-            "'$email_opt_in' );";
-
-        ag_queryDatabase( $query );
-
-        
-        $steamID = "";
-        
-        if( preg_match( "/@steamgames\.com/", $email ) ) {
-            $steamID = preg_replace( '/@steamgames\.com/', '', $email, 1 );
-            }
-        else {
-            // they don't have a steam-ID placeholder email
-
-            // try looking them up in the steamGate mapping
-            global $tableNamePrefixOHOLSteamGateServer;
-            
-            $query = "SELECT steam_id FROM ".
-                "$tableNamePrefixOHOLSteamGateServer". "mapping ".
-                "WHERE ticket_id = '$ticket_id';";
-
-            $result = ag_queryDatabase( $query );
-
-            $numRows = mysqli_num_rows( $result );
-
-            if( $numRows > 0 ) {
-                $steamID = ag_mysqli_result( $result, 0, "steam_id" );
-
-                }
-            }
-        
-            
-        if( $steamID != "" ) {
-            // try to make a new mapping for them in the
-            // AHAP-specific steamGate
-            global $tableNamePrefixAHAPSteamGateServer;
-            
-            $query =
-                "INSERT IGNORE INTO $tableNamePrefixAHAPSteamGateServer".
-                "mapping( steam_id, ticket_id, steam_gift_key, ".
-                "         creation_date ) ".
-                "VALUES( '$steamID', ".
-                "        '$ticket_id', '', CURRENT_TIMESTAMP );";
-        
-            ag_queryDatabase( $query );
-            }
-        
-
-
-        // get a steam key for them
-        // (this can be "" if we run out of keys)
-
-        $steam_gift_key = ag_getSteamKey();
-        
-
-        
-        // finally, create a record for this user here
-        $query = "INSERT INTO $tableNamePrefix". "users SET " .
-            "email = '$email', ".
-            "github_username = '', ".
-            "content_leader_email_vote = '', ".
-            "steam_gift_key = '$steam_gift_key', ".
-            "sequence_number = 1, ".
-            "grant_time = CURRENT_TIMESTAMP, ".
-            "last_vote_time = CURRENT_TIMESTAMP ".
-            "ON DUPLICATE KEY UPDATE sequence_number = sequence_number + 1 ;";
-        ag_queryDatabase( $query );
-
-        if( $steam_gift_key == "" ) {
-            echo "NO-KEYS-LEFT\n";
-            }
-        else {
-            echo "$steam_gift_key\n";
-            }
-        
-        global $fullServerURL;
-        
-        echo "$fullServerURL".
-            "?action=show_account&ticket_id=$ticket_id\n";
+        ag_grantForNew( $email );
         
         echo "OK";
         return;
