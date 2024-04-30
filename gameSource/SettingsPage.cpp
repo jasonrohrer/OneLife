@@ -576,6 +576,8 @@ void SettingsPage::step() {
 
 void SettingsPage::makeActive( char inFresh ) {
     if( inFresh ) {        
+        setSoundLoudness( 1.0 );
+        resumePlayingSoundSprites();
 
         int mode = getCursorMode();
         
