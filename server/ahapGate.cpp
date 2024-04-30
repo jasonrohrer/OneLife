@@ -51,13 +51,17 @@ void initAHAPGate() {
 
 static void freeRecord( GrantActionRecord *inR ) {
     delete [] inR->email;
-    delete inR->request;
+    if( inR->request != NULL ) {
+        delete inR->request;
+        }
     }
 
 static void freeRecord( VoteActionRecord *inR ) {
     delete [] inR->voterEmail;
     delete [] inR->voteForGithubUsername;
-    delete inR->request;
+    if( inR->request != NULL ) {
+        delete inR->request;
+        }
     }
 
     
@@ -258,7 +262,7 @@ static void stepVoteRecords() {
             AppLog::info( "Request to ahapGate server failed." );
         
             freeRecord( r );
-            grantRecords.deleteElement( 0 );
+            voteRecords.deleteElement( 0 );
             i--;
             }
         else if( result == 1 ) {

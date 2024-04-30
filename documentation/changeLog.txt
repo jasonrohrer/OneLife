@@ -16,6 +16,9 @@ Server Fixes:
 --Support for periodic placements, to allow AHAP orbital locations to spawn
   every eleven hours.
 
+--Fixed server crash when connecting to ahapGate fails (like when operating as
+  a local test server).
+
 
 
 
