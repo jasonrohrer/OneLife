@@ -44,3 +44,11 @@ void addMusicSuppression( const char *inActionName );
 // If no suppression actions remain, music fades back up to its original volume
 // where it was before the first call to addMusicSuppression
 void removeMusicSuppression( const char *inActionName );
+
+
+
+
+// adds a delay to main player's aging, causing age-triggered music to play
+// later
+// (used during rocket animation, where aging is paused on server)
+void delayAgingMusic( double inDelaySeconds );

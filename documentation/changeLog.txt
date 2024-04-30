@@ -4,6 +4,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 423   ???
+
+--Fixed so that aging-triggered music is delayed while rocket animation is
+  playing (since aging is paused during the animation).
+
+
+
 Server Fixes:
 
 --Support for periodic placements, to allow AHAP orbital locations to spawn

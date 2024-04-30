@@ -1867,3 +1867,5 @@ void addMusicSuppression( const char *inActionName ) {
 void removeMusicSuppression( const char *inActionName ) {
     }
 
+void delayAgingMusic( double inDelaySeconds ) {
+    }

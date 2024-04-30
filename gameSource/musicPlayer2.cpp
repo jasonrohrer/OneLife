@@ -47,10 +47,15 @@ static char soundEffectsFaded = false;
 static double ageNextMusicDone = -1;
 
 
+static double ageDelaySeconds = 0;
+
+
 
 static double getCurrentAge() {
     double timePassed = game_getCurrentTime() - ageSetTime;
     
+    timePassed -= ageDelaySeconds;
+
     return age + ageRate * timePassed;
     }
 
@@ -140,6 +145,8 @@ void restartMusic( double inAge, double inAgeRate, char inForceNow ) {
     //inAge = 0;
 
     ageSetTime = game_getCurrentTime();
+    
+    ageDelaySeconds = 0;
     
 
     lockAudio();
@@ -311,7 +318,9 @@ void getSoundSamples( Uint8 *inBuffer, int inLengthToFillInBytes ) {
 
     
     double sampleComputedAge = 
-        ( samplesSeenSinceAgeSet / (double)getSampleRate() ) * ageRate
+        ( samplesSeenSinceAgeSet / (double)getSampleRate() 
+          - ageDelaySeconds ) 
+        * ageRate
         + age;
     
 
@@ -508,4 +517,10 @@ void removeMusicSuppression( const char *inActionName ) {
         // restore volume
         setMusicLoudness( preSuppressionTargetLoudness );
         }
+    }
+
+
+
+void delayAgingMusic( double inDelaySeconds ) {
+    ageDelaySeconds += inDelaySeconds;
     }

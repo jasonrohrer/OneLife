@@ -301,6 +301,9 @@ void addMusicSuppression( const char *inActionName ) {
 void removeMusicSuppression( const char *inActionName ) {
     }
 
+void delayAgingMusic( double inDelaySeconds ) {
+    }
+
 
 double game_getCurrentTime() {
     return 0;
