@@ -12,6 +12,8 @@ Version 423   ???
 --Fixed so that sound/music demos for sliders on Settings page continue to
   work when revisiting Settings page after living a life.
 
+--Support for playing Tom's music_99.ogg during YOU WON page.
+
 
 
 Server Fixes:

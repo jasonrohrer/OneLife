@@ -2,8 +2,11 @@
 
 #include "message.h"
 #include "buttonStyle.h"
+#include "musicPlayer.h"
 
 #include "minorGems/game/game.h"
+
+#include "minorGems/util/SettingsManager.h"
 
 
 
@@ -11,6 +14,8 @@ extern char *ahapAccountURL;
 extern char *ahapSteamKey;
 
 extern Font *mainFont;
+
+extern float musicLoudness;
 
 
 
@@ -53,6 +58,7 @@ AHAPResultPage::~AHAPResultPage() {
 
 void AHAPResultPage::actionPerformed( GUIComponent *inTarget ) {
     if( inTarget == &mOKButton ) {
+        setMusicLoudness( 0 );
         setSignal( "done" );
         }
     else if( inTarget == &mCopyAccountURLButton ) {
@@ -71,6 +77,17 @@ void AHAPResultPage::actionPerformed( GUIComponent *inTarget ) {
 void AHAPResultPage::makeActive( char inFresh ) {
     mSteamKeyField.setText( ahapSteamKey );
     mSteamKeyField.setContentsHidden( true );
+
+    if( inFresh ) {
+
+        instantStopMusic();
+
+        setSoundLoudness( 1.0 );
+        setMusicLoudness( musicLoudness );
+
+        // this will trigger music_99.ogg
+        restartMusic( 494.0, 1.0/60.0, true );
+        }
     }
 
         
