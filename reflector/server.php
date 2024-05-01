@@ -557,7 +557,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
 
             $spreadingFile = "/tmp/" .$inAddress . "_" . $inPort . "_spreading";
             
-            if( $spreading ) {
+            if( $spreading && ! $inIgnoreSpreading ) {
 
                 if( ! file_exists( $spreadingFile ) ) {    
                     // remember that we've crossed the spreading
@@ -578,7 +578,7 @@ function tryServer( $inAddress, $inPort, $inReportOnly,
                 $spreading = true;
                 }
 
-            if( $stopSpreading ) {
+            if( $stopSpreading && ! $inIgnoreSpreading ) {
                 // we've dropped back down below the spreading fraction
                 // stop sending people to servers further down
                 // the list from this one

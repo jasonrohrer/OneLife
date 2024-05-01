@@ -24,6 +24,10 @@ Server Fixes:
 --Fixed server crash when connecting to ahapGate fails (like when operating as
   a local test server).
 
+--Blocked reflector log messages about individual server spreading and
+  stop-spreading, since individual server spreading code no longer used, and
+   that logging was misleading.
+
 
 
 
