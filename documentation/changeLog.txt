@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 423   ???
+Version 423    2024-May-3
 
 --Fixed so that aging-triggered music is delayed while rocket animation is
   playing (since aging is paused during the animation).
