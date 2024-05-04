@@ -12,6 +12,9 @@ All code, drawings, graphics, music, sounds, and fonts by <a href="http://hcsoft
 <br>
 <br>
 <br>
+
+Rocket Launch and YOU WON music by <a href="https://soundcloud.com/delcroy">Tom Bailey</a><br><br><br>
+
 <br>
 <br>
 
