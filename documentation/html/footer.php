@@ -42,7 +42,7 @@ if( ! $nocounter && ( !isSet( $blockCounter ) || ! $blockCounter ) ) {
     <td align=center width=10%>[<a href='http://onehouronelife.com/reviewServer/server.php?action=list_polls'>Polls</a>]</td>
     <td align=center width=10%>[<a href='https://onehouronelife.com/forums/viewtopic.php?pid=101114'>FAQ</a>]</td>
     <td align=center width=10%>[<a href='http://onehouronelife.com/artLogPage.php'>Artwork</a>]</td>
-        <td align=center width=10%>[<a href='http://onehouronelife.com/ahap.php'>AHAP</a>]</td>
+        <td align=center width=10%>[<a href='https://onehouronelife.com/ahap.php'>AHAP</a>]</td>
 
     <td align=center width=10%>[<a href='http://onehouronelife.com/credits.php'>Credits</a>]</td>
 

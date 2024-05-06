@@ -34,6 +34,25 @@
 
 <br><br>
 
+<a href="http://onehouronelife.com/ahapUpdateGate">Update Gate</a>
+
+<br><br>
+
+<br><br>
+
+
+
+Lookup AHAP Account Info:<br><br>
+<form action="https://onehouronelife.com/ahapGate/server.php" method="POST">
+<input type="hidden" name="action" value="show_account">
+
+Account Key: <INPUT TYPE="text" MAXLENGTH=23 SIZE=23 NAME="ticket_id"><br>
+<INPUT TYPE="Submit" VALUE="Lookup">
+</form>
+
+<br><br>
+
+
 <br><br>
 
 
