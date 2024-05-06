@@ -146,6 +146,9 @@ else if( $action == "register_vote" ) {
 else if( $action == "register_github" ) {
     ag_registerGithub();
     }
+else if( $action == "register_github_and_paypal" ) {
+    ag_registerGithubAndPaypal();
+    }
 else if( $action == "get_content_leader" ) {
     ag_getContentLeader();
     }
@@ -300,6 +303,7 @@ function ag_setupDatabase() {
             "UNIQUE KEY( email )," .
             "sequence_number INT NOT NULL," .
             "github_username VARCHAR(254) NOT NULL," .
+            "paypal_email VARCHAR(254) NOT NULL," .
             "content_leader_email_vote VARCHAR(254) NOT NULL," .
             "steam_gift_key VARCHAR(254) NOT NULL," .
             "grant_time DATETIME NOT NULL, ".
@@ -466,6 +470,7 @@ function ag_showData( $checkPassword = true ) {
         $keywordClause = "WHERE ( email LIKE '%$search%' " .
             "OR id LIKE '%$search%' ".
             "OR github_username LIKE '%$search%' ".
+            "OR paypal_email LIKE '%$search%' ".
             "OR content_leader_email_vote LIKE '%$search%' ".
             "OR steam_gift_key LIKE '%$search%' ".
             " ) ";
@@ -569,6 +574,7 @@ function ag_showData( $checkPassword = true ) {
     echo "<tr><td>".orderLink( "id", "ID" )."</td>\n";
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
     echo "<td>".orderLink( "github_username", "Github Username" )."</td>\n";
+    echo "<td>".orderLink( "paypal_email", "PayPal Email" )."</td>\n";
     echo "<td>".orderLink( "content_leader_email_vote",
                            "Chosen Leader" )."</td>\n";
     echo "<td>".orderLink( "steam_gift_key",
@@ -582,6 +588,7 @@ function ag_showData( $checkPassword = true ) {
         $id = ag_mysqli_result( $result, $i, "id" );
         $email = ag_mysqli_result( $result, $i, "email" );
         $github_username = ag_mysqli_result( $result, $i, "github_username" );
+        $paypal_email = ag_mysqli_result( $result, $i, "paypal_email" );
         $content_leader_email_vote =
             ag_mysqli_result( $result, $i, "content_leader_email_vote" );
         $steam_gift_key = ag_mysqli_result( $result, $i, "steam_gift_key" );
@@ -599,6 +606,7 @@ function ag_showData( $checkPassword = true ) {
             "<a href=\"server.php?action=show_detail&email=$encodedEmail\">".
             "$email</a></td>\n";
         echo "<td>$github_username</td>\n";
+        echo "<td>$paypal_email</td>\n";
         echo "<td>$content_leader_email_vote</td>\n";
         echo "<td>$steam_gift_key</td>\n";
         echo "<td>$grant_time</td>\n";
@@ -671,13 +679,15 @@ function ag_showDetail( $checkPassword = true ) {
 
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, github_username, content_leader_email_vote ".
+    $query = "SELECT id, github_username, paypal_email, ".
+        "content_leader_email_vote ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = ag_queryDatabase( $query );
 
     $id = ag_mysqli_result( $result, 0, "id" );
     $github_username = ag_mysqli_result( $result, 0, "github_username" );
+    $paypal_email = ag_mysqli_result( $result, 0, "paypal_email" );
     $content_leader_email_vote =
         ag_mysqli_result( $result, 0, "content_leader_email_vote" );
     
@@ -686,6 +696,7 @@ function ag_showDetail( $checkPassword = true ) {
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
     echo "<b>Github Username:</b> $github_username<br><br>";
+    echo "<b>PayPal Email:</b> $paypal_email<br><br>";
     echo "<b>Content Leader:</b> $content_leader_email_vote<br><br>";
     echo "<br><br>";
 ?>
@@ -1127,6 +1138,7 @@ function ag_grantForNew( $email ) {
     $query = "INSERT INTO $tableNamePrefix". "users SET " .
         "email = '$email', ".
         "github_username = '', ".
+        "paypal_email = '', ".
         "content_leader_email_vote = '', ".
         "steam_gift_key = '$steam_gift_key', ".
         "sequence_number = 1, ".
@@ -1425,6 +1437,49 @@ function ag_registerGithub() {
     $query = "UPDATE $tableNamePrefix"."users SET " .
         "sequence_number = sequence_number + 1, ".
         "github_username = '$github_username' ".
+        "WHERE email = '$email'; ";
+    
+    ag_queryDatabase( $query );
+    
+    echo "OK";
+    }
+
+
+
+
+function ag_registerGithubAndPaypal() {
+    global $tableNamePrefix;
+
+    $github_username = strtolower( ag_requestFilter( "github_username",
+                                                     "/[A-Z0-9\-]+/i", "" ) );
+    $paypal_email =
+        ag_requestFilter( "paypal_email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
+
+    // will die on failure
+    $email = ag_checkTicketServerSeqHash( $github_username );
+    
+
+    $oldGithubUsername = ag_getGithubUsername( $email );
+
+
+    $leader = ag_getContentLeaderInternal();
+
+    if( $oldGithubUsername != "" &&
+        $oldGithubUsername != $github_username &&
+        $leader == $email ) {
+        // we are the leader
+        // and our github email has changed
+
+        ag_ungrantGithub( $oldGithubUsername );
+
+        ag_grantGithub( $github_username );
+        }
+        
+    
+    $query = "UPDATE $tableNamePrefix"."users SET " .
+        "sequence_number = sequence_number + 1, ".
+        "github_username = '$github_username', ".
+        "paypal_email = '$paypal_email' ".
         "WHERE email = '$email'; ";
     
     ag_queryDatabase( $query );

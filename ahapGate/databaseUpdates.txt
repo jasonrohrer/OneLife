@@ -1,0 +1,3 @@
+ALTER TABLE ahapGateServer_users ADD paypal_email VARCHAR(254) NOT NULL after github_username;
+
+UPDATE ahapGateServer_users SET paypal_email = "";

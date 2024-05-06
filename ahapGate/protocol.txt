@@ -137,6 +137,41 @@ Secure against replay attacks and modification of submitted username.
 
 
 
+
+== Called by game client only
+
+
+server.php
+?action=register_github_and_paypal
+&email=[email address]
+&github_username=[username]
+&paypal_email=[paypal_email]
+&sequence_number=[int]
+&hash_value=[hash value]
+
+Return:
+OK
+-or-
+DENIED
+
+Used by game clients to update user's github account username AND their
+PayPal email address.
+
+DENIED is returned if the user's email isn't known
+
+
+hash_value is computed on both ends with:
+
+  HMAC_SHA1( $ticket_id, $sequence_number$github_username$paypal_email )
+
+  (sequence number concatonated with github username and paypal email)
+  (github forced to all lower-case for hashing)
+
+Secure against replay attacks and modification of submitted username and email.
+
+
+
+
 == Called by game client only
 
 
