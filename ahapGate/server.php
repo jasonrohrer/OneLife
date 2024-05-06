@@ -1456,7 +1456,7 @@ function ag_registerGithubAndPaypal() {
         ag_requestFilter( "paypal_email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
 
     // will die on failure
-    $email = ag_checkTicketServerSeqHash( $github_username );
+    $email = ag_checkTicketServerSeqHash( $github_username . $paypal_email );
     
 
     $oldGithubUsername = ag_getGithubUsername( $email );
