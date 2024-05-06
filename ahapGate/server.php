@@ -1274,8 +1274,9 @@ function ag_registerVote() {
     
     // include both email and github in hash check, so we can't replay voting
     // for a given leader, with a given sequence number for a different email
+    // leave email in whatever case it was submitted with
     $trueSeq = ag_checkSeqHash( $email,
-                                strtolower( $email ) . $leader_github );
+                                $email . $leader_github );
     
     
     if( $trueSeq == 0 ) {
@@ -1455,9 +1456,10 @@ function ag_registerGithubAndPaypal() {
     $paypal_email =
         ag_requestFilter( "paypal_email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i",
                           "" );
-
+    $paypalSHA1 = strtoupper( sha1( $paypal_email ) );
+    
     // will die on failure
-    $email = ag_checkTicketServerSeqHash( "$github_username$paypal_email" );
+    $email = ag_checkTicketServerSeqHash( "$github_username$paypalSHA1" );
     
 
     $oldGithubUsername = ag_getGithubUsername( $email );

@@ -97,7 +97,7 @@ hash_value is computed on both ends with:
   HMAC_SHA1( $shared_secret, $sequence_number$email$leaderGithub )
 
   (sequence number concatonated with email and github)
-  (both email and github forced to all lower-case for hashing)
+  (github forced to all lower-case for hashing)
 
 Secure against replay attacks and modification of submitted github vote.
 
@@ -162,12 +162,23 @@ DENIED is returned if the user's email isn't known
 
 hash_value is computed on both ends with:
 
-  HMAC_SHA1( $ticket_id, $sequence_number$github_username$paypal_email )
+  HMAC_SHA1( $ticket_id, $sequence_number$github_username$paypal_email_sha1 )
 
-  (sequence number concatonated with github username and paypal email)
+  (sequence number concatonated with github username and SHA1 hash of paypal
+   email address)
+  
   (github forced to all lower-case for hashing)
+  
+  (SHA1 hash of paypal email is all upper-case, but email is preserved
+   however user entered it, potentially mixed case)
 
 Secure against replay attacks and modification of submitted username and email.
+
+
+NOTE: the SHA1 of the PayPal email is used in the hash, instead of the email
+      itself, becasue of the limited character set supported by the
+      ticketServer for check_ticket_hash.
+      The full character set of email addresses is not supported.
 
 
 
