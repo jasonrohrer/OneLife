@@ -41,10 +41,13 @@ class AHAPSettingsPage : public ServerActionPage, public ActionListener {
 
 
         TextField mGithubAccountNameField;
+
+        TextField mPaypalEmailField;
         
         TextField mContentLeaderVoteField;        
 
         KeyEquivalentTextButton mPasteGithubButton;
+        KeyEquivalentTextButton mPastePaypalButton;
         KeyEquivalentTextButton mPasteLeaderButton;
 
         TextButton mBackButton;

@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 425   ???
+
+--PLANET settings page now allows you to specify your PayPal email address,
+  which will be used for delivering your revshare for content you contribute
+  to AHAP.
+
+
+
+
 Version 423    2024-May-3
 
 --Fixed so that aging-triggered music is delayed while rocket animation is

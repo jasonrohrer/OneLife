@@ -29,21 +29,30 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
           mSequenceNumber( -1 ),
           mCurrentLeaderGithub( NULL ),
           mPosting( false ),
-          mGithubAccountNameField( mainFont, 200, 60, 10, false,
-                                   translate( "githubAccountName"), 
+          mGithubAccountNameField( mainFont, 200, 120, 10, false,
+                                   translate( "githubAccountName" ), 
                                    "abcdefghijklmnopqrstuvwxyz"
                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                    "1234567890"
                                    "._-" ),
-          mContentLeaderVoteField( mainFont, 200, -100, 10, false,
-                                   translate( "contentLeaderVote"), 
-                                   NULL,
-                                   // forbid only spaces and backslash and 
-                                   // single/double quotes 
-                                   "\"' \\" ),
-          mPasteGithubButton( mainFont, 200, 0, 
+          mPaypalEmailField( mainFont, 200, -20, 10, false,
+                             translate( "paypalEmail"), 
+                             NULL,
+                             // forbid only spaces and backslash and 
+                             // single/double quotes
+                             // an email address
+                             "\"' \\" ),
+          mContentLeaderVoteField( mainFont, 200, -160, 10, false,
+                                   translate( "contentLeaderVote" ), 
+                                   "abcdefghijklmnopqrstuvwxyz"
+                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                                   "1234567890"
+                                   "._-" ),
+          mPasteGithubButton( mainFont, 200, 60, 
                               translate( "paste" ), 'v', 'V' ),
-          mPasteLeaderButton( mainFont, 200, -160, 
+          mPastePaypalButton( mainFont, 200, -80, 
+                              translate( "paste" ), 'v', 'V' ),
+          mPasteLeaderButton( mainFont, 200, -220, 
                               translate( "paste" ), 'v', 'V' ),
           mBackButton( mainFont, -526, -280, translate( "backButton" ) ),
           mPostButton( mainFont, 526, -280, translate( "postButton" ) ),
@@ -53,6 +62,7 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     setButtonStyle( &mPostButton );
     
     setButtonStyle( &mPasteGithubButton );
+    setButtonStyle( &mPastePaypalButton );
     setButtonStyle( &mPasteLeaderButton );
 
 
@@ -60,31 +70,35 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
     addComponent( &mPostButton );
 
     addComponent( &mPasteGithubButton );
+    addComponent( &mPastePaypalButton );
     addComponent( &mPasteLeaderButton );
 
     mBackButton.addActionListener( this );
     mPostButton.addActionListener( this );
     
     mPasteGithubButton.addActionListener( this );
+    mPastePaypalButton.addActionListener( this );
     mPasteLeaderButton.addActionListener( this );
     
 
     mGithubAccountNameField.addActionListener( this );
+    mPaypalEmailField.addActionListener( this );
     mContentLeaderVoteField.addActionListener( this );
     
     mGithubAccountNameField.setFireOnAnyTextChange( true );
+    mPaypalEmailField.setFireOnAnyTextChange( true );
     mContentLeaderVoteField.setFireOnAnyTextChange( true );
 
 
-    // add name field after so we can hit return in name field
-    // and advance to text area without sending a return key to the text area
     addComponent( &mGithubAccountNameField );    
+    addComponent( &mPaypalEmailField );    
     addComponent( &mContentLeaderVoteField );
     
 
     mPostButton.setMouseOverTip( translate( "postAHAPSettingsTip" ) );
 
     mPasteGithubButton.setVisible( false );
+    mPastePaypalButton.setVisible( false );
     mPasteLeaderButton.setVisible( false );
     }
 
@@ -113,6 +127,13 @@ void AHAPSettingsPage::saveSettings() {
     SettingsManager::setSetting( "githubUsername", githubAccountName );
     
     delete [] githubAccountName;
+
+
+    char *paypalEmail = mPaypalEmailField.getText();
+
+    SettingsManager::setSetting( "paypalEmail", paypalEmail );
+    
+    delete [] paypalEmail;
     }
 
 
@@ -147,6 +168,9 @@ void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
     else if( inTarget == &mGithubAccountNameField ) {
         testPostVisible();
         }
+    else if( inTarget == &mPaypalEmailField ) {
+        testPostVisible();
+        }
     else if( inTarget == &mContentLeaderVoteField ) {
         testPostVisible();
         }
@@ -154,6 +178,13 @@ void AHAPSettingsPage::actionPerformed( GUIComponent *inTarget ) {
         char *clipboardText = getClipboardText();
         
         mGithubAccountNameField.setText( clipboardText );
+    
+        delete [] clipboardText;
+        }
+    else if( inTarget == &mPastePaypalButton ) {
+        char *clipboardText = getClipboardText();
+        
+        mPaypalEmailField.setText( clipboardText );
     
         delete [] clipboardText;
         }
@@ -253,6 +284,9 @@ void AHAPSettingsPage::step() {
 
     mPasteGithubButton.setVisible( isClipboardSupported() &&
                                    mGithubAccountNameField.isFocused() );
+
+    mPastePaypalButton.setVisible( isClipboardSupported() &&
+                                   mPaypalEmailField.isFocused() );
     
     mPasteLeaderButton.setVisible( isClipboardSupported() &&
                                    mContentLeaderVoteField.isFocused() );
@@ -292,13 +326,42 @@ void AHAPSettingsPage::step() {
 
                     char *username = mGithubAccountNameField.getText();
                     
-                    setupRequest( "register_github", username );
-
-
-                    setActionParameter( "github_username", username );
-
+                    char *usernameLower = stringToLowerCase( username );
+                    
                     delete [] username;
                     
+                    username = usernameLower;
+                    
+
+                    char *paypal = mPaypalEmailField.getText();
+                    
+                    if( strcmp( paypal, "" ) != 0 &&
+                        strstr( paypal, "@" ) != NULL ) {
+                        
+                        char *paypalSHA1 = computeSHA1Digest( paypal );
+
+                        char *userAndPaypalConcat = 
+                            autoSprintf( "%s%s", username, paypalSHA1 );
+                        
+                        delete [] paypalSHA1;
+
+                        setupRequest( "register_github_and_paypal",
+                                      userAndPaypalConcat );
+
+                        delete [] userAndPaypalConcat;
+
+                        setActionParameter( "github_username", username );
+                        setActionParameter( "paypal_email", paypal );
+                        }
+                    else {
+
+                        setupRequest( "register_github", username );
+
+                        setActionParameter( "github_username", username );
+                        }
+                    
+                    delete [] username;
+                    delete [] paypal;
                     
                     startRequest();
                     }
@@ -355,6 +418,13 @@ void AHAPSettingsPage::makeActive( char inFresh ) {
     mGithubAccountNameField.setText( username );
     
     delete [] username;
+
+
+    char *paypal = SettingsManager::getStringSetting( "paypalEmail", "" );
+    
+    mPaypalEmailField.setText( paypal );
+    
+    delete [] paypal;
     
 
     char *leaderEmail = 
@@ -395,6 +465,9 @@ void AHAPSettingsPage::makeNotActive() {
 
 void AHAPSettingsPage::switchFields() {
     if( mGithubAccountNameField.isFocused() ) {
+        mPaypalEmailField.focus();
+        }
+    else if( mPaypalEmailField.isFocused() ) {
         mContentLeaderVoteField.focus();
         }
     else if( mContentLeaderVoteField.isFocused() ) {
