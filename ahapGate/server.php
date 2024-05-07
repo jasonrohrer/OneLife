@@ -1619,7 +1619,8 @@ function ag_showVoteStats() {
     $recentVotesDay = 0;
     
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
-        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 7 DAY );";
+        "WHERE content_leader_email_vote != '' AND ".
+        "last_vote_time >= DATE( NOW() - INTERVAL 7 DAY );";
     
     $result = ag_queryDatabase( $query );
 
@@ -1630,7 +1631,8 @@ function ag_showVoteStats() {
         }
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
-        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 1 DAY );";
+        "WHERE content_leader_email_vote != '' AND ".
+        "last_vote_time >= DATE( NOW() - INTERVAL 1 DAY );";
     
     $result = ag_queryDatabase( $query );
 
@@ -1655,7 +1657,8 @@ function ag_showVoteStats() {
 
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
-        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 1 DAY ) ".
+        "WHERE content_leader_email_vote != '' AND ".
+        "last_vote_time >= DATE( NOW() - INTERVAL 1 DAY ) ".
         "GROUP BY content_leader_email_vote ".
         "ORDER BY COUNT(*) DESC;";
     
