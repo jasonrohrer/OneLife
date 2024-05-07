@@ -1658,7 +1658,7 @@ function ag_showVoteStats() {
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
         "WHERE content_leader_email_vote != '' AND ".
-        "last_vote_time >= DATE( NOW() - INTERVAL 1 DAY ) ".
+        "last_vote_time >= DATE( NOW() - INTERVAL 7 DAY ) ".
         "GROUP BY content_leader_email_vote ".
         "ORDER BY COUNT(*) DESC;";
     
