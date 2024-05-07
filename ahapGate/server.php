@@ -1640,6 +1640,8 @@ function ag_showVoteStats() {
         $recentVotesDay = ag_mysqli_result( $result, 0, 0 );
         }
 
+    global $header, $footer;
+
     eval( $header );
 
     echo "<center><br><br>";
@@ -1665,7 +1667,7 @@ function ag_showVoteStats() {
         
         echo "Vote distributions:<br><br>";
 
-        echo "<table border=0>";
+        echo "<table border=1 cellpadding=10>";
 
         echo "<tr><td></td><td>Vote Count</td></tr>";
         
