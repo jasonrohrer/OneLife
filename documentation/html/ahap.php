@@ -38,6 +38,10 @@
 
 <br><br>
 
+<a href="http://onehouronelife.com/ahapGate/server.php?action=show_vote_stats">Content Leader Voting Stats</a>
+
+<br><br>
+
 <br><br>
 
 
