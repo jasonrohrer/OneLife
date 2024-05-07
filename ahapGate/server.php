@@ -1682,7 +1682,8 @@ function ag_showVoteStats() {
         echo "</table>";
         }
 
-        
+    echo "<br><br><br>";
+    
     echo "</center>";
 
     eval( $footer );
