@@ -1665,18 +1665,19 @@ function ag_showVoteStats() {
 
     if( $numRows > 0 ) {
         
-        echo "Vote distributions:<br><br>";
+        echo "<br><br>Vote distribution:<br>";
 
-        echo "<table border=1 cellpadding=10>";
+        echo "<table border=1 cellspacing=0 cellpadding=10>";
 
-        echo "<tr><td></td><td>Vote Count</td></tr>";
+        echo "<tr><td></td><td align=right>Vote Count</td></tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
             $c = ag_mysqli_result( $result, $i, 0 );
 
             $candNumber = $i + 1;
             
-            echo "<tr><td>Candidate $candNumber</td><td>$c</td></tr>";
+            echo "<tr><td>Candidate $candNumber</td>".
+                "<td align=right>$c</td></tr>";
             }
         echo "</table>";
         }
