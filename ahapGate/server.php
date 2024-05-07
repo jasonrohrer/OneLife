@@ -155,6 +155,9 @@ else if( $action == "get_content_leader" ) {
 else if( $action == "show_account" ) {
     ag_showAccount();
     }
+else if( $action == "show_vote_stats" ) {
+    ag_showVoteStats();
+    }
 else if( $action == "show_log" ) {
     ag_showLog();
     }
@@ -1600,6 +1603,83 @@ function ag_showAccount() {
     echo "Your Another Planet off-Steam downloads:<br><br>".
         "<a href='$url'>$url</a><br><br><br>";
     
+    echo "</center>";
+
+    eval( $footer );
+    }
+
+
+
+function ag_showVoteStats() {
+    
+
+    global $tableNamePrefix;
+
+    $recentVotesWeek = 0;
+    $recentVotesDay = 0;
+    
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 7 DAY );";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 1 ) {
+        $recentVotesWeek = ag_mysqli_result( $result, 0, 0 );
+        }
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 1 DAY );";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows == 1 ) {
+        $recentVotesDay = ag_mysqli_result( $result, 0, 0 );
+        }
+
+    eval( $header );
+
+    echo "<center><br><br>";
+    
+    echo "Another Planet Voting Stats<br><br><br>";
+
+
+    echo "$recentVotesDay people voted in the past 24 hours.<br><br>";
+    
+    echo "$recentVotesWeek people voted in the past week.<br><br>";
+
+
+    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 1 DAY ) ".
+        "GROUP BY content_leader_email_vote ".
+        "ORDER BY COUNT(*) DESC;";
+    
+    $result = ag_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    if( $numRows > 0 ) {
+        
+        echo "Vote distributions:<br><br>";
+
+        echo "<table border=0>";
+
+        echo "<tr><td></td><td>Vote Count</td></tr>";
+        
+        for( $i=0; $i<$numRows; $i++ ) {
+            $c = ag_mysqli_result( $result, $i, 0 );
+
+            $candNumber = $i + 1;
+            
+            echo "<tr><td>Candidate $candNumber</td><td>$c</td></tr>";
+            }
+        echo "</table>";
+        }
+
+        
     echo "</center>";
 
     eval( $footer );

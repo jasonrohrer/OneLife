@@ -19,6 +19,8 @@ Server Fixes:
 
 --Fixed typo in protocol.txt for server.  Fixes #1066  Thanks 4ferrocyanide  
 
+--ahapGate now has show_vote_stats call.  Part of #1064
+
 
 
 
