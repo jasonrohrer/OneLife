@@ -105,7 +105,7 @@ hyphens removed, and is computed by:
 HMAC_SHA1( account_key, challenge_string )
 
 
-tutorial_number specifies the tutorail map number to load, or 0 for normal game.
+tutorial_number specifies the tutorial map number to load, or 0 for normal game.
 
 
 twin_code_hash is optional.  The sha1 hash of the twin code.

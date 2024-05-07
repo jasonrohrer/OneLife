@@ -12,6 +12,12 @@ Version 425   ???
 
 
 
+Server Fixes:
+
+--Fixed typo in protocol.txt for server.  Fixes #1066  Thanks 4ferrocyanide  
+
+
+
 
 Version 423    2024-May-3
 
