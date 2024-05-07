@@ -10,6 +10,9 @@ Version 425   ???
   which will be used for delivering your revshare for content you contribute
   to AHAP.
 
+--ahapTechTreeURL changed to ahap.info    Fixes #1065
+
+
 
 
 Server Fixes:
