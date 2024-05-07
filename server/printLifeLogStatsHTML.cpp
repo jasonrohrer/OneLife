@@ -129,6 +129,7 @@ void processLogFile( File *inFile ) {
             char deathReason[1000];
             
             char race = '?';
+            char status = '?';
 
             email[0] = '\0';
             parent[0] = '\0';
@@ -143,10 +144,15 @@ void processLogFile( File *inFile ) {
             if( event == 'B' ) {
                 // note that old-style log files might not have race=
                 // at end of line, which should be okay
+
+                // note that old-style log files might not have status=
+                // at end of line, which should be okay
+
                 fscanf( f, "%lf %d %999s %c (%d,%d) %999s pop=%d chain=%d "
-                        "race=%c\n",
+                        "race=%c status=%c\n",
                         &time, &id, email, &gender, 
-                        &locX, &locY, parent, &pop, &parentChain, &race );
+                        &locX, &locY, parent, &pop, &parentChain, &race,
+                        &status );
             
                 Living l;
                 l.id = id;

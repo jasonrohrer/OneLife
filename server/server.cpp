@@ -11204,7 +11204,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
               newObject.xd,
               newObject.yd,
               players.size(),
-              newObject.parentChainLength );
+              newObject.parentChainLength,
+              ( newObject.curseStatus.curseLevel != 0 ) );
     
     AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)"
                    " (maxPlacementX=%d)",

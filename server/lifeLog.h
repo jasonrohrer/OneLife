@@ -16,7 +16,8 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inRace,
                int inMapX, int inMapY,
                int inTotalPopulation,
-               int inParentChainLength );
+               int inParentChainLength,
+               char inDonkeytown );
 
 
 // inName can be NULL if player has no name

@@ -21,6 +21,9 @@ Server Fixes:
 
 --ahapGate now has show_vote_stats call.  Part of #1064
 
+--Life Log stats (public data) now include status=N for normal player or
+  status=D for d-town player.  Fixes #1041
+
 
 
 

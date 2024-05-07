@@ -148,7 +148,8 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                int inRace,
                int inMapX, int inMapY,
                int inTotalPopulation,
-               int inParentChainLength ) {
+               int inParentChainLength,
+               char inDonkeytown ) {
     
     cursesLogBirth( inPlayerEmail );
     
@@ -173,13 +174,21 @@ void logBirth( int inPlayerID, char *inPlayerEmail,
                 }
             
             char raceChar = (char)( inRace - 1  + 'A' );
+            
+            char statusChar = 'N';
+            
+            if( inDonkeytown ) {
+                statusChar = 'D';
+                }
 
             fprintf( logFile, 
-                     "B %.f %d %s %c (%d,%d) %s pop=%d chain=%d race=%c\n",
+                     "B %.f %d %s %c (%d,%d) %s pop=%d chain=%d race=%c "
+                     "status=%c\n",
                      Time::timeSec(),
                      inPlayerID, inPlayerEmail, genderChar, inMapX, inMapY, 
                      parentString,
-                     inTotalPopulation, inParentChainLength, raceChar );
+                     inTotalPopulation, inParentChainLength, raceChar,
+                     statusChar );
             
             fflush( logFile );
 
