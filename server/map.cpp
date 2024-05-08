@@ -3425,8 +3425,36 @@ char initMap() {
             }
         }
     
+    
 
+    const char *landingLocationsFileName = "landingLocations.txt";
+    
+    FILE *landingLocationsFile = fopen( landingLocationsFileName, "r" );
+    if( landingLocationsFile != NULL ) {
+        
+        int x, y;
 
+        int numRead = fscanf( landingLocationsFile, "%d,%d", &x, &y );
+        
+        while( numRead == 2 ) {
+            GridPos p = { x, y };
+            
+            flightLandingPos.push_back( p );
+            
+            numRead = fscanf( landingLocationsFile, "%d,%d", &x, &y );
+            }
+        
+
+        fclose( landingLocationsFile );
+
+        printf( "Loaded %d landing locations from %s\n",
+                flightLandingPos.size(), landingLocationsFileName );
+        }
+    else {
+        printf( "Landing locations file not found: %s\n",
+                landingLocationsFileName );
+        }
+    
 
 
     
@@ -7340,6 +7368,29 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
         
         if( !found ) {
             flightLandingPos.push_back( p );
+
+            // re-save to disk whenever we add a new one
+            // don't worry about re-saving whenever we discover that one
+            // is stale and remove it, since we don't care too much about
+            // forgetting stale positions after server restart
+            // but we NEVER want to forget added positions, even in the
+            // case of a server crash.
+            // And we will "catch up" on disk with removal of stale
+            // positions whenever we add one
+
+            const char *landingLocationsFileName = "landingLocations.txt";
+    
+            FILE *landingLocationsFile = fopen( landingLocationsFileName, "w" );
+            if( landingLocationsFile != NULL ) {
+                
+                for( int i=0; i< flightLandingPos.size(); i++ ) {
+                    GridPos *p = flightLandingPos.getElement( i );
+                    
+                    fprintf( landingLocationsFile, "%d, %d\n", p->x, p->y );
+                    }
+                
+                fclose( landingLocationsFile );
+                }
             }
         }
     
@@ -9603,6 +9654,10 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
                                                         10000 );
     
+    if( maxDist <= 0 ) {
+        maxDist = DBL_MAX;
+        }
+
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 

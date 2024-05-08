@@ -32,6 +32,11 @@ Server Fixes:
   preventing planes from landing anywhere but closest landing pad.
   Part of #1040
 
+--Server now saves known landing positions to landingLocations.txt to re-load
+  after next server startup, so landing pads aren't forgotten across server
+  restarts.  Part of #1040
+
+
 
 
 
