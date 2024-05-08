@@ -9661,6 +9661,10 @@ GridPos getClosestLandingPos( GridPos inTargetPos, char *outFound ) {
     double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
                                                         10000 );
     
+    if( maxDist <= 0 ) {
+        maxDist = DBL_MAX;
+        }
+
     for( int i=0; i<flightLandingPos.size(); i++ ) {
         GridPos thisPos = flightLandingPos.getElementDirect( i );
 

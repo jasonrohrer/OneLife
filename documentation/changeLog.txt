@@ -28,6 +28,10 @@ Server Fixes:
 --Life Log stats (public data) now include status=N for normal player or
   status=D for d-town player.  Fixes #1041
 
+--Fixed major bug when maxFlightDistanced.ini is 0 (current setting), which was
+  preventing planes from landing anywhere but closest landing pad.
+  Part of #1040
+
 
 
 
