@@ -229,6 +229,105 @@ double pixelCountToDraw = 0;
 
 
 
+
+
+typedef struct RecordedSpeechRecord {
+        char *speakerName;
+        char *speech;
+        double speechTime;
+    } RecordedSpeechRecord;
+
+
+static SimpleVector<RecordedSpeechRecord> recordeSpeechRecords;
+
+
+static void clearRecordedSpeechRecord( RecordedSpeechRecord *inR ) {
+    if( inR->speakerName != NULL ) {
+        delete [] inR->speakerName;
+        inR->speakerName = NULL;
+        }
+    if( inR->speech != NULL ) {
+        delete [] inR->speech;
+        inR->speech = NULL;
+        }
+    }
+    
+        
+
+static void clearRecordedSpeech() {
+    for( int i=0; i<recordeSpeechRecords.size(); i++ ) {
+        RecordedSpeechRecord *r = recordeSpeechRecords.getElement( i );
+        clearRecordedSpeechRecord( r );
+        }
+    recordeSpeechRecords.deleteAll();
+    }
+
+
+
+static void cullRecordedSpeech() {
+    double curTime = game_getCurrentTime();
+    
+    for( int i=0; i<recordeSpeechRecords.size(); i++ ) {
+        RecordedSpeechRecord *r = recordeSpeechRecords.getElement( i );
+        
+        if( r->speechTime < curTime - 30 ) {
+            // more than 30 seconds old
+            clearRecordedSpeechRecord( r );
+            recordeSpeechRecords.deleteElement( i );
+            i--;
+            }
+        }
+    }
+
+
+static void recordSpeech( const char *inSpeakerName, const char *inSpeech ) {
+    cullRecordedSpeech();
+    
+    RecordedSpeechRecord r;
+    r.speakerName = NULL;
+    
+    if( inSpeakerName != NULL ) {
+        r.speakerName = stringDuplicate( inSpeakerName );
+        }
+    r.speech = stringDuplicate( inSpeech );
+    
+    r.speechTime = game_getCurrentTime();
+    
+    recordeSpeechRecords.push_back( r );
+    }
+
+
+
+// returned value destroyed by caller
+static char *getRecordedSpeechLog() {
+    SimpleVector<char> workingLog;
+    
+    cullRecordedSpeech();
+    
+    for( int i=0; i<recordeSpeechRecords.size(); i++ ) {
+        RecordedSpeechRecord *r = recordeSpeechRecords.getElement( i );
+        
+        if( r->speech != NULL ) {
+            
+            const char *name = r->speakerName;
+            
+            if( name == NULL ) {
+                name = "UNKNOWN";
+                }
+            
+            char *line = autoSprintf( "%s:  %s\n\n", name, r->speech );
+            
+            workingLog.appendElementString( line );
+            delete [] line;
+            }
+        }
+    
+    return workingLog.getElementString();
+    }
+
+
+
+
 static SimpleVector<double> fpsHistoryGraph;
 static SimpleVector<TimeMeasureRecord> timeMeasureHistoryGraph;
 static SimpleVector<double> spriteCountHistoryGraph;
@@ -3175,6 +3274,8 @@ LivingLifePage::~LivingLifePage() {
             "total sent = %d bytes (+%d in headers)\n",
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
+    
+    clearRecordedSpeech();
     
     mBadBiomeNames.deallocateStringElements();
 
@@ -20369,6 +20470,14 @@ void LivingLifePage::step() {
                                     }
                                 }
                             
+
+                            if( existing->currentSpeech != NULL ) {
+                                
+                                recordSpeech( existing->name,
+                                              existing->currentSpeech );
+                                }
+                            
+
                             break;
                             }
                         }
@@ -22961,6 +23070,8 @@ void LivingLifePage::makeActive( char inFresh ) {
         return;
         }
 
+    clearRecordedSpeech();
+    
     for( int i=0; i<homelands.size(); i++ ) {
         delete [] homelands.getElementDirect( i ).familyName;
         }
@@ -26707,6 +26818,22 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                 TextField::unfocusAll();
                 }
             break;
+        }
+
+    if( isCommandKeyDown() ) {
+
+        if( inASCII == 'c' || inASCII == 3 ) {
+            // ctrl-c is ETX on some platforms
+            
+            // copy!
+            if( isClipboardSupported() ) {
+                char *log = getRecordedSpeechLog();
+                
+                setClipboardText( log );
+                
+                delete [] log;
+                }
+            }
         }
     }
 

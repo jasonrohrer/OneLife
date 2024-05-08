@@ -12,6 +12,10 @@ Version 425   ???
 
 --ahapTechTreeURL changed to ahap.info    Fixes #1065
 
+--Ctrl-c in-game now copies recent speech log, from past 30 seconds, to system
+  clipboard.  This will help non-English-speaking users who are trying to paste
+  speech into translation services.  Fixes #1029
+
 
 
 
