@@ -16,6 +16,9 @@ Version 425   ???
   clipboard.  This will help non-English-speaking users who are trying to paste
   speech into translation services.  Fixes #1029
 
+--Added a lot more logging around required version numbers when PLEASE UPGRADE
+  error pages are shown.
+
 
 
 
