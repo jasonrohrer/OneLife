@@ -30,6 +30,10 @@ Version 425   ???
   interpreted as comment if transition had no comment, resulting in
   duplication of author= line when transition was saved again.  Fixes #1071
 
+--When using import_replace folder, if an object ID doesn't exist, the next
+  object ID is used instead of inflating the local object ID space by
+  force-inserting an ID.  Fixes #1072
+
 
 
 

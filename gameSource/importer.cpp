@@ -916,6 +916,34 @@ static float initLoaderStepInternal( char inSaveIntoDataDirs = false,
                             // report each remapping
                             printf( "%d => %d\n", id, idToWrite );
                             }
+                        else {
+                            // If we're in Replace mode, check if object file
+                            // exists to be overwritten
+                            // if not, add object with nextObjectNumber instead
+                            // to avoid inflating the object ID space
+
+                            char *fileName = autoSprintf( "%d.txt", idToWrite );
+                        
+                            File *objFile = objectsDir.getChildFile( fileName );
+                        
+                            delete [] fileName;
+                        
+                            if( ! objFile->exists() ) {
+                                // can't REPLACE if object doesn't exist
+                                // avoid inflating ID space in this case
+                                
+                                printf( "Failed to replace object ID=%d, "
+                                        "adding new object instead:  ",
+                                        idToWrite );
+                                
+                                idToWrite = nextObjectNumber;
+
+                                // report each remapping
+                                printf( "%d => %d\n", id, idToWrite );
+                                }
+                            
+                            delete objFile;
+                            }
                         
                         if( idToWrite >= nextObjectNumber ) {
                             nextObjectNumber = idToWrite + 1;
