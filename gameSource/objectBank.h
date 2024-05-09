@@ -962,9 +962,9 @@ void computeHeldDrawPos( HoldingPos inHoldingPos, doublePair inPos,
 
 
 
-// sets vis flags in inSpriteVis based on inUsesRemaining
+// sets skipDrawing flags in inSpriteSkipDrawing based on inUsesRemaining
 void setupSpriteUseVis( ObjectRecord *inObject, int inUsesRemaining,
-                        char *inSpriteVis );
+                        char *inSpriteSkipDrawing );
 
 
 // sets vis flags in inSpriteVis based on inVarNumber

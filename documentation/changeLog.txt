@@ -23,6 +23,9 @@ Version 425   ???
   (which were being rounded, by surprise, to closest 90-degree rotation).
   It now shows a message explaining why the bake cannot occur.  Fixes #1070
 
+--Slider for simulating uses in Object Editor now works the same way as slider
+  in Scene editor.  Fixes #1073
+
 
 
 
