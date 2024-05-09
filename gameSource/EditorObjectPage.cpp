@@ -226,7 +226,8 @@ EditorObjectPage::EditorObjectPage()
 
 
     mDragging = false;
-    
+    mBakeBlocked = false;
+
     mObjectCenterOnScreen.x = 0;
     mObjectCenterOnScreen.y = -32;
     
@@ -4067,6 +4068,18 @@ void EditorObjectPage::draw( doublePair inViewCenter,
             smallFont->drawString( "F", pos, alignLeft );
             }
         }
+    else {
+        if( ! mBakeButton.isVisible() && mBakeBlocked ) {
+            
+            pos = mBakeButton.getPosition();
+            
+            smallFont->drawString( "CANNOT BAKE", pos, alignCenter );
+            
+            pos.y -= 16;
+            
+            smallFont->drawString( "NON-90 ROTS", pos, alignCenter );
+            }
+        }
     
 
 
@@ -4882,9 +4895,37 @@ void EditorObjectPage::pickedLayerChanged() {
         char *des = mDescriptionField.getText();
         
         mBakeButton.setVisible( false );
-
+        
+        mBakeBlocked = false;
+        
         if( strcmp( des, "" ) != 0 ) {
-            mBakeButton.setVisible( true );
+
+            char anyNot90 = false;
+            
+            for( int i=0; i<mCurrentObject.numSprites; i++ ) {
+                double rot = mCurrentObject.spriteRot[i];
+                
+                while( rot < 0 ) {
+                    rot += 1.0;
+                    }
+                while( rot > 1.0 ) {
+                    rot -= 1.0;
+                    }
+
+                double closest90Rot = 0.25 * lrint( rot / 0.25 );
+
+                if( closest90Rot != rot ) {
+                    anyNot90 = true;
+                    break;
+                    }
+                }
+            
+            if( ! anyNot90 ) {
+                mBakeButton.setVisible( true );
+                }
+            else {
+                mBakeBlocked = true;
+                }
             }
         delete [] des;
         }

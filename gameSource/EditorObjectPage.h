@@ -277,6 +277,9 @@ class EditorObjectPage : public GamePage, public ActionListener {
         
         int mStepsSinceDescriptionChange;
         
+        char mBakeBlocked;
+        
+
         double getClosestSpriteOrSlot( float inX, float inY,
                                        int *outSprite,
                                        int *outSlot );

@@ -19,6 +19,12 @@ Version 425   ???
 --Added a lot more logging around required version numbers when PLEASE UPGRADE
   error pages are shown.
 
+--Fixed so that Object Editor doesn't allow baking of non-90 rotated sprites
+  (which were being rounded, by surprise, to closest 90-degree rotation).
+  It now shows a message explaining why the bake cannot occur.  Fixes #1070
+
+
+
 
 
 
