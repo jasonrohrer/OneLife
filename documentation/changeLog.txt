@@ -26,6 +26,9 @@ Version 425   ???
 --Slider for simulating uses in Object Editor now works the same way as slider
   in Scene editor.  Fixes #1073
 
+--Fixed bug that was causing author= line in transition files to get
+  interpreted as comment if transition had no comment, resulting in
+  duplication of author= line when transition was saved again.  Fixes #1071
 
 
 

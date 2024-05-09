@@ -209,8 +209,16 @@ float initTransBankStep() {
                     r->actorMinUseFraction = actorMinUseFraction;
                     r->targetMinUseFraction = targetMinUseFraction;
                     
+                    char authorInComment = false;
+
                     if( numParts > 1 ) {
-                        r->comment = trimWhitespace( parts[1] );
+                        if( strstr( parts[1], "author=" ) == parts[1] ) {
+                            authorInComment = true;
+                            r->comment = stringDuplicate( "" );
+                            }
+                        else {
+                            r->comment = trimWhitespace( parts[1] );
+                            }
                         }
                     else {
                         r->comment = stringDuplicate( "" );
@@ -219,12 +227,20 @@ float initTransBankStep() {
                     
                     r->authorTag = NULL;
                     
-                    if( numParts > 2 ) {
+                    if( numParts > 2 ||
+                        ( authorInComment && numParts > 1 ) ) {
                         char authorTagBuffer[100];
             
                         authorTagBuffer[0] = '\0';
 
-                        sscanf( parts[2], "author=%99s", authorTagBuffer );
+                        int partToScan = 2;
+                        
+                        if( authorInComment ) {
+                            partToScan = 1;
+                            }
+
+                        sscanf( parts[partToScan], 
+                                "author=%99s", authorTagBuffer );
             
                         if( strlen( authorTagBuffer ) > 0 ) {
                             r->authorTag = stringDuplicate( authorTagBuffer );
