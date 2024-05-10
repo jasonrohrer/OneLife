@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 425   ???
+Version 425   2024-May-10
 
 --PLANET settings page now allows you to specify your PayPal email address,
   which will be used for delivering your revshare for content you contribute
