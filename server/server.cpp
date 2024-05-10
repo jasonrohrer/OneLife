@@ -16395,13 +16395,108 @@ char isHungryWorkBlocked( LiveObject *inPlayer,
 
 
 
+const char *numberToWords( int inNumber ) {
+    switch( inNumber ) {
+        case 1:
+            return "ONE";
+        case 2:
+            return "TWO";
+        case 3:
+            return "THREE";
+        case 4:
+            return "FOUR";
+        case 5:
+            return "FIVE";
+        case 6:
+            return "SIX";
+        case 7:
+            return "SEVEN";
+        case 8:
+            return "EIGHT";
+        case 9:
+            return "NINE";
+        case 10:
+            return "TEN";
+        case 11:
+            return "ELEVEN";
+        case 12:
+            return "TWELVE";
+        case 13:
+            return "THIRTEEN";
+        case 14:
+            return "FOURTEEN";
+        case 15:
+            return "FIFTEEN";
+        case 16:
+            return "SIXTEEN";
+        case 17:
+            return "SEVENTEEN";
+        case 18:
+            return "EIGHTEEN";
+        case 19:
+            return "NINETEEN";
+        case 20:
+            return "TWENTY";
+        default:
+            return "MANY";
+        }
+    }
 
-void sendNearPopSpeech( LiveObject *inPlayer ) {
+
+
+
+void sendNearPopSpeech( LiveObject *inPlayer, 
+                        int inNewTarget ) {
     // tell player about it with private speech
-    char *message = autoSprintf( 
-        "PS\n"
-        "%d/0 +TOO FAR FROM EVERYONE+\n#",
-        inPlayer->id );
+
+    ObjectRecord *o = getObject( inNewTarget );
+    
+    char *message;
+    
+
+    if( o->nearPopDistance > 200 ) {
+        message = autoSprintf( 
+            "PS\n"
+            "%d/0 +TOO FAR FROM EVERYONE+\n#",
+            inPlayer->id );
+        }
+    else {
+        // need a group of players very close to perform this action
+        // tell them how many
+
+        int totalCount = 0;
+        
+        for( int j=0; j<players.size(); j++ ) {
+            LiveObject *otherPlayer = players.getElement( j );
+            
+            if( ! otherPlayer->error &&
+                ! otherPlayer->isTutorial &&
+                otherPlayer->curseStatus.curseLevel == 0 ) {
+                
+                totalCount++;
+                }
+            }
+        
+        int requiredCount = ceil( totalCount * o->nearPopFraction );
+        
+        // self counts as one of them
+        requiredCount --;
+        
+        
+        const char *playerWord = "PLAYERS";
+        
+        if( requiredCount == 1 ) {
+            playerWord = "PLAYER";
+            }
+
+        const char *numberWord = numberToWords( requiredCount );
+
+        message = autoSprintf( 
+            "PS\n"
+            "%d/0 +NEED %s OTHER %s NEARBY+\n#",
+            inPlayer->id, numberWord, playerWord );
+        
+        }
     
     sendMessageToPlayer( 
         inPlayer, 
@@ -24217,9 +24312,10 @@ int main() {
                                     else if( isNearPopBlocked( 
                                             nextPlayer,
                                             r->newTarget ) ) {
-                                        r = NULL;
                                         
-                                        sendNearPopSpeech( nextPlayer );
+                                        sendNearPopSpeech( nextPlayer,
+                                                           r->newTarget );
+                                        r = NULL;
                                         }
                                     }
 

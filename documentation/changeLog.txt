@@ -58,6 +58,12 @@ Server Fixes:
   after next server startup, so landing pads aren't forgotten across server
   restarts.  Part of #1040
 
+--Improved messaging to player when building something fails due to nearPop
+  restrictions.  If the required distance is short (less than 200), then we
+  tell them specifically how many people need to be nearby.  This is in
+  preparation for using this feature for rocket pads, which will need to be
+  built in villages with lots of people very close by.
+
 
 
 
