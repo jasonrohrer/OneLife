@@ -34,6 +34,9 @@ Version 425   ???
   object ID is used instead of inflating the local object ID space by
   force-inserting an ID.  Fixes #1072
 
+--Fixed glitch in rolling back object ID and sprite ID when deleting last item
+  in bank (to prevent ID inflation).
+
 
 
 

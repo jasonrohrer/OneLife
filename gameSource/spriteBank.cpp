@@ -2053,6 +2053,8 @@ void deleteSpriteFromBank( int inID ) {
                     break;
                     }
                 }
+
+            maxID = lastRecord;
             
             nextSpriteNumber = lastRecord + 1;
             

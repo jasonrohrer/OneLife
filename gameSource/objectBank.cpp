@@ -5103,6 +5103,8 @@ void deleteObjectFromBank( int inID ) {
                     }
                 }
             
+            maxID = lastRecord;
+            
             nextObjectNumber = lastRecord + 1;
             
             nextNumberFile->writeToFile( nextObjectNumber );
