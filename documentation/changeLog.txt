@@ -8,6 +8,13 @@ Version 427   ???
 
 --Apocalypse jumps everyone back to (0,0).  Part of #1069
 
+--When Apocalypse jumps everyone back to (0,0), it now preserves relative
+  positioning amoung clusters of nearby people.  This means people aren't all
+  slammed together right on the (0,0) mark, but people who were working
+  together pre-apocalypse can easily find each other post.  For example, a
+  mother standing near her baby will still be standing near her baby post.
+  Part of #1069
+
 
 
 
