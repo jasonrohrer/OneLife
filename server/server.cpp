@@ -1791,6 +1791,26 @@ static void backToBasics( LiveObject *inPlayer ) {
     p->partiallyLearnedTools.deleteAll();
     p->numToolSlots = -1;
     
+    // end any moves, and move everyon back to 0,0
+
+    p->xd = 0;
+    p->yd = 0;
+    
+    p->xs = 0;
+    p->ys = 0;
+    
+    p->birthPos.x = p->xd;
+    p->birthPos.y = p->yd;
+    
+    p->originalBirthPos = p->birthPos;
+
+    p->actionTarget = p->birthPos;
+    
+    p->posForced = true;
+    
+
+
+
     setupToolSlots( p );
     }
 
