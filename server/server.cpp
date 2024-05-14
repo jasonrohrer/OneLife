@@ -13746,11 +13746,22 @@ void apocalypseStep() {
 
                 AppLog::infoF( "Apocalypse freeMap took %f sec",
                                Time::getCurrentTime() - startTime );
+                
+                resetEveRadius();
+                resetEveLocation();
+                
+                
+                startTime = Time::getCurrentTime();
+
                 wipeMapFiles();
 
                 AppLog::infoF( "Apocalypse wipeMapFiles took %f sec",
                                Time::getCurrentTime() - startTime );
                 
+
+                
+                startTime = Time::getCurrentTime();
+
                 initMap();
 
                 reseedMap( true );

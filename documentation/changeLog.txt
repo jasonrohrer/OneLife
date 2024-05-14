@@ -15,6 +15,9 @@ Version 427   ???
   mother standing near her baby will still be standing near her baby post.
   Part of #1069
 
+--Apocalypse now clears Eve location and several other things.  Fixes #1077
+
+
 
 
 

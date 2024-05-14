@@ -1960,6 +1960,32 @@ void resetEveRadius() {
 
 
 
+static void writeEveLocation() {
+    File eveLocFile( NULL, "lastEveLocation.txt" );
+    char *locString = 
+        autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
+    eveLocFile.writeToFile( locString );
+    delete [] locString;
+    }
+
+
+
+void clearRecentPlacements();
+
+
+
+void resetEveLocation() {
+    eveLocation.x = 0;
+    eveLocation.y = 0;
+
+    writeEveLocation();
+    
+    clearRecentPlacements();
+    }
+
+
+
+
 void clearRecentPlacements() {
     for( int i=0; i<NUM_RECENT_PLACEMENTS; i++ ) {
         recentPlacements[i].pos.x = 0;
@@ -4728,6 +4754,7 @@ void freeMap( char inSkipCleanup ) {
     
 
     writeEveRadius();
+    writeEveLocation();
     writeRecentPlacements();
 
     delete [] biomes;
@@ -4783,6 +4810,8 @@ void wipeMapFiles() {
     deleteFileByName( "mapTime.db" );
     deleteFileByName( "playerStats.db" );
     deleteFileByName( "meta.db" );
+    
+    deleteFileByName( "mapDummyRecall.txt" );
     }
 
 
@@ -8959,11 +8988,7 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 eveLocation.x = ave.x;
                 eveLocation.y = ave.y;
                 
-                File eveLocFile( NULL, "lastEveLocation.txt" );
-                char *locString = 
-                    autoSprintf( "%d,%d", eveLocation.x, eveLocation.y );
-                eveLocFile.writeToFile( locString );
-                delete [] locString;
+                writeEveLocation();
                 }
             }
         

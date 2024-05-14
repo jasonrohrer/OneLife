@@ -56,6 +56,9 @@ void doubleEveRadius();
 // return Eve placement radius to starting value
 void resetEveRadius();
 
+// return eve placement back to 0,0
+void resetEveLocation();
+
 
 // gets new Eve position on outskirts of civilization
 // if inAllowRespawn, this player's last Eve old-age-death will be
