@@ -288,6 +288,11 @@ Any message type, except MC (MAP_CHUNK), can be packaged into a CM message.
 Usually, this behavior is reserved for very long messages (like the first PU
 sent to a client upon connection).
 
+This involves zlib "compress" compression (RFC1950), currently provided by:
+   https://github.com/richgel999/miniz
+
+It can be uncompressed using zlib "uncompress"
+
 After decompression, the text message is in the usual format, complete with
 terminatin # character.
 
@@ -311,8 +316,14 @@ Chunk includes a sizeX x sizeY number of ids (a square of the map).
 Square is positioned on map grid with upper left corner at x y
 binary_size is the number of binary bytes of map data that will follow the #
 
-BINARY_DATA is the raw binary data.  This involves zip compression.  
-Check the code in map.cpp for details.
+BINARY_DATA is the raw binary data.
+
+This involves zlib "compress" compression (RFC1950), currently provided by:
+   https://github.com/richgel999/miniz
+
+It can be uncompressed using zlib "uncompress"
+
+Check the code in map.cpp for details of the format for the binary map data.
 
 
 

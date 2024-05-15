@@ -22,6 +22,11 @@ Version 427   ???
   ghosts could delay server shutdown indefinitely.  Fixes #1030
 
 
+Server Fixes:
+
+--Fixed protocol document to specify zlib and not zip compression for map
+  chunks and CM messages.  Fixes #1032
+
 
 
 
