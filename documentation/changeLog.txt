@@ -17,6 +17,9 @@ Version 427   ???
 
 --Apocalypse now clears Eve location and several other things.  Fixes #1077
 
+--During soft-shutdown, if all players die of old age, and the only players
+  left are ghosts, the ghosts are now force-killed.  Otherwise, remaining
+  ghosts could delay server shutdown indefinitely.  Fixes #1030
 
 
 

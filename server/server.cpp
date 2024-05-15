@@ -18898,6 +18898,9 @@ int main() {
             }
         else if( shutdownMode ) {
             // any disconnected players should be killed now
+            
+            char someNonGhostsRemainAlive = false;
+            
             for( int i=0; i<players.size(); i++ ) {
                 LiveObject *nextPlayer = players.getElement( i );
                 if( ! nextPlayer->error && ! nextPlayer->connected ) {
@@ -18909,7 +18912,36 @@ int main() {
                     nextPlayer->errorCauseString =
                         "Disconnected during shutdown";
                     }
+                else if( ! nextPlayer->error &&
+                         nextPlayer->connected &&
+                         ! nextPlayer->isGhost ) {
+                    someNonGhostsRemainAlive = true;
+                    }
                 }
+
+            if( ! someNonGhostsRemainAlive ) {
+                // everyone left alive is a ghost?
+                // ghosts are preventing the server from shutting down
+                // they could delay it forever
+                // force-kill all ghosts
+
+                for( int i=0; i<players.size(); i++ ) {
+                    
+                    LiveObject *nextPlayer = players.getElement( i );
+                    
+                    if( ! nextPlayer->error && nextPlayer->connected &&
+                        nextPlayer->isGhost ) {
+                    
+                        setDeathReason( nextPlayer, 
+                                        "exorcism_shutdown" );
+                    
+                        nextPlayer->error = true;
+                        nextPlayer->errorCauseString =
+                            "Remaining ghost destroyed during shutdown";
+                        }
+                    }
+                }
+            
             }
         
 
