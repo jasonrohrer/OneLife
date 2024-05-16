@@ -19960,6 +19960,21 @@ int main() {
                                 sscanf( tokens->getElementDirect( 4 ),
                                         "%d", 
                                         &( nextConnection->tutorialNumber ) );
+                                
+                                if( nextConnection->tutorialNumber != 0 ) {
+                                    
+                                    useContentSettings();
+                                
+                                    int tutorialEnabled = 
+                                        SettingsManager::getIntSetting( 
+                                            "tutorialEnabled", 0 );
+                                    
+                                    useMainSettings();
+                                    
+                                    if( ! tutorialEnabled ) {
+                                        nextConnection->tutorialNumber = 0;
+                                        }
+                                    }
                                 }
                             
                             if( tokens->size() == 7 ) {

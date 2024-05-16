@@ -33,6 +33,9 @@ Server Fixes:
 --Fixed protocol document to specify zlib and not zip compression for map
   chunks and CM messages.  Fixes #1032
 
+--Fixed server crash if twin clients specify a tutorial number > 0 when
+  tutorial is disabled.
+
 
 
 
