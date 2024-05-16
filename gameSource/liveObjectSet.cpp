@@ -80,8 +80,10 @@ void clearLiveObjectSet() {
 
 static void markSoundUsageLiveInternal( SoundUsage inUsage ) {
     for( int i=0; i<inUsage.numSubSounds; i++ ) {
-        liveSoundIDMap[ inUsage.ids[i] ] = true;
-        liveSoundSet.push_back( inUsage.ids[i] );
+        if( inUsage.ids[i] < soundMapSize ) {
+            liveSoundIDMap[ inUsage.ids[i] ] = true;
+            liveSoundSet.push_back( inUsage.ids[i] );
+            }
         }
     }
 
@@ -90,7 +92,7 @@ static void markSoundUsageLiveInternal( SoundUsage inUsage ) {
 // adds an object to the base set of live objects
 // objects one transition step away will be auto-added as well  
 void addBaseObjectToLiveObjectSet( int inID ) {
-    if( inID == -1 ) {
+    if( inID == -1 || inID > objectMapSize ) {
         return;
         }
     
@@ -109,7 +111,7 @@ void addBaseObjectToLiveObjectSet( int inID ) {
         for( int j=0; j< o->numSprites; j++ ) {
             int spriteID = o->sprites[j];
             
-            if( ! liveSpriteIDMap[ spriteID ] ) {
+            if( spriteID < spriteMapSize && ! liveSpriteIDMap[ spriteID ] ) {
                 
                 // only if it exists as a sprite record
                 // otherwise, object refers to a sprite that doesn't exist

@@ -21,6 +21,12 @@ Version 427   ???
   left are ghosts, the ghosts are now force-killed.  Otherwise, remaining
   ghosts could delay server shutdown indefinitely.  Fixes #1030
 
+--Fixed crash when adding an object to liveObjectSet when it references
+  non-existent sounds that are bigger than the sound set array size.
+  Fixed a similar bug for non-existent sprites, etc.
+
+
+
 
 Server Fixes:
 
