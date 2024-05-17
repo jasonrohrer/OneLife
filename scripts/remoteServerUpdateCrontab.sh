@@ -19,7 +19,7 @@ read
 while read user server port
 do
   echo "   Updating crontab on $server"
-  ssh -n $user@$server 'crontab /home/jcr13/checkout/OneLife/scripts/remoteServerCrontab'
+  ssh -n $user@$server 'crontab /home/jcr13/checkout/OneLife/scripts/remoteServerCrontabSource'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
