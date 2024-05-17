@@ -1,4 +1,4 @@
-# Script run on main server to clear old bug files on all remote servers
+# Script run on main server to clear old log files on all remote servers
 
 
 
@@ -19,5 +19,5 @@ done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 
 
 echo "" 
-echo "Done clearing old bug files on all servers."
+echo "Done clearing old log files on all servers."
 echo ""
