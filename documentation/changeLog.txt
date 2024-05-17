@@ -36,6 +36,10 @@ Server Fixes:
 --Fixed server crash if twin clients specify a tutorial number > 0 when
   tutorial is disabled.
 
+--Crontab to delete old log files (foodLog, foodLogDetail, failureLog), since
+  they were taking up a lot of disk space over the years.  Now deleting logs
+  over 60 days on all servers.
+
 
 
 

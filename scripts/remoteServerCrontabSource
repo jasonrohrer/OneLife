@@ -1,2 +1,3 @@
 * * * * * /home/jcr13/checkout/OneLife/scripts/checkServerRunningCron.sh
 0 8 * * * /home/jcr13/checkout/OneLife/scripts/clearOldBugFiles.sh
+0 9 * * * /home/jcr13/checkout/OneLife/scripts/clearOldLogFiles.sh
