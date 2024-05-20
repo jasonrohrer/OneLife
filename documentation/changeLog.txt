@@ -40,6 +40,11 @@ Server Fixes:
   they were taking up a lot of disk space over the years.  Now deleting logs
   over 60 days on all servers.
 
+--Fixed remote server update scripts to do reset to origin/master --hard so
+  that we roll-back to early commit if repo has been force-pushed to remove
+  something.
+
+
 
 
 
