@@ -236,6 +236,7 @@ rm ~/checkout/diffWorking/dataLatest/.hg*
 rm -rf ~/checkout/diffWorking/dataLatest/soundsRaw
 rm -rf ~/checkout/diffWorking/dataLatest/faces
 rm -rf ~/checkout/diffWorking/dataLatest/scenes
+rm -rf ~/checkout/diffWorking/dataLatest/settings
 rm -r ~/checkout/diffWorking/dataLatest/*.sh ~/checkout/diffWorking/dataLatest/working ~/checkout/diffWorking/dataLatest/overlays
 echo -n "$newVersion" > ~/checkout/diffWorking/dataLatest/dataVersionNumber.txt
 
@@ -252,6 +253,7 @@ rm ~/checkout/diffWorking/dataLast/.hg*
 rm -rf ~/checkout/diffWorking/dataLast/soundsRaw
 rm -rf ~/checkout/diffWorking/dataLast/faces
 rm -rf ~/checkout/diffWorking/dataLast/scenes
+rm -rf ~/checkout/diffWorking/dataLast/settings
 rm -r ~/checkout/diffWorking/dataLast/*.sh ~/checkout/diffWorking/dataLast/working ~/checkout/diffWorking/dataLast/overlays
 
 

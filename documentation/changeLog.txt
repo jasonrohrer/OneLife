@@ -44,6 +44,12 @@ Server Fixes:
   that we roll-back to early commit if repo has been force-pushed to remove
   something.
 
+--Data diff bundle generation scripts now remove any wayward 'settings' folder
+  from content before making bundle.  A user's settings folder can't be pushed
+  out to other users by accident in the future.
+
+
+
 
 
 

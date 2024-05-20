@@ -211,6 +211,7 @@ rm ~/checkout/ahapDiffWorking/dataLatest/.hg*
 rm -rf ~/checkout/ahapDiffWorking/dataLatest/soundsRaw
 rm -rf ~/checkout/ahapDiffWorking/dataLatest/faces
 rm -rf ~/checkout/ahapDiffWorking/dataLatest/scenes
+rm -rf ~/checkout/ahapDiffWorking/dataLatest/settings
 rm -r ~/checkout/ahapDiffWorking/dataLatest/*.sh ~/checkout/ahapDiffWorking/dataLatest/working ~/checkout/ahapDiffWorking/dataLatest/overlays
 echo -n "$newVersion" > ~/checkout/ahapDiffWorking/dataLatest/dataVersionNumber.txt
 
@@ -227,6 +228,7 @@ rm ~/checkout/ahapDiffWorking/dataLast/.hg*
 rm -rf ~/checkout/ahapDiffWorking/dataLast/soundsRaw
 rm -rf ~/checkout/ahapDiffWorking/dataLast/faces
 rm -rf ~/checkout/ahapDiffWorking/dataLast/scenes
+rm -rf ~/checkout/ahapDiffWorking/dataLast/settings
 rm -r ~/checkout/ahapDiffWorking/dataLast/*.sh ~/checkout/ahapDiffWorking/dataLast/working ~/checkout/ahapDiffWorking/dataLast/overlays
 
 
