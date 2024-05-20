@@ -103,7 +103,9 @@ echo "Updating OneLifeData7Latest"
 echo ""
 
 cd ~/checkout/OneLifeData7Latest
-git pull --tags
+git checkout master
+git pull --tags --force
+git reset origin/master --hard
 
 
 
@@ -374,7 +376,9 @@ echo ""
 
 
 cd ~/checkout/OneLifeData7
-git pull
+git checkout master
+git pull --tags --force
+git reset origin/master --hard
 rm */cache.fcz
 rm */bin_cache.fcz
 

@@ -48,6 +48,10 @@ Server Fixes:
   from content before making bundle.  A user's settings folder can't be pushed
   out to other users by accident in the future.
 
+--Fixed generateDataOnlyDiffBundle scripts to do reset to origin/master --hard
+  so that we roll-back to early commit if repo has been force-pushed to remove
+  something.
+
 
 
 

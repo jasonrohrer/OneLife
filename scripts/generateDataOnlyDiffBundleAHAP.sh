@@ -85,7 +85,9 @@ echo "Updating AnotherPlanetDataLatest"
 echo ""
 
 cd ~/checkout/AnotherPlanetDataLatest
-git pull --tags
+git checkout master
+git pull --tags --force
+git reset origin/master --hard
 
 
 
@@ -349,7 +351,9 @@ echo ""
 
 
 cd ~/checkout/AnotherPlanetData
-git pull
+git checkout master
+git pull --tags --force
+git reset origin/master --hard
 rm */cache.fcz
 rm */bin_cache.fcz
 
