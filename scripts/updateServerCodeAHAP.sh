@@ -14,10 +14,10 @@ echo "Re-compiling non-running local server code base as a sanity check"
 echo ""
 
 cd ~/checkout/minorGems
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 cd ~/checkout/OneLife/server
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 ./configure 1
 make

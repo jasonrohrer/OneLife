@@ -29,7 +29,7 @@ echo "Updating AnotherPlanetDataLatest"
 echo ""
 
 cd ~/checkout/AnotherPlanetDataLatest
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 newerVersion="D"

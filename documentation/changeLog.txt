@@ -52,6 +52,12 @@ Server Fixes:
   so that we roll-back to early commit if repo has been force-pushed to remove
   something.
 
+--Fixed a bunch of scripts that pull from data repos to delete local tags and
+  re-pull tags, so that tags that are deleted remotely are deleted locally.
+  Did this with a centralized gitPullComplete.sh script, which all the other
+  scripts can call when they need to run a git pull.
+
+
 
 
 

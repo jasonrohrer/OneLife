@@ -41,7 +41,7 @@ newVersion=$1
 # first, check that existing tagged versions make sense
 
 cd ~/checkout/OneLifeWorking
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 lastOneLifeVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
 
@@ -52,7 +52,7 @@ echo ""
 
 
 cd ~/checkout/minorGems
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 lastMGVersion=`git for-each-ref --sort=-creatordate --format '%(refname:short)' --count=1 refs/tags/OneLife_v* | sed -e 's/OneLife_v//'`
 
@@ -162,7 +162,7 @@ echo ""
 echo "Tagging OneLife and minorGems with OneLife_v$newVersion"
 
 cd ~/checkout/OneLifeWorking
-git pull
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 git tag -a -m "Tagging for binary version $newVersion" OneLife_v$newVersion
 
@@ -176,7 +176,7 @@ git push -f --tags
 
 
 cd ~/checkout/minorGems
-git pull
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 git tag -a -m "Tagging for OneLife version $newVersion" OneLife_v$newVersion

@@ -2,6 +2,6 @@
 
 cd ~/checkout/OneLife
 
-git pull
+~/checkout/OneLife/scripts/gitPullComplete.sh
 
 bash ~/checkout/OneLife/scripts/backupPull.sh

@@ -55,7 +55,7 @@ echo "Updating OneLifeWorking"
 echo ""
 
 cd ~/checkout/OneLifeWorking
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 echo "" 
@@ -73,7 +73,7 @@ echo "Updating AnotherPlanetDataLatest"
 echo ""
 
 cd ~/checkout/AnotherPlanetDataLatest
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 

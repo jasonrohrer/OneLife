@@ -67,7 +67,7 @@ echo "Updating minorGems"
 echo ""
 
 cd ~/checkout/minorGems
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 
@@ -85,9 +85,7 @@ echo "Updating AnotherPlanetDataLatest"
 echo ""
 
 cd ~/checkout/AnotherPlanetDataLatest
-git checkout master
-git pull --tags --force
-git reset origin/master --hard
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 
@@ -134,7 +132,7 @@ echo "Updating OneLifeWorking"
 echo ""
 
 cd ~/checkout/OneLifeWorking
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 echo "" 
@@ -351,9 +349,7 @@ echo ""
 
 
 cd ~/checkout/AnotherPlanetData
-git checkout master
-git pull --tags --force
-git reset origin/master --hard
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 rm */cache.fcz
 rm */bin_cache.fcz
 
@@ -432,7 +428,7 @@ echo "Re-compiling non-running local server code base as a sanity check"
 echo ""
 
 cd ~/checkout/OneLife/server
-git pull
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 ./configure 1
 make

@@ -28,7 +28,7 @@ echo "Updating minorGems"
 echo ""
 
 cd ~/checkout/minorGems
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 
@@ -37,7 +37,7 @@ echo "Updating OneLifeData7Latest"
 echo ""
 
 cd ~/checkout/OneLifeData7Latest
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 
@@ -51,7 +51,7 @@ echo "Updating OneLifeWorking"
 echo ""
 
 cd ~/checkout/OneLifeWorking
-git pull --tags
+~/checkout/OneLifeWorking/scripts/gitPullComplete.sh
 
 
 

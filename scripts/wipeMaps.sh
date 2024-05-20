@@ -33,7 +33,7 @@ echo ""
 while read user server port
 do
   echo "  Starting update on $server"
-  ssh -n $user@$server 'cd ~/checkout/OneLife; git pull'
+  ssh -n $user@$server 'cd ~/checkout/OneLife; ~/checkout/OneLife/scripts/gitPullComplete.sh'
   ssh -n $user@$server '~/checkout/OneLife/scripts/remoteServerWipeMap.sh'
 done <  <( grep "" ~/www/reflector/remoteServerList.ini )
 

@@ -31,9 +31,7 @@ echo ""
 
 
 cd ~/checkout/OneLifeData7
-git checkout master
-git pull --tags --force
-git reset origin/master --hard
+~/checkout/OneLife/scripts/gitPullComplete.sh
 rm */cache.fcz
 rm */bin_*cache.fcz
 
@@ -43,9 +41,7 @@ echo "Re-compiling server"
 echo ""
 
 cd ~/checkout/minorGems
-git checkout master
-git pull --tags --force
-git reset origin/master --hard
+~/checkout/OneLife/scripts/gitPullComplete.sh
 
 
 ~/checkout/OneLife/scripts/serverPull.sh

@@ -1,5 +1,5 @@
 cd ~/checkout/OneLife
-git pull
+~/checkout/OneLife/scripts/gitPullComplete.sh
 
 cd documentation/html
 
@@ -9,7 +9,7 @@ cp header.php ~/public_html
 cp footer.php ~/public_html
 
 cd ~/checkout/OneLifeData7
-git pull
+~/checkout/OneLife/scripts/gitPullComplete.sh
 
 rsync faces/*.png ~/public_html/faces/
 
@@ -18,7 +18,7 @@ rsync objects/*.txt ~/public_html/objects/
 
 
 cd ~/checkout/AnotherPlanetData
-git pull
+~/checkout/OneLife/scripts/gitPullComplete.sh
 
 rsync faces/*.png ~/public_html/ahapLineageServer/faces/
 
