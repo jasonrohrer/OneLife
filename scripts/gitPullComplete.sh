@@ -9,11 +9,16 @@ git checkout master
 
 # delete local tags, so we can pull latest tags from remote
 # this allows remote to delete tags, and have them be deleted locally
-git tag -d $(git tag)
+# do this silently, so we don't blast the full tag list to output
+git tag -d $(git tag) >/dev/null 2>&1
 
 
-# pull tags again fresh, and use force to get changes made through force-pushes
-git pull --tags --force
+# re-fetch the tags quietly too, to re-get all tags from remote
+git fetch --tags >/dev/null 2>&1
+
+
+# pull, and use force to get changes made through force-pushes
+git pull --force
 
 
 # This will roll our local repo back to match the remote, in the case
