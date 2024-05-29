@@ -66,6 +66,11 @@ echo ""
 useradd -m -s /bin/bash jcr13
 
 
+# make sure new home dir is world readable and accessible, so www user
+# can access it
+chmod a+rx /home/jcr13
+
+
 su jcr13<<EOSU
 
 cd /home/jcr13

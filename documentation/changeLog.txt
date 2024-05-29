@@ -57,6 +57,10 @@ Server Fixes:
   Did this with a centralized gitPullComplete.sh script, which all the other
   scripts can call when they need to run a git pull.
 
+--Fixed linode web server setup script to make /home/jcr13 dir readable by
+  all so that www user can access it.
+
+
 
 
 
