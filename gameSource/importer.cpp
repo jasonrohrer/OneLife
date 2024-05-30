@@ -187,6 +187,8 @@ static int initLoaderStartInternal( const char *inDirName ) {
         int blocks = 0;
         int numRead = fscanf( f, "%d", &blocks );
         
+        fclose( f );
+
         if( numRead != 1 ) {
             printf( "Failed to read header block count "
                     "from mod/import file: %s\n",

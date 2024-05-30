@@ -25,6 +25,12 @@ Version 427   ???
   non-existent sounds that are bigger than the sound set array size.
   Fixed a similar bug for non-existent sprites, etc.
 
+--Fixed bug in importer where it forgot to fclose after fopen on an imported
+  file to peek at the header information.  This prevented the remove call on
+  Windows, leaving the file behind in the import_add or import_replace folder
+  after it was copied over to the imported folder.  Fixes #1079
+
+
 
 
 
