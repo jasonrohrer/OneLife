@@ -4,7 +4,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version 427   ???
+Version 427   2024-May-31
 
 --Apocalypse jumps everyone back to (0,0).  Part of #1069
 
@@ -30,7 +30,8 @@ Version 427   ???
   Windows, leaving the file behind in the import_add or import_replace folder
   after it was copied over to the imported folder.  Fixes #1079
 
-
+--Game no longer crashes on Windows and Linux if it's launched from outside of
+  its game folder.
 
 
 
