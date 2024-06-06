@@ -1,6 +1,7 @@
 # run as root on a web server to get certbot setup for https
 
 
+apt-get -o Acquire::ForceIPv4=true update
 apt -y install snapd
 
 snap install --classic certbot
