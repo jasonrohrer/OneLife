@@ -275,6 +275,11 @@ containerObjectID,subContainerID1:subContainedID1:subContainedID2,containedID2,c
 Containment can only go two layers deep.  A wagon full of baskets full of 
 carrots, for example.
 
+To understand how objects and their IDs are loaded into the game, refer to the code
+in ObjectBank.cpp located in the gameSource directory.
+Note that an object passed to the client can have an ID larger than the maximum ID found in the objects folder.
+
+
 
 
 CM
