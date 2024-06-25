@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Server Fixes:
+
+--Fixed AHAPGate to handle names with apostrophes.  Thanks Aaron O.
+
+
+
 Version 427   2024-May-31
 
 --Apocalypse jumps everyone back to (0,0).  Part of #1069

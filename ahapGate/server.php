@@ -1070,8 +1070,11 @@ function ag_grantForNew( $email ) {
         return;
         }
         
-
-        
+    // some names have ' in them
+    // need to escape this for use in DB query
+    global $ag_mysqlLink;
+    $name = mysqli_real_escape_string( $ag_mysqlLink, $name );
+    
     // create AHAP ticket
     // IGNORE if it already exists
     global $tableNamePrefixAHAPTicketServer;
