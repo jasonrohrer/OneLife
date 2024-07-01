@@ -18302,6 +18302,14 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
             continue;
             }
 
+        // don't show confusing rocket ride animation to tutorial players
+        // UNLESS the tutorial player themselves rode the rocket
+        if( nextPlayer->isTutorial
+            && nextPlayer->id != inPlayer->id ) {
+            
+            continue;
+            }
+
         // add time to their born time, essentially pushing everyone
         // younger by just enough so that they won't die during the rocket
         // launch animation

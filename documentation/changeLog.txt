@@ -8,6 +8,11 @@ Server Fixes:
 
 --Fixed AHAPGate to handle names with apostrophes.  Thanks Aaron O.
 
+--Fixed so that Rocket Ride animation is not shown to tutorial players, which
+  might confuse them (unless the tutorial player themself is riding the
+  rocket).  Part of #1080
+
+
 
 
 Version 427   2024-May-31
