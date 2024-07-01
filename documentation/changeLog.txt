@@ -4,6 +4,15 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version ???   
+
+--Added more logging around cases where startUpdate in diffBundleClient fails.
+  Part of jasonrohrer/OneLife#1082
+
+
+
+
+
 Server Fixes:
 
 --Fixed AHAPGate to handle names with apostrophes.  Thanks Aaron O.
