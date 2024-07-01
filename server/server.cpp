@@ -13866,7 +13866,9 @@ void monumentStep() {
             nextPlayer->lastMonumentID = monumentCallID;
             nextPlayer->monumentPosSent = true;
             
-            if( !nextPlayer->error && nextPlayer->connected ) {
+            if( ! nextPlayer->error && 
+                nextPlayer->connected &&
+                ! nextPlayer->isTutorial ) {
                 
                 char *message = autoSprintf( "MN\n%d %d %d\n#", 
                                              monumentCallX -

@@ -12,6 +12,10 @@ Server Fixes:
   might confuse them (unless the tutorial player themself is riding the
   rocket).  Part of #1080
 
+--Fixed to not send Monument Call (MN) messages to tutorial players, which can
+  be confusing.  Thus, tutorial players no longer get arrows to the rocket,
+  bell, or endtower.  Fixes #1080
+
 
 
 
