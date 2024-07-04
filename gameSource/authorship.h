@@ -10,6 +10,7 @@
 // contributors, according to the formula here:
 // https://matt.might.net/articles/counting-hash-collisions/
 
+// resulting string destoyed by caller
 inline char *getAuthorHash() {
 
     // use a fixed salt here so that authorship hashes are consistent

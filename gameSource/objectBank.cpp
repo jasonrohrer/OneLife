@@ -3634,9 +3634,28 @@ int addObject( const char *inDescription,
                int inExistingObjectHeight ) {
 
 
-    char *authorHash = getAuthorHash();
+    char *authorHash = NULL;
+
+    if( inReplaceID != -1 ) {
+        // see if existing object has a hash saved
+        // if so, keep it
+        
+        ObjectRecord *o = getObject( inReplaceID, true );
+        
+        if( o != NULL && o->authorTag != NULL ) {
+            authorHash = stringDuplicate( o->authorTag );
+            }
+        }
+
+
+    if( authorHash == NULL ) {
+        // no hash set in existing object (or this is a brand new object)
+        // use THIS current author's hash
+        authorHash = getAuthorHash();
+        }
     
-    
+
+
     if( inSlotTimeStretch < 0.0001 ) {
         inSlotTimeStretch = 0.0001;
         }

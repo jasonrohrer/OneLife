@@ -11,6 +11,9 @@ Version ???
 
 --Fixed crash when viewing email on SERVICES page if email blank.  Fixes #1085
 
+--Fixed so that authorship hash is NOT overwritten when editing an object.
+  Original authorship of an object is preserved, even if the object is
+  modified later by someone else.  Fixes #1093
 
 
 
