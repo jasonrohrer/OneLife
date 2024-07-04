@@ -9,6 +9,8 @@ Version ???
 --Added more logging around cases where startUpdate in diffBundleClient fails.
   Part of jasonrohrer/OneLife#1082
 
+--Fixed crash when viewing email on SERVICES page if email blank.  Fixes #1085
+
 
 
 

@@ -164,7 +164,9 @@ void ServicesPage::draw( doublePair inViewCenter,
     setMessageAlign( alignLeft );
 
     if( mEmailVisible ) {
-        drawMessage( userEmail, pos );
+        if( userEmail != NULL ) {
+            drawMessage( userEmail, pos );
+            }
         }
     else {
         drawMessage( "xxxxxxxxxxxxxxxxxxxxx", pos );
