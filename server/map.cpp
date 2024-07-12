@@ -4812,6 +4812,10 @@ void wipeMapFiles() {
     deleteFileByName( "meta.db" );
     
     deleteFileByName( "mapDummyRecall.txt" );
+    deleteFileByName( "lastEveLocation.txt" );
+    deleteFileByName( "recentPlacements.txt" );
+    deleteFileByName( "landingLocations.txt" );
+    deleteFileByName( "shutdownLongLineagePos.txt" );
     }
 
 
