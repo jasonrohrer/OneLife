@@ -92,6 +92,8 @@ githubAccountName "YOUR GITHUB ACCOUNT NAME:"
 paypalEmail "YOUR PAYPAL EMAIL (REVSHARE):"
 contentLeaderVote "LEADER GITHUB (YOUR VOTE):"
 
+voteButton "VOTE"
+
 contentLeaderExplain "CURRENTLY ELECTED CONTENT LEADER:"
 
 postAHAPSettingsTip "POST TO SERVER"

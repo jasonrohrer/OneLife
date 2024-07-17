@@ -5,6 +5,13 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version ???    ???
+
+--Button on AHAP Voting Page now says VOTE (used to say POST).  Part of #1107
+
+
+
+
 Server Fixes:
 
 --Fixed so that shutdownLongLineagePos.txt is cleared during apocalypse, so

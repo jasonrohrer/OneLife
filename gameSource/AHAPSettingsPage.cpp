@@ -55,7 +55,7 @@ AHAPSettingsPage::AHAPSettingsPage( const char *inAHAPGateServerURL )
           mPasteLeaderButton( mainFont, 200, -220, 
                               translate( "paste" ), 'v', 'V' ),
           mBackButton( mainFont, -526, -280, translate( "backButton" ) ),
-          mPostButton( mainFont, 526, -280, translate( "postButton" ) ),
+          mPostButton( mainFont, 526, -280, translate( "voteButton" ) ),
           mGettingSequenceNumber( false ) {
 
     setButtonStyle( &mBackButton );
