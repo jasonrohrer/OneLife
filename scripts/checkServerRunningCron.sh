@@ -54,7 +54,7 @@ then
 				-H "Accept: application/json" \
 				-H "Content-Type: application/json" \
 				-H "X-Postmark-Server-Token: $postmarkToken" \
-				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has read-only file system', TextBody: 'File system mounted at / flagged as ro.'}"				
+				-d "{\"From\": \"jason@thecastledoctrine.net\", \"To\": \"jasonrohrer@fastmail.fm\", \"Subject\": \"OneLifeServer on $serverName has read-only file system\", \"TextBody\": \"File system mounted at / flagged as ro.\"}"				
 			exit 1
 		fi 
 
@@ -87,7 +87,7 @@ then
 					-H "Accept: application/json" \
 					-H "Content-Type: application/json" \
 					-H "X-Postmark-Server-Token: $postmarkToken" \
-					-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName has low disk space', TextBody: '$remainSpace KB remain.  Server shut down as precaution at time: $serverT\nPDT: $pdt'}"				
+					-d "{\"From\": \"jason@thecastledoctrine.net\", \"To\": \"jasonrohrer@fastmail.fm\", \"Subject\": \"OneLifeServer on $serverName has low disk space\", \"TextBody\": \"$remainSpace KB remain.  Server shut down as precaution at time: $serverT\nPDT: $pdt\"}"				
 
 				
 				echo "Shutting server down to be safe."
@@ -133,7 +133,7 @@ then
 				-H "Accept: application/json" \
 				-H "Content-Type: application/json" \
 				-H "X-Postmark-Server-Token: $postmarkToken" \
-				-d "{From: 'jason@thecastledoctrine.net', To: 'jasonrohrer@fastmail.fm', Subject: 'OneLifeServer on $serverName restarted', TextBody: 'Server time: $serverT\nPDT: $pdt'}"
+				-d "{\"From\": \"jason@thecastledoctrine.net\", \"To\": \"jasonrohrer@fastmail.fm\", \"Subject\": \"OneLifeServer on $serverName restarted\", \"TextBody\": \"Server time: $serverT\nPDT: $pdt\"}"
 			exit 1
 		fi
 	fi
