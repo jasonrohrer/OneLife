@@ -27143,6 +27143,10 @@ int main() {
                         // include as negative of ID
                         killerID = - nextPlayer->deathSourceID;
                         }
+                    else if( nextPlayer->rodeRocket ) {
+                        // completed rocket ride
+                        killerID = -999999999;
+                        }
                     // never have suicide in this case
 
                     logDeath( nextPlayer->id,
@@ -27394,7 +27398,8 @@ int main() {
                     killerID = nextPlayer->id;
                     }
                 else if( nextPlayer->rodeRocket ) {
-                    killerID = -999999999;
+                    // rocket interrupted by error
+                    killerID = -999999998;
                     }
                 
                 char male = ! getFemale( nextPlayer );

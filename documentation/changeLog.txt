@@ -10,6 +10,9 @@ Server Fixes:
 --Fixed so that shutdownLongLineagePos.txt is cleared during apocalypse, so
   that Eve location is fully reset to 0.  Fixes #1103
 
+--Fixed crash when rocket ride is interrupted by rider disconnecting and then
+  re-connecting as a twin.  Fixes #1110
+
 
 
 

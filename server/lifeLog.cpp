@@ -262,6 +262,14 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                     if( inKillerID == inPlayerID ) {
                         causeString = stringDuplicate( "suicide" );
                         }
+                    else if( inKillerID == -999999998 ) {
+                        causeString = 
+                            stringDuplicate( "rocket_ride_interrupted" );
+                        }
+                    else if( inKillerID == -999999999 ) {
+                        causeString = 
+                            stringDuplicate( "rocket_ride_completed" );
+                        }
                     else if( inKillerID < -1 ) {
                         
                         // use cleaned-up non-human object string
@@ -283,6 +291,11 @@ void logDeath( int inPlayerID, char *inPlayerEmail,
                                 nextSpace[0] = '_';
                                 nextSpace = strstr( nextSpace, " " );
                                 }
+                            }
+                        else {
+                            causeString = 
+                                autoSprintf( "killed_by_unknown_object_%d",
+                                             -inKillerID );
                             }
                         }
                     else {
