@@ -68,7 +68,7 @@ then
 			# make sure there's enough free disk space
 			# at least one GB
 			minSpace=1000000
-			remainSpace=$(df / | tail -n 1 | sed -e "s#/dev/root[ ]*[0-9]*[ ]*[0-9]*[ ]*##" | sed -e "s/ [ ]*[0-9%]*.*//");
+			remainSpace=$(df / | tail -n 1 | sed -e "s#/dev/sda[ ]*[0-9]*[ ]*[0-9]*[ ]*##" | sed -e "s/ [ ]*[0-9%]*.*//");
 
 
 			echo "Server has $remainSpace KB disk space."
