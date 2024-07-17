@@ -20,6 +20,10 @@ Server Fixes:
 --Fixed crash when rocket ride is interrupted by rider disconnecting and then
   re-connecting as a twin.  Fixes #1110
 
+--Now counts AHAP votes over 30 day window.  Also shows candidate github
+  usernames on vote stats page.  Part of #1107
+
+
 
 
 

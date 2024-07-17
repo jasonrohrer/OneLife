@@ -1618,19 +1618,19 @@ function ag_showVoteStats() {
 
     global $tableNamePrefix;
 
-    $recentVotesWeek = 0;
+    $recentVotesThirtyDays = 0;
     $recentVotesDay = 0;
     
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
         "WHERE content_leader_email_vote != '' AND ".
-        "last_vote_time >= DATE( NOW() - INTERVAL 7 DAY );";
+        "last_vote_time >= DATE( NOW() - INTERVAL 30 DAY );";
     
     $result = ag_queryDatabase( $query );
 
     $numRows = mysqli_num_rows( $result );
 
     if( $numRows == 1 ) {
-        $recentVotesWeek = ag_mysqli_result( $result, 0, 0 );
+        $recentVotesThirtyDays = ag_mysqli_result( $result, 0, 0 );
         }
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
@@ -1656,12 +1656,13 @@ function ag_showVoteStats() {
 
     echo "$recentVotesDay people voted in the past 24 hours.<br><br>";
     
-    echo "$recentVotesWeek people voted in the past week.<br><br>";
+    echo "$recentVotesThirtyDays people voted in the past 30 days.<br><br>";
 
 
-    $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
+    $query = "SELECT COUNT(*), content_leader_email_vote ".
+        "FROM $tableNamePrefix"."users ".
         "WHERE content_leader_email_vote != '' AND ".
-        "last_vote_time >= DATE( NOW() - INTERVAL 7 DAY ) ".
+        "last_vote_time >= DATE( NOW() - INTERVAL 30 DAY ) ".
         "GROUP BY content_leader_email_vote ".
         "ORDER BY COUNT(*) DESC;";
     
@@ -1678,12 +1679,13 @@ function ag_showVoteStats() {
         echo "<tr><td></td><td align=right>Vote Count</td></tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
-            $c = ag_mysqli_result( $result, $i, 0 );
+            $count = ag_mysqli_result( $result, $i, 0 );
+            $email = ag_mysqli_result( $result, $i, 1 );
 
-            $candNumber = $i + 1;
+            $github_username = ag_getGithubUsername( $email );
             
-            echo "<tr><td>Candidate $candNumber</td>".
-                "<td align=right>$c</td></tr>";
+            echo "<tr><td>$github_username</td>".
+                "<td align=right>$count</td></tr>";
             }
         echo "</table>";
         }
@@ -1754,7 +1756,7 @@ function ag_updateContentLeader() {
     $query =
         "SELECT COUNT(*), content_leader_email_vote ".
         "FROM $tableNamePrefix"."users ".
-        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 7 DAY ) ".
+        "WHERE last_vote_time >= DATE( NOW() - INTERVAL 30 DAY ) ".
         "GROUP BY content_leader_email_vote ".
         "ORDER BY COUNT(*) DESC;";
 
