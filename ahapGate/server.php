@@ -1689,7 +1689,30 @@ function ag_showVoteStats() {
             }
         echo "</table>";
         }
+    
 
+    
+    $query =
+        "SELECT github_username ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE github_username != '';";
+            
+    $result = ag_queryDatabase( $query );
+            
+    $numRows = mysqli_num_rows( $result );
+
+    
+    if( $numRows > 0 ) {
+        echo "<br><br>Potential Candidates:<br>";
+        echo "<table border=0 cellspacing=0 cellpadding=10>";
+        
+        for( $i=0; $i<$numRows; $i++ ) {
+            $github_username = ag_mysqli_result( $result, $i, 0 );
+            echo "<tr><td>$github_username</td></tr>";
+            }
+        echo "</table>";
+        }
+    
     echo "<br><br><br>";
     
     echo "</center>";

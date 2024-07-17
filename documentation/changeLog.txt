@@ -23,6 +23,9 @@ Server Fixes:
 --Now counts AHAP votes over 30 day window.  Also shows candidate github
   usernames on vote stats page.  Part of #1107
 
+--AHAP vote stats page now shows full list of registered github names (who you
+  can vote for).
+
 
 
 
