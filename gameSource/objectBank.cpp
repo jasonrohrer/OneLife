@@ -5235,7 +5235,7 @@ int getRandomPersonObjectOfRace( int inRace ) {
 
 
 int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
-                           char inForceGirl ) {
+                           char inForceGirl, char inForceBoy ) {
     
     if( inRace > MAX_RACE ) {
         inRace = MAX_RACE;
@@ -5346,7 +5346,21 @@ int getRandomFamilyMember( int inRace, int inMotherID, int inFamilySpan,
         }
 
     
-    if( inForceGirl && girlCount > 0 ) {
+
+    if( inForceBoy && boyCount > 0 ) {
+        // forced boy overrides forced girl
+        
+        // remove girls from list
+        for( int p=0; p<spanPeople.size(); p++ ) {
+            int pID = spanPeople.getElementDirect( p );
+            
+            if( ! getObject( pID )->male ) {
+                spanPeople.deleteElement( p );
+                p--;
+                }
+            }    
+        }
+    else if( inForceGirl && girlCount > 0 ) {
         // remove boys from list
         for( int p=0; p<spanPeople.size(); p++ ) {
             int pID = spanPeople.getElementDirect( p );

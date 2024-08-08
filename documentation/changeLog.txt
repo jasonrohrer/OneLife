@@ -26,6 +26,9 @@ Server Fixes:
 --AHAP vote stats page now shows full list of registered github names (who you
   can vote for).
 
+--Support for forceBoyAccounts.ini list in server settings, preventing those
+  accounts from being born as girls (if not Eve).  Useful for bots, to make
+  sure bots are never mothers.
 
 
 
