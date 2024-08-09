@@ -494,19 +494,14 @@ function ag_showData( $checkPassword = true ) {
 
     $orderDir = "DESC";
 
-    if( $order_by == "email" ||
-        $order_by == "github_username" ||
-        $order_by == "paypal_email" ||
-        $order_by == "content_leader_github_vote" ||
-        $order_by == "steam_gift_key" ) {
-        
+    if( $order_by == "email" ) {
         $orderDir = "ASC";
         }
     
              
     $query = "SELECT * ".
         "FROM $tableNamePrefix"."users $keywordClause".
-        "ORDER BY $order_by is NULL, $order_by $orderDir ".
+        "ORDER BY $order_by $orderDir ".
         "LIMIT $skip, $usersPerPage;";
     $result = ag_queryDatabase( $query );
     
