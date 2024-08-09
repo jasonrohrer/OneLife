@@ -6709,11 +6709,13 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
             // words to Donkeytown players
             inPlayer->curseStatus.curseLevel == 0 ) {
 
-            char *message = autoSprintf( "CU\n%d 1 %s_%s\n#", targetP->id,
+            char *message = autoSprintf( "CU\n%d 1 %s_%s_%s\n#", targetP->id,
                                          getCurseWord( inPlayer->email,
                                                        targetP->email, 0 ),
                                          getCurseWord( inPlayer->email,
-                                                       targetP->email, 1 ) );
+                                                       targetP->email, 1 ),
+                                         getCurseWord( inPlayer->email,
+                                                       targetP->email, 2 ) );
             sendMessageToPlayer( inPlayer,
                                  message, strlen( message ) );
             delete [] message;
@@ -23234,14 +23236,17 @@ int main() {
                                 
                                 char *message = 
                                     autoSprintf( 
-                                        "CU\n%d 0 %s_%s\n#", 
+                                        "CU\n%d 0 %s_%s_%s\n#", 
                                         otherToForgive->id,
                                         getCurseWord( nextPlayer->email,
                                                       otherToForgive->email, 
                                                       0 ),
                                         getCurseWord( nextPlayer->email,
                                                       otherToForgive->email, 
-                                                      1 ) );
+                                                      1 ),
+                                        getCurseWord( nextPlayer->email,
+                                                      otherToForgive->email, 
+                                                      2 ) );
                                 sendMessageToPlayer( nextPlayer,
                                                      message, 
                                                      strlen( message ) );
@@ -23286,7 +23291,7 @@ int main() {
                                         
                                         char *message = 
                                             autoSprintf( 
-                                                "CU\n%d 0 %s_%s\n#", 
+                                                "CU\n%d 0 %s_%s_%s\n#", 
                                                 otherToForgive->id,
                                                 getCurseWord( 
                                                     nextPlayer->email,
@@ -23294,7 +23299,11 @@ int main() {
                                                 getCurseWord( 
                                                     nextPlayer->email,
                                                     otherToForgive->email, 
-                                                    1 ) );
+                                                    1 ),
+                                                getCurseWord( 
+                                                    nextPlayer->email,
+                                                    otherToForgive->email, 
+                                                    2 ) );
                                         sendMessageToPlayer( 
                                             nextPlayer,
                                             message, strlen( message ) );
@@ -27282,12 +27291,14 @@ int main() {
                         otherPlayer->curseStatus.curseLevel == 0 ) {
 
                         char *message = autoSprintf( 
-                            "CU\n%d 1 %s_%s\n#",
+                            "CU\n%d 1 %s_%s_%s\n#",
                             nextPlayer->id,
                             getCurseWord( otherPlayer->email,
                                           nextPlayer->email, 0 ),
                             getCurseWord( otherPlayer->email,
-                                          nextPlayer->email, 1 ) );
+                                          nextPlayer->email, 1 ),
+                            getCurseWord( otherPlayer->email,
+                                          nextPlayer->email, 2 ) );
                         
                         sendMessageToPlayer( otherPlayer,
                                              message, strlen( message ) );
@@ -29974,11 +29985,13 @@ int main() {
                         }
                     
 
-                    char *line = autoSprintf( "%d %d %s_%s\n", o->id, level,
+                    char *line = autoSprintf( "%d %d %s_%s_%s\n", o->id, level,
                                               getCurseWord( nextPlayer->email,
                                                             o->email, 0 ),
                                               getCurseWord( nextPlayer->email,
-                                                            o->email, 1 ) );
+                                                            o->email, 1 ),
+                                              getCurseWord( nextPlayer->email,
+                                                            o->email, 2 ) );
                     cursesWorking.appendElementString( line );
                     delete [] line;
                     

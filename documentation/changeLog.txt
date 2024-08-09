@@ -40,6 +40,12 @@ Server Fixes:
   someone else's github as their own to falsely receive votes for themselves.
   Part of #1112
 
+--Server now uses 3 curse words per player, instead of two.  Since there are
+  201 useable curse words, this takes the number of combinations up from
+  40,401 up to over 8 million, which reduces the chances of a duplicate
+  combination being used.  Fixes #1119
+
+
 
 
 
