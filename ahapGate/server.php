@@ -1685,7 +1685,7 @@ function ag_showVoteStats() {
                 "<td align=right>$count</td>";
 
             if( $github_username == $winnerGithub ) {
-                echo "<td>*</td>";
+                echo "<td align=center>*</td>";
                 }
             else {
                 echo "<td></td>";
