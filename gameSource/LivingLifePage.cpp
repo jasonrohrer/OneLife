@@ -20911,8 +20911,10 @@ void LivingLifePage::step() {
                                         stringDuplicate( buffer );
                                     char *barPos = strstr( existing->curseName,
                                                            "_" );
-                                    if( barPos != NULL ) {
+                                    while( barPos != NULL ) {
                                         barPos[0] = ' ';
+                                        barPos = strstr( existing->curseName,
+                                                         "_" );
                                         }
                                     
                                     // display their cursed tag now

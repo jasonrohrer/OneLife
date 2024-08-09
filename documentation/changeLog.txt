@@ -9,6 +9,11 @@ Version ???    ???
 
 --Button on AHAP Voting Page now says VOTE (used to say POST).  Part of #1107
 
+--Fixed client to parse arbitrary number of underscore-delimited curse words in
+  a CU message, instead of just two.  Old client will display the extra
+  underscores in the spoken curse words, which looks ugly, but still works for
+  now until next client build is pushed out.  Part of #1119
+
 
 
 
