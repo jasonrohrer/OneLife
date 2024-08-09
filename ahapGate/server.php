@@ -506,7 +506,7 @@ function ag_showData( $checkPassword = true ) {
              
     $query = "SELECT * ".
         "FROM $tableNamePrefix"."users $keywordClause".
-        "ORDER BY $order_by $orderDir ".
+        "ORDER BY $order_by is NULL, $order_by $orderDir ".
         "LIMIT $skip, $usersPerPage;";
     $result = ag_queryDatabase( $query );
     
