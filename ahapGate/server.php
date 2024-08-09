@@ -281,14 +281,14 @@ function ag_setupDatabase() {
 
         $query =
             "CREATE TABLE $tableName(" .
-            "content_leader_email VARCHAR(254) NOT NULL );";
+            "content_leader_github VARCHAR(254) NOT NULL );";
 
         $result = ag_queryDatabase( $query );
 
         echo "<B>$tableName</B> table created<BR>";
 
         $query = "INSERT INTO $tableName ".
-            "SET content_leader_email = '';";
+            "SET content_leader_github = '';";
         ag_queryDatabase( $query );
         }
     else {
@@ -307,7 +307,7 @@ function ag_setupDatabase() {
             "sequence_number INT NOT NULL," .
             "github_username VARCHAR(254) NOT NULL," .
             "paypal_email VARCHAR(254) NOT NULL," .
-            "content_leader_email_vote VARCHAR(254) NOT NULL," .
+            "content_leader_github_vote VARCHAR(254) NOT NULL," .
             "steam_gift_key VARCHAR(254) NOT NULL," .
             "grant_time DATETIME NOT NULL, ".
             "last_vote_time DATETIME NOT NULL );";
@@ -437,16 +437,16 @@ function ag_showData( $checkPassword = true ) {
     global $tableNamePrefix, $remoteIP;
     
     $keysLeftInBank = ag_countKeysInBank();
-    $leader = ag_getContentLeaderInternal();
+    $leader_github = ag_getContentLeaderInternal();
 
-    $leader_github = ag_getGithubUsername( $leader );
+    $leader_email = ag_getEmailForGithubUsername( $leader_github );
     
     echo "<table width='100%' border=0><tr>".
         "<td valign=top>[<a href=\"server.php?action=show_data" .
             "\">Main</a>]</td>".
         "<td  valign=top align=center>".
           "<b>$keysLeftInBank</b> unassigned keys remain".
-          "<br><br>Current Content Leader: $leader<br>".
+          "<br><br>Current Content Leader: $leader_email<br>".
                   "(Github: $leader_github)</td>".
         "<td valign=top align=right>[<a href=\"server.php?action=logout" .
             "\">Logout</a>]</td>".
@@ -474,7 +474,7 @@ function ag_showData( $checkPassword = true ) {
             "OR id LIKE '%$search%' ".
             "OR github_username LIKE '%$search%' ".
             "OR paypal_email LIKE '%$search%' ".
-            "OR content_leader_email_vote LIKE '%$search%' ".
+            "OR content_leader_github_vote LIKE '%$search%' ".
             "OR steam_gift_key LIKE '%$search%' ".
             " ) ";
 
@@ -578,7 +578,7 @@ function ag_showData( $checkPassword = true ) {
     echo "<td>".orderLink( "email", "Email" )."</td>\n";
     echo "<td>".orderLink( "github_username", "Github Username" )."</td>\n";
     echo "<td>".orderLink( "paypal_email", "PayPal Email" )."</td>\n";
-    echo "<td>".orderLink( "content_leader_email_vote",
+    echo "<td>".orderLink( "content_leader_github_vote",
                            "Chosen Leader" )."</td>\n";
     echo "<td>".orderLink( "steam_gift_key",
                            "Steam Key" )."</td>\n";
@@ -592,8 +592,8 @@ function ag_showData( $checkPassword = true ) {
         $email = ag_mysqli_result( $result, $i, "email" );
         $github_username = ag_mysqli_result( $result, $i, "github_username" );
         $paypal_email = ag_mysqli_result( $result, $i, "paypal_email" );
-        $content_leader_email_vote =
-            ag_mysqli_result( $result, $i, "content_leader_email_vote" );
+        $content_leader_github_vote =
+            ag_mysqli_result( $result, $i, "content_leader_github_vote" );
         $steam_gift_key = ag_mysqli_result( $result, $i, "steam_gift_key" );
         $grant_time = ag_mysqli_result( $result, $i, "grant_time" );
         $last_vote_time = ag_mysqli_result( $result, $i, "last_vote_time" );
@@ -610,7 +610,7 @@ function ag_showData( $checkPassword = true ) {
             "$email</a></td>\n";
         echo "<td>$github_username</td>\n";
         echo "<td>$paypal_email</td>\n";
-        echo "<td>$content_leader_email_vote</td>\n";
+        echo "<td>$content_leader_github_vote</td>\n";
         echo "<td>$steam_gift_key</td>\n";
         echo "<td>$grant_time</td>\n";
         echo "<td>$last_vote_time</td>\n";
@@ -683,7 +683,7 @@ function ag_showDetail( $checkPassword = true ) {
     $email = ag_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
     $query = "SELECT id, github_username, paypal_email, ".
-        "content_leader_email_vote ".
+        "content_leader_github_vote ".
         "FROM $tableNamePrefix"."users ".
         "WHERE email = '$email';";
     $result = ag_queryDatabase( $query );
@@ -691,8 +691,8 @@ function ag_showDetail( $checkPassword = true ) {
     $id = ag_mysqli_result( $result, 0, "id" );
     $github_username = ag_mysqli_result( $result, 0, "github_username" );
     $paypal_email = ag_mysqli_result( $result, 0, "paypal_email" );
-    $content_leader_email_vote =
-        ag_mysqli_result( $result, 0, "content_leader_email_vote" );
+    $content_leader_github_vote =
+        ag_mysqli_result( $result, 0, "content_leader_github_vote" );
     
     echo "<center><table border=0><tr><td>";
     
@@ -700,7 +700,7 @@ function ag_showDetail( $checkPassword = true ) {
     echo "<b>Email:</b> $email<br><br>";
     echo "<b>Github Username:</b> $github_username<br><br>";
     echo "<b>PayPal Email:</b> $paypal_email<br><br>";
-    echo "<b>Content Leader:</b> $content_leader_email_vote<br><br>";
+    echo "<b>Content Leader:</b> $content_leader_github_vote<br><br>";
     echo "<br><br>";
 ?>
     <hr>
@@ -1145,7 +1145,7 @@ function ag_grantForNew( $email ) {
         "email = '$email', ".
         "github_username = '', ".
         "paypal_email = '', ".
-        "content_leader_email_vote = '', ".
+        "content_leader_github_vote = '', ".
         "steam_gift_key = '$steam_gift_key', ".
         "sequence_number = 1, ".
         "grant_time = CURRENT_TIMESTAMP, ".
@@ -1319,13 +1319,11 @@ function ag_registerVote() {
         return;
         }
     
-
-    $leader_email = ag_getEmailForGithubUsername( $leader_github );
     
     // update the existing one
     $query = "UPDATE $tableNamePrefix"."users SET " .
         "sequence_number = sequence_number + 1, ".
-        "content_leader_email_vote = '$leader_email', ".
+        "content_leader_github_vote = '$leader_github', ".
         "last_vote_time = CURRENT_TIMESTAMP ".
         "WHERE email = '$email'; ";
     
@@ -1501,7 +1499,7 @@ function ag_registerGithubAndPaypal() {
 function ag_getContentLeaderInternal() {
     global $tableNamePrefix;
     
-    $query = "SELECT content_leader_email " .
+    $query = "SELECT content_leader_github " .
         "FROM $tableNamePrefix"."server_globals ;";
 
     $result = ag_queryDatabase( $query );
@@ -1511,7 +1509,7 @@ function ag_getContentLeaderInternal() {
     if( $numRows < 1 ) {
         return "";
         }
-    $leader = ag_mysqli_result( $result, 0, "content_leader_email" );
+    $leader = ag_mysqli_result( $result, 0, "content_leader_github" );
 
     return $leader;
     }
@@ -1530,9 +1528,7 @@ function ag_getContentLeader() {
 
     // got here, hash check succeeded  
 
-    $leader_email = ag_getContentLeaderInternal();
-
-    $leader_github = ag_getGithubUsername( $leader_email );
+    $leader_github = ag_getContentLeaderInternal();
     
     
     // update sequence number
@@ -1622,7 +1618,7 @@ function ag_showVoteStats() {
     $recentVotesDay = 0;
     
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
-        "WHERE content_leader_email_vote != '' AND ".
+        "WHERE content_leader_github_vote != '' AND ".
         "last_vote_time >= DATE( NOW() - INTERVAL 30 DAY );";
     
     $result = ag_queryDatabase( $query );
@@ -1634,7 +1630,7 @@ function ag_showVoteStats() {
         }
 
     $query = "SELECT COUNT(*) FROM $tableNamePrefix"."users ".
-        "WHERE content_leader_email_vote != '' AND ".
+        "WHERE content_leader_github_vote != '' AND ".
         "last_vote_time >= DATE( NOW() - INTERVAL 1 DAY );";
     
     $result = ag_queryDatabase( $query );
@@ -1659,11 +1655,11 @@ function ag_showVoteStats() {
     echo "$recentVotesThirtyDays people voted in the past 30 days.<br><br>";
 
 
-    $query = "SELECT COUNT(*), content_leader_email_vote ".
+    $query = "SELECT COUNT(*), content_leader_github_vote ".
         "FROM $tableNamePrefix"."users ".
-        "WHERE content_leader_email_vote != '' AND ".
+        "WHERE content_leader_github_vote != '' AND ".
         "last_vote_time >= DATE( NOW() - INTERVAL 30 DAY ) ".
-        "GROUP BY content_leader_email_vote ".
+        "GROUP BY content_leader_github_vote ".
         "ORDER BY COUNT(*) DESC;";
     
     $result = ag_queryDatabase( $query );
@@ -1680,10 +1676,8 @@ function ag_showVoteStats() {
         
         for( $i=0; $i<$numRows; $i++ ) {
             $count = ag_mysqli_result( $result, $i, 0 );
-            $email = ag_mysqli_result( $result, $i, 1 );
+            $github_username = ag_mysqli_result( $result, $i, 1 );
 
-            $github_username = ag_getGithubUsername( $email );
-            
             echo "<tr><td>$github_username</td>".
                 "<td align=right>$count</td></tr>";
             }
@@ -1746,6 +1740,8 @@ function ag_getGithubUsername( $inEmail ) {
     }
 
 
+// if multiple accounts have specified the same github username
+// we return the oldest one
 // returns "" if user for $inGithub does not exist
 function ag_getEmailForGithubUsername( $inGithub ) {
     global $tableNamePrefix;
@@ -1753,7 +1749,9 @@ function ag_getEmailForGithubUsername( $inGithub ) {
     $query =
         "SELECT email ".
         "FROM $tableNamePrefix"."users ".
-        "WHERE github_username='$inGithub';";
+        "WHERE github_username='$inGithub' ".
+        "ORDER BY id ASC ".
+        "LIMIT 1;";
             
     $result = ag_queryDatabase( $query );
             
@@ -1777,10 +1775,10 @@ function ag_updateContentLeader() {
     global $tableNamePrefix;
     
     $query =
-        "SELECT COUNT(*), content_leader_email_vote ".
+        "SELECT COUNT(*), content_leader_github_vote ".
         "FROM $tableNamePrefix"."users ".
         "WHERE last_vote_time >= DATE( NOW() - INTERVAL 30 DAY ) ".
-        "GROUP BY content_leader_email_vote ".
+        "GROUP BY content_leader_github_vote ".
         "ORDER BY COUNT(*) DESC;";
 
     $result = ag_queryDatabase( $query );
@@ -1792,11 +1790,11 @@ function ag_updateContentLeader() {
     // highest votes first
     for( $i=0; $i<$numRows; $i++ ) {
 
-        $leader_email =
-            ag_mysqli_result( $result, $i, "content_leader_email_vote" );
+        $leader_github =
+            ag_mysqli_result( $result, $i, "content_leader_github_vote" );
 
-        if( $leader_email != "" ) {
-            $bestLeader = $leader_email;
+        if( $leader_github != "" ) {
+            $bestLeader = $leader_github;
             break;
             }
         }
@@ -1810,34 +1808,32 @@ function ag_updateContentLeader() {
 
             // leader change
 
-            $newGithubUsername = ag_getGithubUsername( $bestLeader );
+            // remove old leader from github
+            ag_ungrantGithub( $oldLeader );
 
-            $oldGithubUsername = "";
-
-            if( $oldLeader != "" ) {
-                $oldGithubUsername = ag_getGithubUsername( $oldLeader );
-                }
-            
-            if( $newGithubUsername != "" ) {
-
-                // remove old leader from github
-                ag_ungrantGithub( $oldGithubUsername );
-
-                // add new leader to github
-                ag_grantGithub( $newGithubUsername );
-                }
+            // add new leader to github
+            ag_grantGithub( $bestLeader );
             
             $query = "UPDATE $tableNamePrefix"."server_globals ".
-                "SET content_leader_email = '$bestLeader';";
+                "SET content_leader_github = '$bestLeader';";
             ag_queryDatabase( $query );
 
 
             global $contentLeaderEmailFilePath;
 
-            if( ! file_put_contents( $contentLeaderEmailFilePath,
-                                     $bestLeader ) ) {
-                ag_log( "Failed to write content leader email to file ".
-                        $contentLeaderEmailFilePath );
+            $bestLeaderEmail = ag_getEmailForGithubUsername( $bestLeader );
+
+            if( $bestLeaderEmail != "" ) {
+                
+                if( ! file_put_contents( $contentLeaderEmailFilePath,
+                                         $bestLeaderEmail ) ) {
+                    ag_log( "Failed to write content leader email to file ".
+                            $contentLeaderEmailFilePath );
+                    }
+                }
+            else {
+                ag_log( "Best leader github $bestLeader has no matching ".
+                        "email in user database." );
                 }
             }
         }

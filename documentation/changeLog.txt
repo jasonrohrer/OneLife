@@ -30,6 +30,11 @@ Server Fixes:
   accounts from being born as girls (if not Eve).  Useful for bots, to make
   sure bots are never mothers.
 
+--Fixed so that AHAP leader votes are tracked internally by github account
+  name, and not by email.  This fixes the problem where one user specifies
+  someone else's github as their own to falsely receive votes for themselves.
+  Part of #1112
+
 
 
 
