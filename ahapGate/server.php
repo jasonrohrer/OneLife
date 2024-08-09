@@ -1666,20 +1666,31 @@ function ag_showVoteStats() {
 
     $numRows = mysqli_num_rows( $result );
 
+    $winnerGithub = ag_getContentLeaderInternal();
+    
     if( $numRows > 0 ) {
         
         echo "<br><br>Vote distribution:<br>";
 
         echo "<table border=1 cellspacing=0 cellpadding=10>";
 
-        echo "<tr><td></td><td align=right>Vote Count</td></tr>";
+        echo "<tr><td></td><td align=right>Vote Count</td>".
+            "<td align=right>Winner</td></tr>";
         
         for( $i=0; $i<$numRows; $i++ ) {
             $count = ag_mysqli_result( $result, $i, 0 );
             $github_username = ag_mysqli_result( $result, $i, 1 );
 
             echo "<tr><td>$github_username</td>".
-                "<td align=right>$count</td></tr>";
+                "<td align=right>$count</td>";
+
+            if( $github_username == $winnerGithub ) {
+                echo "<td>*</td>";
+                }
+            else {
+                echo "<td></td>";
+                }
+            echo "</tr>";
             }
         echo "</table>";
         }
