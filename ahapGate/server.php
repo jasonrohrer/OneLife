@@ -494,7 +494,12 @@ function ag_showData( $checkPassword = true ) {
 
     $orderDir = "DESC";
 
-    if( $order_by == "email" ) {
+    if( $order_by == "email" ||
+        $order_by == "github_username" ||
+        $order_by == "paypal_email" ||
+        $order_by == "content_leader_github_vote" ||
+        $order_by == "steam_gift_key" ) {
+        
         $orderDir = "ASC";
         }
     
