@@ -1768,6 +1768,34 @@ function ag_getEmailForGithubUsername( $inGithub ) {
 
 
 
+// if multiple accounts have specified the same github username
+// we return the oldest one
+// returns -1 if user for $inGithub does not exist
+function ag_getUserIDForGithubUsername( $inGithub ) {
+    global $tableNamePrefix;
+    
+    $query =
+        "SELECT id ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE github_username='$inGithub' ".
+        "ORDER BY id ASC ".
+        "LIMIT 1;";
+            
+    $result = ag_queryDatabase( $query );
+            
+    $numRows = mysqli_num_rows( $result );
+    
+    $id = -1;
+            
+    if( $numRows > 0 ) {
+        $id = ag_mysqli_result( $result, 0, "id" );
+        }
+            
+    return $id;
+    }
+
+
+
 // re-compute vote based on people who voted in past week
 // returns main email of leader
 function ag_updateContentLeader() {
@@ -1785,19 +1813,53 @@ function ag_updateContentLeader() {
 
     $numRows = mysqli_num_rows( $result );
 
-    $bestLeader = "";
+    $bestLeaders = array();
 
-    // highest votes first
+    $bestVotes = 0;
+    
+    // highest votes first (accume all that have ties)
     for( $i=0; $i<$numRows; $i++ ) {
 
+        $votes = ag_mysqli_result( $result, $i, 0 );
+        
         $leader_github =
             ag_mysqli_result( $result, $i, "content_leader_github_vote" );
 
         if( $leader_github != "" ) {
-            $bestLeader = $leader_github;
-            break;
+            if( $votes >= $bestVotes ) {
+                $bestLeaders[] = $leader_github;
+                }
+            else {
+                // gotten down to where votes are less that top
+                // past tied candidates into second place
+                break;
+                }
             }
         }
+
+    $bestLeader = "";
+
+    if( count( $bestLeaders ) == 1 ) {
+        $bestLeader = $bestLeaders[0];
+        }
+    else {
+        // tie for multiple leaders
+
+        // pick one with lowest ID
+
+        $lowestID = 999999999;
+        $bestLeader = "";
+
+        foreach( $bestLeader as $l ) {
+            $id = ag_getUserIDForGithubUsername( $l );
+
+            if( $id < $lowestID ) {
+                $bestLeader = $l;
+                $lowestID = $id;
+                }
+            }
+        }
+
     
 
     if( $bestLeader != "" ) {
