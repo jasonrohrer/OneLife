@@ -52,6 +52,7 @@ ln -s ../../OneLifeData7/scenes .
 ln -s ../../OneLifeData7/sounds .
 ln -s ../../OneLifeData7/sprites .
 ln -s ../../OneLifeData7/transitions .
+ln -s ../../OneLifeData7/contentSettings .
 ln -s ../../OneLifeData7/dataVersionNumber.txt .
 
 
@@ -64,6 +65,7 @@ ln -s ../../OneLifeData7/categories .
 ln -s ../../OneLifeData7/objects .
 ln -s ../../OneLifeData7/transitions .
 ln -s ../../OneLifeData7/tutorialMaps .
+ln -s ../../OneLifeData7/contentSettings .
 ln -s ../../OneLifeData7/dataVersionNumber.txt .
 
 

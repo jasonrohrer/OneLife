@@ -45,6 +45,9 @@ Server Fixes:
   40,401 up to over 8 million, which reduces the chances of a duplicate
   combination being used.  Fixes #1119
 
+--pullAndBuildTestSystem.sh script now links contentSettings correctly for
+  both client and server.  Fixes #1117
+
 
 
 
