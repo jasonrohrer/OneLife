@@ -17,6 +17,9 @@ Version ???    ???
 --Fixed mod exporter code to avoid duplicating author=author= in .txt files
   for sound files included in export.  Part of #1114
 
+--copyChangesToRepo.bat utility script now copies txt files from sounds
+  folder.  Part of #1114
+
 
 
 Server Fixes:
