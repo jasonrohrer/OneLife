@@ -14,6 +14,8 @@ Version ???    ???
   underscores in the spoken curse words, which looks ugly, but still works for
   now until next client build is pushed out.  Part of #1119
 
+--Fixed mod exporter code to avoid duplicating author=author= in .txt files
+  for sound files included in export.  Part of #1114
 
 
 

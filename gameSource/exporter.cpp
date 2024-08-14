@@ -584,14 +584,24 @@ char finalizeExportBundle( const char *inExportName ) {
         delete [] txtFileName;
 
         if( txtFile->exists() ) {
-            char *authorTag = txtFile->readFileContents();
+            char *authorFileContents = txtFile->readFileContents();
 
-            if( authorTag != NULL ) {
-                authorStringToDestroy = autoSprintf( "author=%s ", 
-                                                     authorTag );
-                authorString = authorStringToDestroy;
+            if( authorFileContents != NULL ) {
                 
-                delete [] authorTag;
+                char loneTagBuffer[100];
+                
+                loneTagBuffer[0] = '\0';
+                
+                sscanf( authorFileContents, "author=%99s", loneTagBuffer );
+                
+                if( strlen( loneTagBuffer ) > 0 ) {
+                    
+                    authorStringToDestroy = autoSprintf( "author=%s ", 
+                                                         loneTagBuffer );
+                    authorString = authorStringToDestroy;
+                    }
+                
+                delete [] authorFileContents;
                 }
             }
         delete txtFile;
