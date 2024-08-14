@@ -8,6 +8,15 @@ then
 
 	flag=$(head -n 1 $flagFile)
 
+	# dummy arg
+	wipeArg="-a"
+
+	if [ "$flag" = "2" ]
+	then
+		flag="1"
+		wipeArg="WIPE"
+	fi
+
 
 	if [ "$flag" = "1" ]
 	then
@@ -29,7 +38,8 @@ then
 
 		# pass two arguments to indicate automation and skip interactive
 		# confirmation
-		/home/jcr15/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundleAHAP.sh -a -a > $logPath 2>&1
+		# second argument is wipe flag
+		/home/jcr15/checkout/OneLifeWorking/scripts/generateDataOnlyDiffBundleAHAP.sh -a $wipeArg > $logPath 2>&1
 				
 	fi
 fi

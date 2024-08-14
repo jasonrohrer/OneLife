@@ -48,6 +48,8 @@ Server Fixes:
 --pullAndBuildTestSystem.sh script now links contentSettings correctly for
   both client and server.  Fixes #1117
 
+--updateGate now gives the content leader power to trigger an AHAP map wipe.
+  Part of #1116
 
 
 

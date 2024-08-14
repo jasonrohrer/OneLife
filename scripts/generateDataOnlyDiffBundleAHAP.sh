@@ -27,6 +27,21 @@ then
 fi
 
 
+if [ $# -eq 2 ]
+then
+	if [ "$2" = "WIPE" ]
+	then
+		echo
+		echo "Auto-wiping maps."
+		echo
+		wipeMaps=1
+	else
+		echo
+		echo "NOT Auto-wiping maps."
+		echo
+	fi
+if
+
 
 
 pauseToVerify=0

@@ -36,6 +36,9 @@ global $fullServerURL;
            VALUE="<?php echo $challenge;?>" readonly><br><br>
     Hash Response: <INPUT TYPE="text" MAXLENGTH=40 SIZE=40 NAME="response"
            VALUE=""><br><br>
+    <INPUT TYPE="checkbox" NAME="wipe_map" VALUE=0> Wipe map<br><br>
+    <INPUT TYPE="checkbox" NAME="wipe_map_confirm" VALUE=0> REALLY Wipe map<br><br>
+    
     <INPUT TYPE="Submit" VALUE="Start Content Update">
   </FORM>
 </center>

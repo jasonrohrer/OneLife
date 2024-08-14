@@ -69,7 +69,16 @@ $action = ug_requestFilter( "action", "/[A-Z_]+/i" );
 if( $action == "content_update" ) {
     global $updateTriggerFilePath;
 
-    if( ! file_put_contents( $updateTriggerFilePath, "1" ) ) {
+    $valToPut = "1";
+
+    $wipe_map = ug_requestFilter( "wipe_map", "/[01]/", 0 );
+    $wipe_map_confirm = ug_requestFilter( "wipe_map_confirm", "/[01]/", 0 );
+
+    if( $wipe_map == 1 && $wipe_map_confirm == 1 ) {
+        $valToPut = "2";
+        }
+    
+    if( ! file_put_contents( $updateTriggerFilePath, $valToPut ) ) {
         echo "<br><br>Failed to write to update trigger file.<br><br>";
     
         eval( $footer );
