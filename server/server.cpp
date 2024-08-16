@@ -2065,6 +2065,16 @@ int getPlayerLineage( int inID ) {
 
 
 
+int getPlayerDisplayID( int inID ) {
+    LiveObject *o = getLiveObject( inID );
+    if( o != NULL ) {
+        return o->displayID;
+        }
+    return -1;
+    }
+
+
+
 char isPlayerIgnoredForEvePlacement( int inID ) {
     LiveObject *o = getLiveObject( inID );
     if( o != NULL ) {

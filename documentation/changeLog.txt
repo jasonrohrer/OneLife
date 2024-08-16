@@ -56,6 +56,9 @@ Server Fixes:
 --updateGate now gives the content leader power to trigger an AHAP map wipe.
   Part of #1116
 
+--Fixed so that if Eve (or another family member) creates their first well
+  outside the birthland band, it doesn't unlock iron.  Only wells dug inside
+  the birthland band can be primary homelands and unlock iron.  Fixes #1120
 
 
 

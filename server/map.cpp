@@ -7320,6 +7320,7 @@ static char runTapoutOperation( int inX, int inY,
 
 // from server.cpp
 extern int getPlayerLineage( int inID );
+extern int getPlayerDisplayID( int inID );
 extern char isPlayerIgnoredForEvePlacement( int inID );
 
     
@@ -7627,6 +7628,10 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
 
         char playerHasPrimaryHomeland = false;
         
+        // if not in birthland, can't start a primary homeland
+        char primaryHomelandBlocked = false;
+        
+
         if( currentResponsiblePlayer != -1 ) {
             int pID = currentResponsiblePlayer;
             if( pID < 0 ) {
@@ -7636,6 +7641,17 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
             
             if( lineage != -1 ) {
                 playerHasPrimaryHomeland = hasPrimaryHomeland( lineage );
+
+                if( specialBiomeBandMode && 
+                    getNumPlayers() >= minActivePlayersForBirthlands ) {
+                    
+                    int birthland = 
+                        isBirthland( inX, inY, lineage, 
+                                     getPlayerDisplayID( pID ) );
+                    if( birthland != 1 ) {
+                        primaryHomelandBlocked = true;
+                        }
+                    }
                 }
             }
         
@@ -7652,7 +7668,8 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                                 r->limitX, r->limitY,
                                 r->gridSpacingX, r->gridSpacingY, 
                                 inID,
-                                playerHasPrimaryHomeland );
+                                playerHasPrimaryHomeland ||
+                                primaryHomelandBlocked );
             
             
             r->buildCount++;
@@ -7666,7 +7683,9 @@ void setMapObjectRaw( int inX, int inY, int inID ) {
                                     r->postBuildLimitX, r->postBuildLimitY,
                                     r->gridSpacingX, r->gridSpacingY, 
                                     inID, 
-                                    playerHasPrimaryHomeland, true );
+                                    playerHasPrimaryHomeland || 
+                                    primaryHomelandBlocked, 
+                                    true );
                 }
             }
         
