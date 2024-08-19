@@ -40,7 +40,7 @@ then
 		echo "NOT Auto-wiping maps."
 		echo
 	fi
-if
+fi
 
 
 
