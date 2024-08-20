@@ -60,6 +60,9 @@ Server Fixes:
   outside the birthland band, it doesn't unlock iron.  Only wells dug inside
   the birthland band can be primary homelands and unlock iron.  Fixes #1120
 
+--Fixed typo in generateDataOnlyDiffBundleAHAP.sh script.
+
+
 
 
 Version 428    2024-July-11
