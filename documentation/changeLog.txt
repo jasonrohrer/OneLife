@@ -36,6 +36,8 @@ Version ???    ???
   broken up to fit).  This also fixes very long words in speech bubbles (which
   used to make very long speech bubbles that would go off screen).
 
+--Word blacklist now applies to DING message too (but not tutorial messages).
+
 
 
 

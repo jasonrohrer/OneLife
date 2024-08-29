@@ -12938,7 +12938,8 @@ void LivingLifePage::displayGlobalMessage( char *inMessage ) {
     char *spaces = replaceAll( lines, "_", " ", &found );
     
     delete [] lines;
-    
+
+    spaces = applyWordBlacklist( spaces );
     
     mGlobalMessageShowing = true;
     mGlobalMessageStartTime = game_getCurrentTime();
