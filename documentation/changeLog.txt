@@ -43,6 +43,9 @@ Version ???    ???
 
 --/BLACKLIST !WORD now matches TESTWORDBLAH and W O RD and W...O?RD
 
+--The exclaimation point version of blacklist now also blocks WWWOOORRDD
+  (and other spaced-out forms) with repeated letters.
+
 
 
 

@@ -306,6 +306,8 @@ static char *applyWordBlacklist( char *inSpeech ) {
 
                         char *next = &( found[1] );
                         
+                        char prevLetter = found[0];
+                        
                         int lookI = 1;
 
                         int nextWordI = 1;
@@ -320,9 +322,23 @@ static char *applyWordBlacklist( char *inSpeech ) {
                                 nextLetter <= 'Z' ) {
                                 
                                 if( nextLetter != wordStart[nextWordI] ) {
-                                    match = false;
+                                    
+                                    if( nextLetter == prevLetter ) {
+                                        // maybe we're repeating letters
+                                        // like WOOORRRD
+                                        xIndex.push_back( lookI );
+                                        
+                                        // don't walk forward in our
+                                        // target word, b/c we haven't
+                                        // consumed another letter
+                                        }
+                                    else {
+                                        match = false;
+                                        }
                                     }
                                 else {
+                                    prevLetter = nextLetter;
+                                    
                                     xIndex.push_back( lookI );
                                     
                                     nextWordI++;
