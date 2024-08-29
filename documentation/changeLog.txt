@@ -38,6 +38,8 @@ Version ???    ???
 
 --Word blacklist now applies to DING message too (but not tutorial messages).
 
+--No longer have a short limit on /COMMAND slash command length (was 23, now
+  200) so that a long list of /BLACKLIST words can by added in one go.
 
 
 

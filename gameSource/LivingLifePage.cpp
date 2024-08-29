@@ -21709,9 +21709,10 @@ void LivingLifePage::step() {
         
         if( strlen( currentText ) > 0 && currentText[0] == '/' ) {
             // typing a filter
-            // hard cap at 25, regardless of age
-            // don't want them typing long filters that overflow the display
-            sayCap = 23;
+            // long filter names no longer overflow the display
+            // and they can blacklist a whole list of words in one go
+            // so make this long
+            sayCap = 200;
             }
         delete [] currentText;
 
