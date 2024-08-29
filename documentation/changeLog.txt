@@ -24,6 +24,10 @@ Version ???    ???
   longer want to see in other players' speech.  These words will be replaced
   with XXXX when spoken by anyone.
 
+--Fixed a memory leak in minorGems/util/SettingsManager.cpp
+
+--Support for /BLACKLIST WORD1 WORD2 WORD3 chat slash command, to add words
+  to your personal blacklist.
 
 
 

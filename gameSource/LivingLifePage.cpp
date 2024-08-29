@@ -267,6 +267,25 @@ static char *applyWordBlacklist( char *inSpeech ) {
     }
 
 
+// inWordString destroyed by caller
+// can contain multiple words delimited by spaces
+static void addToBlacklist( char *inWordString ) {
+    SimpleVector<char *> *tokens = tokenizeString( inWordString );
+
+    for( int i=0; i< tokens->size(); i++ ) {
+        char *t = tokens->getElementDirect( i );
+        
+        if( wordBlacklist.getMatchingStringIndex( t ) == -1 ) {
+            wordBlacklist.push_back( stringDuplicate( t ) );
+            }
+        }
+    tokens->deallocateStringElements();
+    delete tokens;
+
+    SettingsManager::setSetting( "wordBlacklist", &wordBlacklist );
+    }
+
+
 
 
 typedef struct RecordedSpeechRecord {
@@ -26241,11 +26260,16 @@ static void showPlayerLabel( LiveObject *inPlayer, const char *inLabel,
 
 
 
-static char commandTyped( char *inTyped, const char *inCommandTransKey ) {
+static char commandTyped( char *inTyped, const char *inCommandTransKey,
+                          char inLengthMustMatch = true ) {
     const char *command = translate( inCommandTransKey );
     
     if( strstr( inTyped, command ) == inTyped ) {
         
+        if( ! inLengthMustMatch ) {
+            return true;
+            }
+
         char *trimmedCommand = trimWhitespace( inTyped );
         
         unsigned int lengthTrim = strlen( trimmedCommand );
@@ -26785,6 +26809,16 @@ void LivingLifePage::keyDown( unsigned char inASCII ) {
                             else if( commandTyped( typedText, 
                                                    "orderCommand" ) ) {
                                 sendToServerSocket( (char*)"ORDR 0 0#" );
+                                }
+                            else if( commandTyped( typedText, 
+                                                   "blacklistCommand",
+                                                   false ) ) {
+                                
+                                char *firstSpace = strstr( typedText, " " );
+                                
+                                if( firstSpace != NULL ) {
+                                    addToBlacklist( firstSpace );
+                                    }
                                 }
                             else {
                                 // filter hints
