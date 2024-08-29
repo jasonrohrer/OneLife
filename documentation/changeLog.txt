@@ -31,6 +31,10 @@ Version ???    ???
 
 --Fixed a memory leak if you die with the typing-speech notepad open.
 
+--Fixed so that if you type a really long word with no spaces in the
+  typing-speech notepad, it doesn't overflow the notepad line (the long word is
+  broken up to fit).  This also fixes very long words in speech bubbles (which
+  used to make very long speech bubbles that would go off screen).
 
 
 

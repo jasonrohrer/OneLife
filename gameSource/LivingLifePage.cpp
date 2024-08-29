@@ -3688,24 +3688,69 @@ SimpleVector<char*> *splitLines( const char *inString,
     // break into lines
     SimpleVector<char *> *tokens = 
         tokenizeString( inString );
+
+    // watch out for long tokens (split them up)
+    
+    SimpleVector<char*> finalTokens;
+    
+    for( int t=0; t< tokens->size(); t++ ) {
+        char *thisToken = tokens->getElementDirect( t );
+        
+        while( handwritingFont->measureString( thisToken ) > inMaxWidth ) {
+            
+            int splitPoint = strlen( thisToken ) - 1;
+
+            char splitChar = thisToken[ splitPoint ];
+            
+            thisToken[ splitPoint ] = '\0';
+            
+            while( handwritingFont->measureString( thisToken ) > inMaxWidth ) {
+                // restore char at last cut
+                thisToken[splitPoint] = splitChar;
+                
+                // start new shorter cut
+                splitPoint --;
+                
+                splitChar = thisToken[ splitPoint ];
+            
+                thisToken[ splitPoint ] = '\0';
+                }
+
+            // found prefix that isn't too long
+            
+            finalTokens.push_back( stringDuplicate( thisToken ) );
+            
+
+            // restore char at cut point
+            thisToken[splitPoint] = splitChar;
+            
+            thisToken = &( thisToken[ splitPoint ] );
+            }
+        finalTokens.push_back( stringDuplicate( thisToken ) );
+        }
+    tokens->deallocateStringElements();
+    delete tokens;
+    
+    
+            
     
     
     // collect all lines before drawing them
     SimpleVector<char *> *lines = new SimpleVector<char*>();
     
     
-    if( tokens->size() > 0 ) {
+    if( finalTokens.size() > 0 ) {
         // start with firt token
-        char *firstToken = tokens->getElementDirect( 0 );
+        char *firstToken = finalTokens.getElementDirect( 0 );
         
         lines->push_back( firstToken );
         
-        tokens->deleteElement( 0 );
+        finalTokens.deleteElement( 0 );
         }
     
     
-    while( tokens->size() > 0 ) {
-        char *nextToken = tokens->getElementDirect( 0 );
+    while( finalTokens.size() > 0 ) {
+        char *nextToken = finalTokens.getElementDirect( 0 );
         
         char *currentLine = lines->getElementDirect( lines->size() - 1 );
          
@@ -3728,10 +3773,8 @@ SimpleVector<char*> *splitLines( const char *inString,
          
 
         delete [] nextToken;
-        tokens->deleteElement( 0 );
+        finalTokens.deleteElement( 0 );
         }
-    
-    delete tokens;
     
     return lines;
     }
