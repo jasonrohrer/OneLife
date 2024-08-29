@@ -3353,6 +3353,8 @@ LivingLifePage::~LivingLifePage() {
     
     wordBlacklist.deallocateStringElements();
 
+    mLastKnownNoteLines.deallocateStringElements();
+
     clearRecordedSpeech();
     
     mBadBiomeNames.deallocateStringElements();

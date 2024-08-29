@@ -29,6 +29,8 @@ Version ???    ???
 --Support for /BLACKLIST WORD1 WORD2 WORD3 chat slash command, to add words
   to your personal blacklist.
 
+--Fixed a memory leak if you die with the typing-speech notepad open.
+
 
 
 
