@@ -228,6 +228,44 @@ double uniqueSpriteCountToDraw = 0;
 double pixelCountToDraw = 0;
 
 
+static SimpleVector<char*> wordBlacklist;
+
+
+// destroyed inSpeech and returns newly-allocated string (destroyed by caller)
+// with blacklist words replaced by XXXXX
+static char *applyWordBlacklist( char *inSpeech ) {
+    
+    SimpleVector<char *> *tokens = tokenizeString( inSpeech );
+    
+    delete [] inSpeech;
+
+    SimpleVector<char*> finalWords;
+    for( int i=0; i< tokens->size(); i++ ) {
+        char *word = tokens->getElementDirect( i );
+        
+        if( wordBlacklist.getMatchingStringIndex( word ) != -1 ) {
+            // word on blacklist
+            int wordLen = strlen( word );
+            
+            for( int c=0; c<wordLen; c++ ) {
+                word[c] = 'X';
+                }
+            }
+        finalWords.push_back( word );
+        }
+    delete tokens;
+    
+    char **wordArray = finalWords.getElementArray();
+    
+    char *outSpeech = join( wordArray, finalWords.size(), " " );
+    
+    delete [] wordArray;
+    
+    finalWords.deallocateStringElements();
+    
+    return outSpeech;
+    }
+
 
 
 
@@ -2801,6 +2839,25 @@ LivingLifePage::LivingLifePage()
           mXKeyDown( false ),
           mObjectPicker( &objectPickable, +510, 90 ) {
 
+    
+    
+    wordBlacklist.deallocateStringElements();
+
+    
+    
+    SimpleVector<char *> *wordList = 
+        SettingsManager::getSetting( "wordBlacklist" );
+    
+    for( int i=0; i< wordList->size(); i++ ) {
+        char *upper = stringToUpperCase( wordList->getElementDirect( i ) );
+        
+        wordBlacklist.push_back( upper );
+        }
+    
+    wordList->deallocateStringElements();
+    delete wordList;
+    
+    
 
     if( SettingsManager::getIntSetting( "useSteamUpdate", 0 ) ) {
         mUsingSteam = true;
@@ -3275,6 +3332,8 @@ LivingLifePage::~LivingLifePage() {
             numServerBytesRead, overheadServerBytesRead,
             numServerBytesSent, overheadServerBytesSent );
     
+    wordBlacklist.deallocateStringElements();
+
     clearRecordedSpeech();
     
     mBadBiomeNames.deallocateStringElements();
@@ -20480,6 +20539,11 @@ void LivingLifePage::step() {
                                 
                                 recordSpeech( existing->name,
                                               existing->currentSpeech );
+                            
+                                existing->currentSpeech = 
+                                    applyWordBlacklist( 
+                                        existing->currentSpeech );
+                                
                                 }
                             
 

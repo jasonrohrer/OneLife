@@ -20,6 +20,13 @@ Version ???    ???
 --copyChangesToRepo.bat utility script now copies txt files from sounds
   folder.  Part of #1114
 
+--Support for settings/wordBlacklist.ini file. which lets you list words you no
+  longer want to see in other players' speech.  These words will be replaced
+  with XXXX when spoken by anyone.
+
+
+
+
 
 
 Server Fixes:
