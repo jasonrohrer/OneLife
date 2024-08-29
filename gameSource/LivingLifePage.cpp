@@ -262,6 +262,95 @@ static char *applyWordBlacklist( char *inSpeech ) {
     delete [] wordArray;
     
     finalWords.deallocateStringElements();
+
+    
+    // now search for strings anywhere based on !WORD words on list
+    
+    for( int i=0; i< wordBlacklist.size(); i++ ) {
+        char *word = wordBlacklist.getElementDirect( i );
+        
+        if( strlen( word ) > 0 && word[0] == '!' ) {
+            char *wordStart = &( word[1] );
+            
+            int wordLen = strlen( wordStart );
+            
+            if( wordLen > 0 ) {
+                
+                char someNonX = false;
+                
+                for( int c=0; c<wordLen; c++ ) {
+                    if( wordStart[c] != 'X' ) {
+                        someNonX = true;
+                        break;
+                        }
+                    }
+                
+                // if word is XXXXX
+                // don't search and replace with X's, becasuse
+                // we'll infinite loop
+                if( someNonX ) {
+                    
+                    // look for WORD and W ORD and W,,,O R??D
+                    
+                    char firstLetter[2];
+                    firstLetter[0] = wordStart[0];
+                    firstLetter[1] = '\0';
+                    
+                    char *found = strstr( outSpeech, firstLetter );
+                
+                    while( found != NULL ) {
+                        SimpleVector<int> xIndex;
+                        xIndex.push_back( 0 );
+                        
+                        char match = true;
+
+                        char *next = &( found[1] );
+                        
+                        int lookI = 1;
+
+                        int nextWordI = 1;
+                        unsigned lettersLeft = wordLen - 1;
+                        
+                        while( match && lettersLeft > 0 && 
+                               strlen( next ) >= lettersLeft ) {
+                            
+                            char nextLetter = next[0];
+                            
+                            if( nextLetter >= 'A' &&
+                                nextLetter <= 'Z' ) {
+                                
+                                if( nextLetter != wordStart[nextWordI] ) {
+                                    match = false;
+                                    }
+                                else {
+                                    xIndex.push_back( lookI );
+                                    
+                                    nextWordI++;
+                                    lettersLeft = wordLen - nextWordI;
+                                    }
+                                }
+                            lookI ++;
+                            
+                            next = &( found[lookI] );
+                            }
+                        
+                        if( lettersLeft != 0 ) {
+                            match = false;
+                            }
+                        if( match ) {    
+                            for( int f=0; f < xIndex.size(); f++ ) {
+                                found[ xIndex.getElementDirect( f ) ] = 'X';
+                                }
+                            }
+                        
+                        found = strstr( &( found[1] ), firstLetter );
+                        }
+                    }
+                }
+            }
+        }
+    
+
     
     return outSpeech;
     }

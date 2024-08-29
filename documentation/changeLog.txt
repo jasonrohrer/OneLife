@@ -41,6 +41,9 @@ Version ???    ???
 --No longer have a short limit on /COMMAND slash command length (was 23, now
   200) so that a long list of /BLACKLIST words can by added in one go.
 
+--/BLACKLIST !WORD now matches TESTWORDBLAH and W O RD and W...O?RD
+
+
 
 
 Server Fixes:
