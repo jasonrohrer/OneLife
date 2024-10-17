@@ -4,3 +4,8 @@ SHELL=/bin/bash
 
 30 4 * * * /usr/bin/indexer --quiet --config /etc/sphinxsearch/sphinx.conf fluxbb_search_posts_main --rotate >/dev/null 2>&1; /usr/bin/indexer --quiet --config /etc/sphinxsearch/sphinx.conf fluxbb_search_posts_delta --rotate >/dev/null 2>&1
 
+
+# every 5 minutes
+# Check for IPs that are hammering web server and block them in ufw
+
+*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/antiDOS.sh
