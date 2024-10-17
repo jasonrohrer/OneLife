@@ -8,4 +8,4 @@ SHELL=/bin/bash
 # every 5 minutes
 # Check for IPs that are hammering web server and block them in ufw
 
-*/5 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/antiDOS.sh
+*/5 * * * * bash /home/jcr15/checkout/OneLifeWorking/scripts/antiDOS.sh
