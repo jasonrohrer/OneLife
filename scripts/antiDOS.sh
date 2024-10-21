@@ -8,7 +8,8 @@ while read line ; do
 	ip=${parts[1]}
 	
 
-	if [[ $count -gt 10000 ]];
+	# 100k let's selb's api bot through, which does less than 50k
+	if [[ $count -gt 100000 ]];
 	then
 		echo "blocking future connections from $ip"
 		echo "since it has made $count requests recently"
