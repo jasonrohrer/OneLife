@@ -35,7 +35,7 @@ if( ! $nocounter && ( !isSet( $blockCounter ) || ! $blockCounter ) ) {
     <td align=center width=10%>[<a href='http://onehouronelife.com'>Home</a>]</td>
     <td align=center width=10%>[<a href='https://sites.fastspring.com/jasonrohrer/instant/onehouronelife?referrer=<?php echo $referrer;?>'>Buy</a>]</td>
     
-    <td align=center width=10%>[<a href="http://onehouronelife.gamepedia.com">Wiki</a>]</td>
+    <td align=center width=10%>[<a href="https://onehouronelife.wiki.gg">Wiki</a>]</td>
 
     <td align=center width=10%>[<a href='http://onehouronelife.com/foodStats.php'>Food Stats</a>]</td>
     <td align=center width=10%>[<a href='http://onehouronelife.com/failureStats.php'>Fail Stats</a>]</td>
