@@ -89,6 +89,8 @@ Server Fixes:
 
 --Fixed typo in generateDataOnlyDiffBundleAHAP.sh script.
 
+--CoordinateTimeTracking now manually requests fast vector methods, making it
+  2x faster. 
 
 
 

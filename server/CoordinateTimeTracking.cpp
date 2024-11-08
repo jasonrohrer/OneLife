@@ -4,6 +4,9 @@
 
 CoordinateTimeTracking::CoordinateTimeTracking()
         :mNextIndex( 0 ) {
+
+    // vector contains structs, which can be safely memcpy'd
+    mRecords.toggleFastMethods( true );
     }
 
 
