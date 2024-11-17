@@ -79,6 +79,8 @@ call :folderCopy sprites txt
 
 call :folderCopy transitions txt
 
+call :folderCopy categories txt
+
 echo:
 
 echo Setup done.
