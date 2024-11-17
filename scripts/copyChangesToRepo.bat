@@ -43,6 +43,8 @@ call :folderCheck sprites
 
 call :folderCheck transitions
 
+call :folderCheck categories
+
 
 call :folderCopy animations txt
 
@@ -71,6 +73,8 @@ call :folderCopy sprites tga
 call :folderCopy sprites txt
 
 call :folderCopy transitions txt
+
+call :folderCopy categories txt
 
 
 echo:
