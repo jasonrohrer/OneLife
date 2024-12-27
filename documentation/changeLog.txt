@@ -92,6 +92,8 @@ Server Fixes:
 --CoordinateTimeTracking now manually requests fast vector methods, making it
   2x faster. 
 
+--Max flight distance back to 10,000, to prevent d-town apocalylpse.
+
 
 
 Version 428    2024-July-11
