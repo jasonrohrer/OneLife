@@ -94,6 +94,8 @@ Server Fixes:
 
 --Max flight distance back to 10,000, to prevent d-town apocalylpse.
 
+--New pullAndBuilTestSystemAHAP.sh script.  Fixes #1142
+
 
 
 Version 428    2024-July-11
