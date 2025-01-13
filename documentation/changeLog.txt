@@ -49,6 +49,13 @@ Version ???    ???
 --OneLifeSever now has a command-line argument 'rebuild' which forces it to
   clear its cache files and rebuild them.  Fixes #1123
 
+--New client setting:  ahapSkipDataUpdate.ini   When set to 1, this blocks the
+  client from fetching the lastest AHAP game data from the content server.  If
+  you're working on making content, this prevents what you're working on from
+  getting overwritten by accident by new content when you launch the client to
+  test it.  Fixes #1125
+
+
 
 
 Server Fixes:
