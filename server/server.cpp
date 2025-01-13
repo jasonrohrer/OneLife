@@ -18424,7 +18424,7 @@ static GridPos getAveragePopulationPos(
 
 
 
-int main() {
+int main( int inNumArgs, const char **inArgs ) {
     useMainSettings();
     
     if( checkReadOnly() ) {
@@ -18457,6 +18457,25 @@ int main() {
 
     AppLog::setLoggingLevel( Log::DETAIL_LEVEL );
     AppLog::printAllMessages( true );
+    
+
+    char forceRebuilding = false;
+    
+    if( inNumArgs > 1 && strcmp( inArgs[1], "rebuild" ) == 0 ) {
+        forceRebuilding = true;
+        
+        printf( "\n" );
+        AppLog::info( "'rebuild' argument present, "
+                      "forcing rebuild of caches." );
+        }
+    else {
+        printf( "\n" );
+        AppLog::info( "Run with this argument to force-rebuild caches:  "
+                      "rebuild" );
+        }
+    
+
+
 
     printf( "\n" );
     AppLog::info( "Server starting up" );
@@ -18731,8 +18750,62 @@ int main() {
     
     initPeriodicPlacements();
 
+    
+    if( forceRebuilding ) {
+        
+        File animDir( NULL, "animations" );
+        
+        if( animDir.exists() ) {
+            File *cacheFile = animDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            }
+        
+        
+        File objectDir( NULL, "objects" );
+        
+        if( objectDir.exists() ) {
+            File *cacheFile = objectDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            }
+        
+        
+        File catDir( NULL, "categories" );
+        
+        if( catDir.exists() ) {    
+            File *cacheFile = catDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            }
+        
+
+        File transDir( NULL, "transitions" );
+        
+        if( transDir.exists() ) {
+            File *cacheFile = transDir.getChildFile( "cache.fcz" );
+            
+            cacheFile->remove();
+            
+            delete cacheFile;
+            }
+        }
+
 
     char rebuilding;
+
+    // NOTE:
+    // While server itself doesn't use animation bank, and animation folder
+    // isn't even present in server folder, server still needs to init an
+    // (empty) animationBank because objectBank expects it to be there
+    // during some if its initialization.  This is effectively an empty
+    // animation bank, but this allows the calls in objectBank to still work.
 
     initAnimationBankStart( &rebuilding );
     while( initAnimationBankStep() < 1.0 );

@@ -46,6 +46,8 @@ Version ???    ???
 --The exclaimation point version of blacklist now also blocks WWWOOORRDD
   (and other spaced-out forms) with repeated letters.
 
+--OneLifeSever now has a command-line argument 'rebuild' which forces it to
+  clear its cache files and rebuild them.  Fixes #1123
 
 
 
