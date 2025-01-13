@@ -5,7 +5,7 @@ http://onehouronelife.com/updateLog.php
 
 
 
-Version ???    ???
+Version 430    2025-January-13
 
 --Button on AHAP Voting Page now says VOTE (used to say POST).  Part of #1107
 
