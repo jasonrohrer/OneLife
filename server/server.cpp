@@ -21034,6 +21034,12 @@ int main( int inNumArgs, const char **inArgs ) {
                         nextPlayer->preVogPos = getPlayerPos( nextPlayer );
                         nextPlayer->preVogBirthPos = nextPlayer->birthPos;
                         nextPlayer->vogJumpIndex = 0;
+
+                        if( nextPlayer->pathToDest != NULL ) {
+                            delete [] nextPlayer->pathToDest;
+                            nextPlayer->pathToDest = NULL;
+                            }
+                        nextPlayer->pathLength = 0;
                         }
                     }
                 else if( m.type == VOGN ) {
@@ -21171,16 +21177,28 @@ int main( int inNumArgs, const char **inArgs ) {
                 else if( m.type == VOGT && m.saidText != NULL ) {
                     if( nextPlayer->vogMode ) {
                         
-                        newLocationSpeech.push_back( 
-                            stringDuplicate( m.saidText ) );
-                        GridPos p = getPlayerPos( nextPlayer );
-                        
-                        ChangePosition cp;
-                        cp.x = p.x;
-                        cp.y = p.y;
-                        cp.global = false;
+                        if( strcmp( m.saidText, "TP" ) == 0 ) {
 
-                        newLocationSpeechPos.push_back( cp );
+                            nextPlayer->preVogPos.x = nextPlayer->xs;
+                            nextPlayer->preVogPos.y = nextPlayer->ys;
+                            
+                            nextPlayer->preVogBirthPos.x = nextPlayer->xs;
+                            nextPlayer->preVogBirthPos.y = nextPlayer->ys;
+                            // hide TP speech, don't show it as location
+                            // speech
+                            }
+                        else {
+                            newLocationSpeech.push_back( 
+                                stringDuplicate( m.saidText ) );
+                            GridPos p = getPlayerPos( nextPlayer );
+                            
+                            ChangePosition cp;
+                            cp.x = p.x;
+                            cp.y = p.y;
+                            cp.global = false;
+                            
+                            newLocationSpeechPos.push_back( cp );
+                            }
                         }
                     }
                 else if( m.type == VOGX ) {
@@ -21197,6 +21215,22 @@ int main( int inNumArgs, const char **inArgs ) {
                         
                         nextPlayer->birthPos = nextPlayer->preVogBirthPos;
 
+                        nextPlayer->heldOriginX = nextPlayer->preVogPos.x;
+                        nextPlayer->heldOriginY = nextPlayer->preVogPos.y;
+
+                        nextPlayer->actionTarget = p;
+                        
+                        
+                        // always assume teleport at end of VOG
+                        // treat it like a flight
+                        FlightDest fd = {
+                            nextPlayer->id,
+                            p };
+
+                        newFlightDest.push_back( fd );
+
+                        nextPlayer->inFlight = true;
+                        
                         // send them one last VU message to move them 
                         // back instantly
                         char *message = autoSprintf( "VU\n%d %d\n#",
