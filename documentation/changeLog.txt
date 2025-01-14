@@ -111,6 +111,11 @@ Server Fixes:
 --Extensive persistent logging around Eve placement to see if we can figure out
   why Eve spawn locations aren't resetting after the apocalypse.  Part of #1135
 
+--Finally found cause of persistent Eve location after apocalypse (we were
+  bootstrapping even location, as a last-ditch effort, basted on monument
+  logs).  Part of #1135
+
+
 
 
 

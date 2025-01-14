@@ -3390,7 +3390,7 @@ char initMap() {
 
         fclose( eveLocFile );
 
-        printf( "Loading lastEveLocation %d,%d\n", 
+        eveLogPrintf( "\nLoading lastEveLocation %d,%d\n", 
                 eveLocation.x, eveLocation.y );
         }
 
@@ -3403,69 +3403,85 @@ char initMap() {
 
         fclose( lineagePosFile );
 
-        printf( "Overriding eveLocation with shutdownLongLineagePos %d,%d\n", 
-                eveLocation.x, eveLocation.y );
+        eveLogPrintf(
+            "\nOverriding eveLocation with shutdownLongLineagePos %d,%d\n", 
+            eveLocation.x, eveLocation.y );
         }
     else {
-        printf( "No shutdownLongLineagePos.txt file exists\n" );
+        eveLogPrintf( "\nNo shutdownLongLineagePos.txt file exists\n" );
         
-        // look for longest monument log file
-        // that has been touched in last 24 hours
-        // (ignore spots that may have been culled)
-        File f( NULL, "monumentLogs" );
-        if( f.exists() && f.isDirectory() ) {
-            int numChildFiles;
-            File **childFiles = f.getChildFiles( &numChildFiles );
-            
-            timeSec_t longTime = 0;
-            int longLen = 0;
-            int longX = 0;
-            int longY = 0;
-            
-            timeSec_t curTime = Time::timeSec();
+        if( haveMonumentsBeenWiped() ) {
+            eveLogPrintf( "\nMonuments have been wiped, "
+                          "so not using them to bootstrap Eve location\n" );
+            }
+        else {
+            eveLogPrintf( "\nMonuments have NOT been wiped, "
+                          "looking at recent ones to "
+                          "bootstrap Eve location\n" );
 
-            int secInDay = 3600 * 24;
+            // look for longest monument log file
+            // that has been touched in last 24 hours
+            // (ignore spots that may have been culled)
+
+            File f( NULL, "monumentLogs" );
+
+            if( f.exists() && f.isDirectory() ) {
+                int numChildFiles;
+                File **childFiles = f.getChildFiles( &numChildFiles );
             
-            for( int i=0; i<numChildFiles; i++ ) {
-                timeSec_t modTime = childFiles[i]->getModificationTime();
+                timeSec_t longTime = 0;
+                int longLen = 0;
+                int longX = 0;
+                int longY = 0;
+            
+                timeSec_t curTime = Time::timeSec();
+
+                int secInDay = 3600 * 24;
+            
+                for( int i=0; i<numChildFiles; i++ ) {
+                    timeSec_t modTime = childFiles[i]->getModificationTime();
                 
-                if( curTime - modTime < secInDay ) {
-                    char *cont = childFiles[i]->readFileContents();
+                    if( curTime - modTime < secInDay ) {
+                        char *cont = childFiles[i]->readFileContents();
                     
-                    int numNewlines = countNewlines( cont );
+                        int numNewlines = countNewlines( cont );
                     
-                    delete [] cont;
+                        delete [] cont;
                     
-                    if( numNewlines > longLen ||
-                        ( numNewlines == longLen && modTime > longTime ) ) {
+                        if( numNewlines > longLen ||
+                            ( numNewlines == longLen && modTime > longTime ) ) {
                         
-                        char *name = childFiles[i]->getFileName();
+                            char *name = childFiles[i]->getFileName();
                         
-                        int x, y;
-                        int numRead = sscanf( name, "%d_%d_",
-                                              &x, &y );
+                            int x, y;
+                            int numRead = sscanf( name, "%d_%d_",
+                                                  &x, &y );
 
-                        delete [] name;
+                            delete [] name;
                         
-                        if( numRead == 2 ) {
-                            longTime = modTime;
-                            longLen = numNewlines;
-                            longX = x;
-                            longY = y;
+                            if( numRead == 2 ) {
+                                longTime = modTime;
+                                longLen = numNewlines;
+                                longX = x;
+                                longY = y;
+                                }
                             }
                         }
+                    delete childFiles[i];
                     }
-                delete childFiles[i];
-                }
-            delete [] childFiles;
+                delete [] childFiles;
 
-            if( longLen > 0 ) {
-                eveLocation.x = longX;
-                eveLocation.y = longY;
+                if( longLen > 0 ) {
+                    eveLocation.x = longX;
+                    eveLocation.y = longY;
                 
-                printf( "Overriding eveLocation with "
-                        "tallest recent monument location %d,%d\n", 
-                        eveLocation.x, eveLocation.y );
+                    eveLogPrintf( "\nOverriding eveLocation with "
+                                  "tallest recent monument location %d,%d\n", 
+                                  eveLocation.x, eveLocation.y );
+                    }
+                else {
+                    eveLogPrintf( "\nNo recent monument location found\n" );
+                    }    
                 }
             }
         }
@@ -4835,6 +4851,8 @@ void wipeMapFiles() {
     deleteFileByName( "recentPlacements.txt" );
     deleteFileByName( "landingLocations.txt" );
     deleteFileByName( "shutdownLongLineagePos.txt" );
+    
+    monumentMapWipe();
 
     eveLogPrintf( "\nWiping all map files.\n" );
     }

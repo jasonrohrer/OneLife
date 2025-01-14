@@ -8,6 +8,31 @@ extern char monumentCallPending;
 extern int monumentCallX, monumentCallY, monumentCallID;
 
 
+// destroyed by caller
+static File *getWipeFile() {
+    File monumentDir( NULL, "monumentLogs" );
+    
+    
+    if( ! monumentDir.exists() ) {
+        monumentDir.makeDirectory();
+        }
+    
+    File *wipeFile = monumentDir.getChildFile( "wipe.txt" );
+
+    return wipeFile;
+    }
+
+
+static void clearWipeFile() {
+    File *wipeFile = getWipeFile();
+    if( wipeFile->exists() ) {
+        wipeFile->remove();
+        }
+    delete wipeFile;
+    }
+
+
+
 
 char *getMonumentLogFilePath( int inX, int inY, const char *inExtra = "" ) {
         
@@ -50,7 +75,7 @@ FILE *getMonumentLogFile( int inX, int inY ) {
 
 
 
-void finalizeMonumentLogFile( int inX, int inY ) {
+void finalizeMonumentLogFile( int inX, int inY ) {    
     char *pathOld = getMonumentLogFilePath( inX, inY );
 
     double t = Time::getCurrentTime();
@@ -64,6 +89,10 @@ void finalizeMonumentLogFile( int inX, int inY ) {
     delete [] pathOld;
     delete [] pathNew;
     delete [] extra;
+
+    // wipe file cleared whenever a new monument action happens
+    // this means our latest monument files are no longer stale.
+    clearWipeFile();
     }
 
 
@@ -106,6 +135,10 @@ void monumentAction( int inX, int inY, int inObjectID, int inPlayerID,
                 }
             
             fclose( f );
+            
+            // wipe file cleared whenever a new monument action happens
+            // this means our latest monument files are no longer stale.
+            clearWipeFile();
             }
 
         if( inAction == 2 ) {
@@ -114,4 +147,34 @@ void monumentAction( int inX, int inY, int inObjectID, int inPlayerID,
         }
     
     }
+
+
+
+
+    
+
+void monumentMapWipe() {
+    File *wipeFile = getWipeFile();
+    
+    wipeFile->writeToFile( "wiped" );
+    
+    delete wipeFile;
+    }
+
+
+
+char haveMonumentsBeenWiped() {
+    File *wipeFile = getWipeFile();
+    
+    char returnVal = false;
+    
+    if( wipeFile->exists() ) {
+        returnVal = true;
+        }
+
+    delete wipeFile;
+    
+    return returnVal;
+    }
+
 
