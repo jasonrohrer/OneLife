@@ -108,6 +108,10 @@ Server Fixes:
 --VOG now has a TP speech command to teleport the underlying character after
   VOG mode ends.
 
+--Extensive persistent logging around Eve placement to see if we can figure out
+  why Eve spawn locations aren't resetting after the apocalypse.  Part of #1135
+
+
 
 
 
