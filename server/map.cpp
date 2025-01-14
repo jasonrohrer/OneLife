@@ -660,6 +660,23 @@ static char hasPrimaryHomeland( int inLineageEveID ) {
 
 
 
+static void eveLogPrintf( const char* inFormatString, ... ) {
+    FILE *logFile = fopen( "evePlacementLog.txt", "a" );
+
+    if( logFile == NULL ) {
+        printf( "Failed to open evePlacementLog.txt for writing\n" );
+        return;
+        }
+
+    va_list argList;
+    va_start( argList, inFormatString );
+
+    vfprintf( logFile, inFormatString, argList );
+    
+    va_end( argList );
+
+    fclose( logFile );
+    }
 
 
 
@@ -1975,6 +1992,8 @@ void clearRecentPlacements();
 
 
 void resetEveLocation() {
+    eveLogPrintf( "\nResetting Eve location\n" );
+    
     eveLocation.x = 0;
     eveLocation.y = 0;
 
@@ -4816,6 +4835,8 @@ void wipeMapFiles() {
     deleteFileByName( "recentPlacements.txt" );
     deleteFileByName( "landingLocations.txt" );
     deleteFileByName( "shutdownLongLineagePos.txt" );
+
+    eveLogPrintf( "\nWiping all map files.\n" );
     }
 
 
@@ -8846,7 +8867,8 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
 
     doublePair ave = { 0, 0 };
 
-    printf( "Placing new Eve...\n" );
+    eveLogPrintf( "\nPlacing new Eve for %s (%d) at time %.f...\n", 
+                  inEmail, inID, Time::timeSec() );
     
     
     int pX, pY, pR;
@@ -8854,9 +8876,8 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
     int result = eveDBGet( inEmail, &pX, &pY, &pR );
     
     if( inAllowRespawn && result == 1 && pR > 0 ) {
-        printf( "Placing new Eve:  "
-                "Found camp center (%d,%d) r=%d in db for %s\n",
-                pX, pY, pR, inEmail );
+        eveLogPrintf( "  Found camp center (%d,%d) r=%d in db for %s\n",
+                      pX, pY, pR, inEmail );
         
         ave.x = pX;
         ave.y = pY;
@@ -8864,15 +8885,18 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         didEveRespawn = true;
         }
     else if( SettingsManager::getIntSetting( "useEveMovingGrid", 0 ) ) {
-        printf( "Placing new Eve:  "
-                "using Eve moving grid method\n" );
+        eveLogPrintf( "  Using Eve moving grid method\n" );
         
         int gridX = eveLocation.x;
         int gridY = eveLocation.y;
         
+        eveLogPrintf( "  Last eveLocation = %d, %d\n", gridX, gridY );
 
         getEveMovingGridPosition( & gridX, & gridY, inIncrementPosition );
         
+        eveLogPrintf( "  Applying moving grid takes us to = %d, %d\n",
+                      gridX, gridY );
+
         ave.x = gridX;
         ave.y = gridY;
         
@@ -8880,20 +8904,25 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         currentEveRadius = 50;
 
         if( inIncrementPosition ) {
+            eveLogPrintf( "  inIncrementPosition set, so saving for future\n" );
+
             // update advancing position
             eveLocation.x = gridX;
             eveLocation.y = gridY;
             }
 
         if( SettingsManager::getIntSetting( "eveToWestOfHomelands", 0 ) ) {
+
+            eveLogPrintf( "  Pushing Eve to west of homelands\n" );
+
             // we've placed Eve based on walking grid
             // now move her farther west, to avoid plopping her down
             // in middle of active homelands
             
             FILE *tempLog = fopen( "evePlacementHomelandLog.txt", "a" );
             
-            fprintf( tempLog, "Placing Eve for %s at time %.f:\n",
-                     inEmail, Time::timeSec() );
+            fprintf( tempLog, "Placing Eve for %s (%d) at time %.f:\n",
+                     inEmail, inID, Time::timeSec() );
 
 
             fprintf( tempLog, "    First homeland list:  " );
@@ -8987,9 +9016,10 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                     if( xBoundary < ave.x ) {
                         ave.x = xBoundary;
                         
-                        AppLog::infoF( 
-                            "Pushing Eve to west of homeland %d at x=%d\n",
-                            i, h->x );
+                        eveLogPrintf( 
+                            "  Pushing Eve to west of homeland %d at x=%d "
+                            "(new ave.x = %f)\n",
+                            i, h->x, ave.x );
 
                         fprintf( 
                             tempLog, 
@@ -9011,6 +9041,10 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
                 eveLocation.x = ave.x;
                 eveLocation.y = ave.y;
                 
+                eveLogPrintf( "  inIncrementPosition set, so saving pushed "
+                              "location %d, %d for future\n",
+                              eveLocation.x, eveLocation.y );
+                
                 writeEveLocation();
                 }
             }
@@ -9024,8 +9058,7 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             SettingsManager::getIntSetting( "maxEveStartupLocationUsage", 10 );
 
 
-        printf( "Placing new Eve:  "
-                "using Eve spiral method\n" );
+        eveLogPrintf( "  Using Eve spiral method\n" );
 
         
         // first try new grid placement method
@@ -9375,8 +9408,7 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
         }
     
     while( !found ) {
-        printf( "Placing new Eve:  "
-                "trying radius of %d from camp\n", currentEveRadius );
+        eveLogPrintf( "  trying radius of %d from camp\n", currentEveRadius );
 
         int tryCount = 0;
         
@@ -9447,8 +9479,7 @@ char getEvePosition( const char *inEmail, int inID, int *outX, int *outY,
             }
         }
 
-    printf( "Placing new Eve:  "
-            "Final location (%d,%d)\n", *outX, *outY );
+    eveLogPrintf( "  Final location (%d,%d)\n", *outX, *outY );
 
 
     
