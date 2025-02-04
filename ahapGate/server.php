@@ -1839,6 +1839,7 @@ function ag_updateContentLeader() {
         if( $leader_github != "" ) {
             if( $votes >= $bestVotes ) {
                 $bestLeaders[] = $leader_github;
+                $bestVotes = $votes;
                 }
             else {
                 // gotten down to where votes are less that top
@@ -1861,7 +1862,7 @@ function ag_updateContentLeader() {
         $lowestID = 999999999;
         $bestLeader = "";
 
-        foreach( $bestLeader as $l ) {
+        foreach( $bestLeaders as $l ) {
             $id = ag_getUserIDForGithubUsername( $l );
 
             if( $id < $lowestID ) {

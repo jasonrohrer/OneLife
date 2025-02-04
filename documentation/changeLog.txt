@@ -115,6 +115,7 @@ Server Fixes:
   bootstrapping even location, as a last-ditch effort, basted on monument
   logs).  Part of #1135
 
+--Fixed two bugs in tallying content leader votes.
 
 
 
