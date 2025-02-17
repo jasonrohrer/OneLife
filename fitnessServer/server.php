@@ -391,7 +391,7 @@ function fs_setupDatabase() {
             "PRIMARY KEY( player_id, life_id ),".
             // this will be You for self
             // or Granddaughter, etc.
-            "relation_name VARCHAR(254) NOT NULL,".
+            "relation_name MEDIUMTEXT NOT NULL,".
             // player_id's score before this offspring
             "old_score FLOAT NOT NULL,".
             // player_id's score after this offspring

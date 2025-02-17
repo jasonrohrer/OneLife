@@ -117,6 +117,9 @@ Server Fixes:
 
 --Fixed two bugs in tallying content leader votes.
 
+--Fixed fitness server to allow relation names longer than 254 characters (for
+  long chains of great great greats when families survive for a long time).
+
 
 
 
