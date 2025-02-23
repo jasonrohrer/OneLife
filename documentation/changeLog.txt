@@ -120,6 +120,15 @@ Server Fixes:
 --Fixed fitness server to allow relation names longer than 254 characters (for
   long chains of great great greats when families survive for a long time).
 
+--Fixed so that we only check if a player becomes a ghost ONCE after age 60.
+  Old code would re-check with every computeAge call after age 60, assuming
+  that only one such call would occur.  But there are lots of places that can
+  trigger checkAge to be called again, which was resulting in a greater-than-
+  desired frequency of players becoming ghosts (and opening up an exploit
+  where modded clients could spam actions that trigger checkAge right around
+  age 60 to increase their ghost chance).  Thanks selb.
+
+
 
 
 

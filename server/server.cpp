@@ -806,6 +806,11 @@ typedef struct LiveObject {
         // time when this player actually died
         double deathTimeSeconds;
         
+        // only check for ghost chance once
+        // so we don't check for it again during every computeAge call after 
+        // age 60.
+        char alreadyCheckedGhostChance;
+        
         char isGhost;
         char ghostDestroyed;
 
@@ -4070,7 +4075,8 @@ double computeAge( LiveObject *inPlayer ) {
     if( age >= forceDeathAge ) {
         
         
-        if( ! inPlayer->ghostDestroyed && 
+        if( ! inPlayer->alreadyCheckedGhostChance &&
+            ! inPlayer->ghostDestroyed && 
             ! inPlayer->isGhost &&
             SettingsManager::getIntSetting( "allowGhosts", 0 ) &&
             SettingsManager::getDoubleSetting( "ghostChance", 0.0 ) >=
@@ -4079,6 +4085,7 @@ double computeAge( LiveObject *inPlayer ) {
             // player reached old age, and ghosts allowed, keep them around
             // as a surviving ghost for now
 
+            inPlayer->alreadyCheckedGhostChance = true;
             inPlayer->isGhost = true;
             
             newGhostPlayers.push_back( inPlayer->id );
@@ -4093,7 +4100,11 @@ double computeAge( LiveObject *inPlayer ) {
 
             return forceDeathAge;
             }
-
+        
+        // they didn't become a ghost, for whatever reason
+        // don't check if they become a ghost ever again
+        // (in future computeAge calls after age forceDeathAge)
+        inPlayer->alreadyCheckedGhostChance = true;
 
         // else they died of old age, or their surviving ghost was finally
         // destroyed
@@ -9394,6 +9405,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.trueStartTimeSeconds = Time::getCurrentTime();
     newObject.lifeStartTimeSeconds = newObject.trueStartTimeSeconds;
     
+    newObject.alreadyCheckedGhostChance = false;
     newObject.isGhost = false;
     newObject.ghostDestroyed = false;
 
