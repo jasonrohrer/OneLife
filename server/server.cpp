@@ -59,6 +59,7 @@
 #include "arcReport.h"
 #include "curseDB.h"
 #include "trustDB.h"
+#include "curseLog.h"
 #include "specialBiomes.h"
 #include "cravings.h"
 #include "offspringTracker.h"
@@ -243,6 +244,9 @@ static SimpleVector<char*> youForgivingPhrases;
 
 static SimpleVector<char*> trustingPhrases;
 static SimpleVector<char*> youTrustingPhrases;
+
+static SimpleVector<char*> distrustingPhrases;
+static SimpleVector<char*> youDistrustingPhrases;
 
 
 static SimpleVector<char*> youGivingPhrases;
@@ -2706,6 +2710,9 @@ void quitCleanup() {
 
     trustingPhrases.deallocateStringElements();
     youTrustingPhrases.deallocateStringElements();
+
+    distrustingPhrases.deallocateStringElements();
+    youDistrustingPhrases.deallocateStringElements();
     
     youGivingPhrases.deallocateStringElements();
     namedGivingPhrases.deallocateStringElements();
@@ -13399,6 +13406,19 @@ char *isNamedTrustingSay( char *inSaidString ) {
     }
 
 
+
+char isYouDistrustingSay( char *inSaidString ) {
+    return isWildcardGivingSay( inSaidString, &youDistrustingPhrases );
+    }
+
+// returns pointer into inSaidString
+char *isNamedDistrustingSay( char *inSaidString ) {
+    return isNamingSay( inSaidString, &distrustingPhrases );
+    }
+
+
+
+
 char isForgiveEveryoneSay( char *inSaidString ) {
     return isWildcardGivingSay( inSaidString, &forgiveEveryonePhrases );
     }
@@ -18631,6 +18651,9 @@ int main( int inNumArgs, const char **inArgs ) {
     readPhrases( "trustingPhrases", &trustingPhrases );
     readPhrases( "trustYouPhrases", &youTrustingPhrases );
 
+    readPhrases( "distrustingPhrases", &distrustingPhrases );
+    readPhrases( "distrustYouPhrases", &youDistrustingPhrases );
+
     
     readPhrases( "youGivingPhrases", &youGivingPhrases );
     readPhrases( "namedGivingPhrases", &namedGivingPhrases );
@@ -23463,6 +23486,39 @@ int main( int inNumArgs, const char **inArgs ) {
                             setDBTrust( nextPlayer->id,
                                         nextPlayer->email, 
                                         otherToTrust->email );
+                            }
+
+
+                        
+                        LiveObject *otherToDistrust = NULL;
+                        
+                        if( isYouDistrustingSay( m.saidText ) ) {
+                            otherToDistrust = 
+                                getClosestOtherPlayer( nextPlayer );
+                            }
+                        else {
+                            char *distrustName = 
+                                isNamedDistrustingSay( m.saidText );
+                            
+                            if( distrustName != NULL ) {
+                                otherToDistrust =
+                                    getPlayerByName( distrustName, nextPlayer );
+                                
+                                }
+                            }
+                        
+                        if( otherToDistrust != NULL ) {
+                            clearDBTrust( nextPlayer->email, 
+                                          otherToDistrust->email );
+                            // log here....
+                            // setDBTrust abvoe does logging
+                            // but clearDBTrust does not, because we clear
+                            // it on cursing, too.
+                            // We want to log distrust even distinctly from
+                            // cursing.
+                            logDistrust( nextPlayer->id,
+                                         nextPlayer->email, 
+                                         otherToDistrust->email );
                             }
 
                         

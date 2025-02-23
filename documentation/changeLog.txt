@@ -128,6 +128,10 @@ Server Fixes:
   where modded clients could spam actions that trigger checkAge right around
   age 60 to increase their ghost chance).  Thanks selb.
 
+--Added new DISTRUST command to remove TRUST.  Invoked with I DISTRUST YOU, to
+  target the closest person, or I DISTRUST EVE JONES to target by name.
+  Before, you had to curse someone to remove trust.
+
 
 
 

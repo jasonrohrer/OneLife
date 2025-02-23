@@ -26,5 +26,8 @@ void logCurseExpire( char *inPlayerEmail,
 void logTrust( int inPlayerID, char *inPlayerEmail,
                char *inTargetPlayerEmail );
 
+void logDistrust( int inPlayerID, char *inPlayerEmail,
+                  char *inTargetPlayerEmail );
+
 
 void logCurseScore( char *inPlayerEmail, int inCurseScore );
