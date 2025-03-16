@@ -132,6 +132,14 @@ Server Fixes:
   target the closest person, or I DISTRUST EVE JONES to target by name.
   Before, you had to curse someone to remove trust.
 
+--When a force-drop happens (like when player is wounded), if entire radius-10
+  area around player is full of stuff, the thing they were holding used to
+  disappear.  Now, after finding a spot in radius 10 fails, we keep searching
+  in a randomly-chosen direction, in a randomized, drunken-walk zig-zag, for up
+  to 2000 steps, until we find a spot (if there's no empty spot after that, the
+  item still disappears, since we can't keep searching forever).  This entire
+  process, until we ultimately give up, was clocked at taking 3ms on a slow
+  laptop.  Searching until failure like this should be very rare, generally.
 
 
 

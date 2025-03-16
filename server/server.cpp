@@ -6342,6 +6342,49 @@ char findDropSpot( LiveObject *inDroppingPlayer,
             }
         }
 
+
+    if( !found ) {
+        // entire radius-10 area is full of stuff on the ground.
+
+        // keep looking, but just do a randomized zig-zag walk in one
+        // general direction
+        int xDir = 1;
+        int yDir = 1;
+        
+        if( randSource.getRandomBoolean() ) {
+            xDir = -1;
+            }
+        if( randSource.getRandomBoolean() ) {
+            yDir = -1;
+            }
+        
+        // for random walk, move in either x dir or y dir, but not both
+        // if we pick randomly, we get a diagonal-ish zig-zag with variable-
+        // length zigs and zags
+        
+        int numTries = 0;
+        int xD = 0;
+        int yD = 0;
+        
+        while( !found && numTries < 2000 ) {
+            if( isMapSpotEmpty( inSourceX + xD, inSourceY + yD ) ) {
+                found = true;
+                foundX = inSourceX + xD;
+                foundY = inSourceY + yD;
+                }
+
+            if( randSource.getRandomBoolean() ) {
+                xD += xDir;
+                }
+            else {
+                yD += yDir;
+                }
+            
+            numTries++;
+            }
+        }
+
+
     outSpot->x = foundX;
     outSpot->y = foundY;
     return found;
