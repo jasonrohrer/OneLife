@@ -4,6 +4,12 @@ http://onehouronelife.com/updateLog.php
 
 
 
+Version 431    ???
+
+--Added better message after hitting the AHAP VOTE button.  Vote isn't
+  submitted until you log in to the game.
+
+
 
 Version 430    2025-January-13
 

@@ -98,7 +98,7 @@ contentLeaderExplain "CURRENTLY ELECTED CONTENT LEADER:"
 
 postAHAPSettingsTip "POST TO SERVER"
 
-githubAccountUpdateSuccess "POSTING SUCCEEDED"
+githubAccountUpdateSuccess "POSTING SUCCEEDED##YOU MUST LOG IN TO REGISTER VOTE"
 
 
 
