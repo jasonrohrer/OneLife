@@ -3240,6 +3240,22 @@ function ls_log( $message ) {
         $query = "INSERT INTO $tableNamePrefix"."log VALUES ( " .
             "'$slashedMessage', CURRENT_TIMESTAMP );";
         $result = ls_queryDatabase( $query );
+
+        
+        // don't keep log entries  after log gets too big
+
+        $query = "SELECT COUNT(*) FROM $tableNamePrefix"."log;";
+
+        $result = ts_queryDatabase( $query );
+        
+        $countEntries = ts_mysqli_result( $result, 0, 0 );
+
+        if( $countEntries > 10000 ) {
+        
+            $query = "DELETE FROM $tableNamePrefix"."log ".
+                "ORDER BY entry_time ASC LIMIT 100";
+            ts_queryDatabase( $query );
+            }
         }
     }
 
