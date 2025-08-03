@@ -1280,11 +1280,14 @@ function ls_logLife() {
 
     $hash_value = strtoupper( $hash_value );
 
+    
+    ls_log( "Got logLife call:  " . $_SERVER[ 'QUERY_STRING' ] );
 
     if( $email == "" ||
         $server == "" ) {
 
-        ls_log( "logLife denied for bad email or server name" );
+        ls_log( "logLife denied for bad email or server name:  "
+                . $_SERVER[ 'QUERY_STRING' ] );
         
         echo "DENIED";
         return;
@@ -1293,7 +1296,8 @@ function ls_logLife() {
     $trueSeq = ls_getSequenceNumberForEmail( $email );
 
     if( $trueSeq > $sequence_number ) {
-        ls_log( "logLife denied for stale sequence number" );
+        ls_log( "logLife denied for stale sequence number:  "
+                . $_SERVER[ 'QUERY_STRING' ] );
 
         echo "DENIED";
         return;
@@ -1303,7 +1307,8 @@ function ls_logLife() {
         strtoupper( ls_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
 
     if( $computedHashValue != $hash_value ) {
-        // ls_log( "logLife denied for bad hash value" );
+        ls_log( "logLife denied for bad hash value:  "
+                . $_SERVER[ 'QUERY_STRING' ] );
 
         echo "DENIED";
         return;
