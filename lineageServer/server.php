@@ -1974,7 +1974,10 @@ function ls_printFrontPageRows( $inForceIndexClause,
         "(query took $runTimeMS milisecond$plural)</td></tr>";
 
     if( $runTime > 0.5 ) {
-        ls_log( "This query took $runTimeMS miliseconds:  $query" );
+        // for now, we're logging ALL slow queries in ls_queryDatabase
+        // don't double-log here
+        
+        // ls_log( "This query took $runTimeMS miliseconds:  $query" );
         }
     }
 
