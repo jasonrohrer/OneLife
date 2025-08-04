@@ -3198,7 +3198,7 @@ function ls_queryDatabase( $inQueryString, $inLogLongQueries = true ) {
 
         if( $runTime > 0.5 ) {
             $runTimeMS = number_format( $runTime * 1000, 0 );
-            ls_log( "This query took $runTimeMS miliseconds:  $query" );
+            ls_log( "This query took $runTimeMS miliseconds:  $inQueryString" );
             }
         }
     
