@@ -1638,7 +1638,7 @@ function ls_frontPage() {
         $result = ls_queryDatabase( $query );
         $numNameMatches = ls_mysqli_result( $result, 0, 0 );
 
-        if( $numNameMatches > 30000 ) {
+        if( $numNameMatches > 1000 ) {
             $filterClause = " WHERE 1 ";
             $tooManyNameMatches = true;
             }
