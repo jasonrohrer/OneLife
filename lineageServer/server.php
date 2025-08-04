@@ -3150,8 +3150,11 @@ function ls_secondsToAgeSummary( $inSeconds ) {
  *
  * @return a result handle that can be passed to other mysql functions.
  */
-function ls_queryDatabase( $inQueryString ) {
+function ls_queryDatabase( $inQueryString, $inLogLongQueries = true ) {
     global $ls_mysqlLink;
+
+    $startTime = microtime( true );
+    
     
     if( gettype( $ls_mysqlLink ) != "resource" ) {
         // not a valid mysql link?
@@ -3190,6 +3193,16 @@ function ls_queryDatabase( $inQueryString ) {
             }
         }
 
+    if( $inLogLongQueries ) {    
+        $runTime = microtime( true ) - $startTime;
+
+        if( $runTime > 0.5 ) {
+            $runTimeMS = number_format( $runTime * 1000, 0 );
+            ls_log( "This query took $runTimeMS miliseconds:  $query" );
+            }
+        }
+    
+    
     return $result;
     }
 
@@ -3244,22 +3257,24 @@ function ls_log( $message ) {
     
         $query = "INSERT INTO $tableNamePrefix"."log VALUES ( " .
             "'$slashedMessage', CURRENT_TIMESTAMP );";
-        $result = ls_queryDatabase( $query );
+
+        // don't time this 
+        $result = ls_queryDatabase( $query, false );
 
         
         // don't keep log entries  after log gets too big
 
         $query = "SELECT COUNT(*) FROM $tableNamePrefix"."log;";
 
-        $result = ts_queryDatabase( $query );
+        $result = ls_queryDatabase( $query );
         
-        $countEntries = ts_mysqli_result( $result, 0, 0 );
+        $countEntries = ls_mysqli_result( $result, 0, 0 );
 
         if( $countEntries > 10000 ) {
         
             $query = "DELETE FROM $tableNamePrefix"."log ".
                 "ORDER BY entry_time ASC LIMIT 100";
-            ts_queryDatabase( $query );
+            ls_queryDatabase( $query );
             }
         }
     }
