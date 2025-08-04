@@ -20221,6 +20221,15 @@ int main( int inNumArgs, const char **inArgs ) {
                                 if( nextConnection->twinCount > maxCount ) {
                                     nextConnection->twinCount = maxCount;
                                     }
+                                if( nextConnection->twinCount < 2 ) {
+                                    // don't allow twin counts of 1 or 0
+                                    // count it as if they're not even
+                                    // asking to be twins
+                                    nextConnection->twinCount = 0;
+                                    delete [] nextConnection->twinCode;
+                                    nextConnection->twinCode = NULL;
+                                    }
+                                
                                 }
                             
 

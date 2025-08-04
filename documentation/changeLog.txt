@@ -29,6 +29,10 @@ Server Fixes:
   server entries (custom filter was set, preventing generation=1 for the deep
   roots lists).
 
+--Sever no longer accepts LOGIN messages with twin_counts of 0 or 1, and
+  instead counts these as ordinary non-twin logins.  This was a bug in the
+  server code being used by modded clients to force-end adult lives and get
+  reborn.
 
 
 
