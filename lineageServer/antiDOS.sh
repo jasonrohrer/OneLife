@@ -31,11 +31,12 @@ while read line ; do
 	count=${parts[0]}
 	ip=${parts[1]}
 
-	if echo "$whiteList" | grep -q "$ip"; then
-		# IP on whitelist, do nothing
-	else	
-		if [[ $count -gt 2000 ]];
-		then
+	if [[ $count -gt 2000 ]];
+	then
+		if echo "$whiteList" | grep -q "$ip"; then
+			# IP on whitelist, do nothing
+			echo "IP $ip has $count requests recently, but it's on white list."
+		else
 			echo "blocking future connections from $ip"
 			echo "since it has made $count requests recently"
 		
