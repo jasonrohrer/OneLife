@@ -695,18 +695,23 @@ function ls_showDetail( $checkPassword = true ) {
     echo "[<a href=\"server.php?action=show_data" .
          "\">Main</a>]<br><br><br>";
     
-    global $tableNamePrefix;
+    global $tableNamePrefix, $sharedGameServerSecret;
     
 
     $email = ls_requestFilter( "email", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i" );
             
-    $query = "SELECT id, life_count FROM $tableNamePrefix"."users ".
-            "WHERE email = '$email';";
+    $query =
+        "SELECT id, life_count, sequence_number ".
+        "FROM $tableNamePrefix"."users ".
+        "WHERE email = '$email';";
     $result = ls_queryDatabase( $query );
 
     $id = ls_mysqli_result( $result, 0, "id" );
     $life_count = ls_mysqli_result( $result, 0, "life_count" );
+    $sequence_number = ls_mysqli_result( $result, 0, "sequence_number" );
 
+    $nextHashValue =
+        strtoupper( ls_hmac_sha1( $sharedGameServerSecret, $sequence_number ) );
     
 
     echo "<center><table border=0><tr><td>";
@@ -714,6 +719,8 @@ function ls_showDetail( $checkPassword = true ) {
     echo "<b>ID:</b> $id<br><br>";
     echo "<b>Email:</b> $email<br><br>";
     echo "<b>Life Count:</b> $life_count<br><br>";
+    echo "<b>Next sequence number:</b> $sequence_number<br><br>";
+    echo "<b>Next hash value:</b> $nextHashValue<br><br>";
     echo "<br><br>";
 
 
