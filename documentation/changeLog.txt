@@ -15,6 +15,21 @@ Server Fixes:
 
 --Lineage server only keeps most recent 10,000 log entries.
 
+--Logging all slow queries in lineage server.
+
+--Anti-DOS script running on lineage server to block IP addresses making more
+  than 2000 requests per day (several bots were making 50,000 requests per
+  day).  OHOL game servers are whitelisted.
+
+--No longer allowing vague lineage name searches that match 30,000 lives,
+  since this was too slow. Limiting name searches to specific names that
+  don't match more than 1000 lives.  
+
+--Fixed a major slowdown bug when vague name search matches too many lineage
+  server entries (custom filter was set, preventing generation=1 for the deep
+  roots lists).
+
+
 
 
 
