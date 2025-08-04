@@ -44,8 +44,8 @@ while read line ; do
 
 			if [[ $alreadyBlocked -eq 0 ]];
 			then
-				ufw insert 3 deny from $ip to any port 443
-				ufw insert 3 deny from $ip to any port 80
+				ufw insert 2 deny from $ip to any port 443
+				ufw insert 2 deny from $ip to any port 80
 			else
 				echo "already blocked by ufw, doing nothing."
 			fi
