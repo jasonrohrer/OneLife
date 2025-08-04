@@ -151,6 +151,9 @@ else if( $action == "show_data" ) {
 else if( $action == "show_detail" ) {
     ls_showDetail();
     }
+else if( $action == "recompute_depth" ) {
+    ls_recomputeDepth();
+    }
 else if( $action == "logout" ) {
     ls_logout();
     }
@@ -677,6 +680,21 @@ function ls_showData( $checkPassword = true ) {
 
 
     echo "<hr>";
+
+    // form for updating depth for life
+?>
+        <hr>
+            <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="recompute_depth">
+             Life ID: <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="life_id"
+             VALUE=""> 
+    <INPUT TYPE="Submit" VALUE="Recompute Depth">
+    </FORM>
+        <hr>
+<?php
+
+
+    echo "<hr>";
     
     echo "<a href=\"server.php?action=show_log\">".
         "Show log</a>";
@@ -773,6 +791,25 @@ function ls_showDetail( $checkPassword = true ) {
         }
     }
 
+
+
+function ls_recomputeDepth() {
+    ls_checkPassword( "recompute_depth" );
+    
+    echo "[<a href=\"server.php?action=show_data" .
+         "\">Main</a>]<br><br><br>";
+    
+    global $tableNamePrefix;
+    
+
+    $life_id = ls_requestFilter( "life_id", "/[0-9]+/i", 0 );
+
+    echo "Setting up depth for life: $life_id<br><br>";
+        
+    ls_setupDepthForLife( $life_id );
+
+    echo "Done<br><br>";
+    }
 
 
 
@@ -1387,6 +1424,18 @@ function ls_logLife() {
     ls_queryDatabase( $query );
 
     $life_id = ls_getLifeID( $server_id, $player_id );
+
+    ls_setupDepthForLife( $inLifeID );
+    
+    
+    echo "OK";
+    }
+
+
+
+function ls_setupDepthForLife( $inLifeID ) {
+    $life_id = $inLifeID;
+    
     $deepestInfo = ls_computeDeepestGeneration( $life_id );
 
 
@@ -1413,9 +1462,6 @@ function ls_logLife() {
                                        $deepest_descendant_life_id );
             }
         }
-    
-    
-    echo "OK";
     }
 
 

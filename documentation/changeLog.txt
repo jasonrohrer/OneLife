@@ -39,6 +39,10 @@ Server Fixes:
   and finally goes through (before, parallel requests could end up using the
   same sequence number, causing the later requests to be rejected).
 
+--Added function in back-end admin interface for re-computing lineage depth for
+  a given life (up and down) in lineage server.  Will let me patch up the depth
+  of the Cat family.
+
 
 
 
