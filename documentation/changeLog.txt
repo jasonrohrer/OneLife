@@ -34,6 +34,11 @@ Server Fixes:
   server code being used by modded clients to force-end adult lives and get
   reborn.
 
+--Fixed so that parallel lineage server requests (logging deaths) for the same
+  email address force incremental sequence numbers as each request is resolved
+  and finally goes through (before, parallel requests could end up using the
+  same sequence number, causing the later requests to be rejected).
+
 
 
 

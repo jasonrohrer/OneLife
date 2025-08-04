@@ -31,8 +31,17 @@ typedef struct LineageRecord {
         char male;
         
         WebRequest *request;
+
         // -1 until first request gets it
         int sequenceNumber;
+        
+        // if we have other parallel sequence number requests for this email
+        // and they return first, we might get a stale sequence number when
+        // our request returns
+        // set this to 1 above the higest sequence number used by a parallel
+        // request
+        int forceSequenceNumberToBeAtLeast;
+
     } LineageRecord;
 
 
@@ -124,7 +133,7 @@ void recordPlayerLineage( char *inEmail, double inAge,
                             stringDuplicate( inName ),
                             stringDuplicate( inLastSay ),
                             inMale,
-                            request, -1 };
+                            request, -1, 0 };
         records.push_back( r );
         }
     }
@@ -166,6 +175,67 @@ void stepLineageLog() {
                     delete r->request;
                     
                     // start lineage-posting request
+                    
+                    // make sure our sequence number that we will use
+                    // is higher than any alread-used sequence number
+                    // from a parallel request for this same email
+                    
+                    if( r->sequenceNumber < 
+                        r->forceSequenceNumberToBeAtLeast ) {
+                        
+                        r->sequenceNumber = r->forceSequenceNumberToBeAtLeast;
+                        }
+                    
+
+                    // we are actually going to USE this sequence number now,
+                    // so make sure any parallel requests that are still
+                    // waiting for sequence numbers use an even higher number
+                    for( int j=0; j<records.size(); j++ ) {
+                        LineageRecord *rOther = records.getElement( j );
+                        if( r->sequenceNumber == -1 &&     // still waiting
+                            strcmp( rOther->email, r->email ) ==  0 ) {
+                            
+                            rOther->forceSequenceNumberToBeAtLeast =
+                                r->sequenceNumber + 1;
+                            }
+                        }
+                    // note that if there are MULTIPLE parallel requests
+                    // waiting for sequence numbers, we set them ALL to the
+                    // same forceSequenceNumberToBeAtLeast value.
+                    // This works because they will each get a sequence
+                    // number back from the server, one at a time (in some
+                    // order, though the responses could be out-of-order
+                    // in terms of sequence numbers the server provides).
+                    // So each one, in turn, will use its
+                    // forceSequenceNumberToBeAtLeast value and THEN
+                    // set all the other waiting parallel requests to one higher
+                    // than that.
+                    
+                    // Note that also, due to parallel requests from other
+                    // places, the server might return an even higher sequence
+                    // number than forceSequenceNumberToBeAtLeast
+                    // in which case, the request will use that instead
+                    // (and set other parallel requests 1 higher than that).
+
+                    // This is all necessary because if a player dies
+                    // multiple times in a row, very quickly, lots
+                    // of pending lineage server requests can be launched
+                    // which may be resolved by the lineage server in
+                    // whatever order.  Two requests for sequence numbers
+                    // might go through before either request goes through,
+                    // which would cause the requests to use the same
+                    // sequence number, and one be marked as stale.
+                    
+                    // We COULD process these requests one at a time,
+                    // from start-to-finish (getting sequence number, 
+                    // sending request, and then moving on to next one)
+                    // but that would require a big code refactor.
+
+                    // also, we only run this step 4x per second, so we
+                    // want to process as many requests as possible in
+                    // each step, or else requests could pile up (if we
+                    // only ended up processing one request per step).
+                    
 
                     char *seqString = autoSprintf( "%d", r->sequenceNumber );
                     
