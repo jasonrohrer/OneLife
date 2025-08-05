@@ -40,12 +40,12 @@ while read line ; do
 			echo "blocking future connections from $ip"
 			echo "since it has made $count requests recently"
 		
-			alreadyBlocked="$( ufw status | grep -c $ip )"
+			alreadyBlocked="$( /usr/sbin/ufw status | grep -c $ip )"
 
 			if [[ $alreadyBlocked -eq 0 ]];
 			then
-				ufw insert 2 deny from $ip to any port 443
-				ufw insert 2 deny from $ip to any port 80
+				/usr/sbin/ufw insert 2 deny from $ip to any port 443
+				/usr/sbin/ufw insert 2 deny from $ip to any port 80
 			else
 				echo "already blocked by ufw, doing nothing."
 			fi
