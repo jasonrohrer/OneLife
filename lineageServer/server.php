@@ -154,6 +154,9 @@ else if( $action == "show_detail" ) {
 else if( $action == "recompute_depth" ) {
     ls_recomputeDepth();
     }
+else if( $action == "recompute_depth_bulk" ) {
+    ls_recomputeDepthBulk();
+    }
 else if( $action == "logout" ) {
     ls_logout();
     }
@@ -694,6 +697,19 @@ function ls_showData( $checkPassword = true ) {
 <?php
 
 
+    // form for updating depth for lives in bulk
+?>
+        <hr>
+            <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="recompute_depth_bulk">
+             Num Recent Lives To Update: <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="count"
+             VALUE=""> 
+    <INPUT TYPE="Submit" VALUE="Recompute Depth">
+    </FORM>
+        <hr>
+<?php
+
+
     echo "<hr>";
     
     echo "<a href=\"server.php?action=show_log\">".
@@ -807,6 +823,37 @@ function ls_recomputeDepth() {
     echo "Setting up depth for life: $life_id<br><br>";
         
     ls_setupDepthForLife( $life_id );
+
+    echo "Done<br><br>";
+    }
+
+
+
+function ls_recomputeDepthBulk() {
+    ls_checkPassword( "recompute_depth_bulk" );
+    
+    echo "[<a href=\"server.php?action=show_data" .
+         "\">Main</a>]<br><br><br>";
+    
+    global $tableNamePrefix;
+    
+
+    $count = ls_requestFilter( "count", "/[0-9]+/i", 0 );
+
+    $query = "SELECT id FROM $tableNamePrefix"."lives ".
+        "WHERE generation = -1 ".
+        "ORDER BY id DESC LIMIT $count";
+
+    $result = ls_queryDatabase( $query );
+
+    $numRows = mysqli_num_rows( $result );
+
+    for( $i=0; $i<$numRows; $i++ ) {
+        
+        $id = ls_mysqli_result( $result, $i, "id" );
+        echo "Setting up depth for life: $id<br><br>";
+        ls_setupDepthForLife( $id );
+        }
 
     echo "Done<br><br>";
     }
