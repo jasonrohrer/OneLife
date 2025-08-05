@@ -848,7 +848,9 @@ function ls_recomputeDepthBulk() {
 
     $numRows = mysqli_num_rows( $result );
 
-    for( $i=0; $i<$numRows; $i++ ) {
+    // process backwards, to increase chances of parents being done
+    // before children
+    for( $i=$numRows-1; $i>=0; $i-- ) {
         
         $id = ls_mysqli_result( $result, $i, "id" );
         echo "Setting up depth for life: $id<br><br>";
