@@ -956,21 +956,15 @@ function ls_getServerName( $inServerID ) {
 function ls_getGeneration( $inLifeID ) {
     global $tableNamePrefix;
     
-    $query = "SELECT id, server_id, generation, parent_id, ".
-        "TIMESTAMPDIFF( HOUR, death_time, CURRENT_TIMESTAMP ) AS hours_dead ".
+    $query = "SELECT server_id, generation, parent_id ".
         "FROM $tableNamePrefix"."lives ".
         "WHERE id = '$inLifeID';";
 
     $result = ls_queryDatabase( $query );
 
-    $id = ls_mysqli_result( $result, 0, "id" );
     $generation = ls_mysqli_result( $result, 0, "generation" );
-    $hours_dead = ls_mysqli_result( $result, 0, "hours_dead" );
     
     if( $generation == -1 ) {
-        if( $hours_dead > 2 ) {
-            ls_log( "Trying to set generation for long-dead life id $id" );
-            }
 
         // compute it, if we can
 
@@ -986,11 +980,6 @@ function ls_getGeneration( $inLifeID ) {
             
             if( $parent_life_id == -1 ) {
                 // parent hasn't died yet
-                if( $hours_dead > 2 ) {
-                    // ancestor not logged, even though we're long dead
-                    ls_log( "Ancestor with player_id = $parent_id " .
-                            "does not exist for long-dead life id $id" );
-                    }
                 break;
                 }
             
@@ -1015,9 +1004,6 @@ function ls_getGeneration( $inLifeID ) {
             $query = "UPDATE $tableNamePrefix"."lives SET ".
                 "generation = '$generation' WHERE id = '$inLifeID';";
             ls_queryDatabase( $query );
-            }
-        else if( $hours_dead > 2 ) {
-            ls_log( "Failed to set generation for long-dead life id $id" );
             }
         }
 
