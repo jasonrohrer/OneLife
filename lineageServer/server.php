@@ -1498,6 +1498,9 @@ function ls_logLife() {
 
 function ls_setupDepthForLife( $inLifeID ) {
     $life_id = $inLifeID;
+
+    // this will compute it if it's not set yet
+    ls_getGeneration( $life_id );
     
     $deepestInfo = ls_computeDeepestGeneration( $life_id );
 
