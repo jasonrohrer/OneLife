@@ -1425,7 +1425,7 @@ function ls_logLife() {
 
     $life_id = ls_getLifeID( $server_id, $player_id );
 
-    ls_setupDepthForLife( $inLifeID );
+    ls_setupDepthForLife( $life_id );
     
     
     echo "OK";
