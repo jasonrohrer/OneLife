@@ -43,6 +43,14 @@ Server Fixes:
   a given life (up and down) in lineage server.  Will let me patch up the depth
   of the Cat family.
 
+--Fixed behavior of sub-containers when something in the main container decays
+  away to nothing, leaving a gap.  Before, the sub-container filling the gap
+  (sliding into place) would forget its sub-items but those items would still
+  be stuck in the database for that slot. A new sub-container inserted into
+  that slot would pick up those items.  This could be repeated to eventually
+  get a container with an arbitrary number of items, way over its specified
+  capacity.  Fixes #1170
+
 
 
 
