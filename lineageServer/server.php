@@ -3132,6 +3132,7 @@ function ls_purgePrepare() {
 
     $query = "SELECT id, name, death_time ".
         "FROM $tableNamePrefix"."lives ".
+        "WHERE generation = 1 ".
         "ORDER BY lineage_depth DESC, death_time DESC ".
         "LIMIT $numPerList;";
     
@@ -3225,6 +3226,7 @@ function ls_purge() {
 
     $query = "SELECT id, name, lineage_depth, death_time ".
         "FROM $tableNamePrefix"."lives ".
+        "WHERE generation = 1 ".
         "ORDER BY lineage_depth DESC, death_time DESC ".
         "LIMIT $numPerList;";
     
