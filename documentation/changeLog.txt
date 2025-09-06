@@ -51,6 +51,10 @@ Server Fixes:
   get a container with an arbitrary number of items, way over its specified
   capacity.  Fixes #1170
 
+--Added lineage server index on ( eve_life_id, death_time ) to make finding old
+  lives that don't match one of the record-breaking eve lines faster.
+
+
 
 
 
