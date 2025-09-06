@@ -3236,7 +3236,8 @@ function ls_purge() {
     $numRows = mysqli_num_rows( $result );
 
     echo "Record-breaking eves:<br>";
-
+    flush();
+    
     $whereClauseA = " 1 ";
     $whereClauseB = " 0 ";
     
@@ -3253,6 +3254,8 @@ function ls_purge() {
 
         echo "$name || $lineage_depth || $deathAgo<br>\n";
 
+        flush();
+        
         $whereClauseA = $whereClauseA .
             " AND eve_life_id != $id  AND id != $id ";
         $whereClauseB = $whereClauseB .
@@ -3288,6 +3291,7 @@ function ls_purge() {
     echo "Would delete $countToDelete ".
         "and keep $countToKeep out of $countAll lives<br>";
 
+    flush();
 
     $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
         "WHERE death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR )";
