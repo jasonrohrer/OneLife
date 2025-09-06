@@ -3121,6 +3121,9 @@ function ls_purgePrepare() {
     global $tableNamePrefix;
     // fixme
 
+    $step = ls_requestFilter( "step", "/[0-9]+/i", 0 );
+
+    
     global $usersPerPage;
 
     $numPerList = floor( $usersPerPage / 4 );
@@ -3141,14 +3144,15 @@ function ls_purgePrepare() {
     
     $numRows = mysqli_num_rows( $result );
 
-    echo "$numRows eves<br>";
+    echo "$numRows eves (step = $step)<br>";
     
     for( $i=0; $i<$numRows; $i++ ) {
         $id = ls_mysqli_result( $result, $i, "id" );
         $name = ls_mysqli_result( $result, $i, "name" );
         $death_time = ls_mysqli_result( $result, $i, "death_time" );
 
-        if( $name != "Nameless" ) {
+        if( ( $i == $step || $step == -1 )
+            && $name != "Nameless" ) {
             
             echo "Looking for missing descendants from $name<br>";
 
@@ -3236,8 +3240,7 @@ function ls_purge() {
     $numRows = mysqli_num_rows( $result );
 
     echo "Record-breaking eves:<br>";
-    flush();
-    
+
     $whereClauseA = " 1 ";
     $whereClauseB = " 0 ";
     
@@ -3254,8 +3257,6 @@ function ls_purge() {
 
         echo "$name || $lineage_depth || $deathAgo<br>\n";
 
-        flush();
-        
         $whereClauseA = $whereClauseA .
             " AND eve_life_id != $id  AND id != $id ";
         $whereClauseB = $whereClauseB .
@@ -3291,7 +3292,6 @@ function ls_purge() {
     echo "Would delete $countToDelete ".
         "and keep $countToKeep out of $countAll lives<br>";
 
-    flush();
 
     $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
         "WHERE death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR )";
