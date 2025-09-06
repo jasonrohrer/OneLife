@@ -169,6 +169,12 @@ else if( $action == "character_page" ) {
 else if( $action == "character_dump" ) {
     ls_characterDump();
     }
+else if( $action == "purge_prepare" ) {
+    ls_purgePrepare();
+    }
+else if( $action == "purge" ) {
+    ls_purge();
+    }
 // disable this one for now, no longer needed
 else if( false && $action == "reformat_names" ) {
     ls_reformatNames();
@@ -364,6 +370,8 @@ function ls_setupDatabase() {
             "INDEX( user_id, death_time ),".
             // -1 if not set yet
             // 0 for Eve
+            // -2 if we tried to set it an hour after death and failed
+            // (so we shouldn't try again)
             // the Eve of this family line
             "eve_life_id INT NOT NULL,".
             "INDEX( eve_life_id ),".
@@ -1019,14 +1027,18 @@ function ls_getGeneration( $inLifeID ) {
 function ls_getEveID( $inLifeID ) {
     global $tableNamePrefix;
     
-    $query = "SELECT server_id, eve_life_id, parent_id ".
+    $query = "SELECT server_id, eve_life_id, parent_id, death_time ".
         "FROM $tableNamePrefix"."lives ".
         "WHERE id = '$inLifeID';";
 
     $result = ls_queryDatabase( $query );
 
     $eve_life_id = ls_mysqli_result( $result, 0, "eve_life_id" );
-    
+
+    $deathAgoSec =
+        strtotime( "now" ) -
+        strtotime( ls_mysqli_result( $result, 0, "death_time" ) );
+
     if( $eve_life_id == -1 ) {
 
         // compute it, if we can
@@ -1070,6 +1082,16 @@ function ls_getEveID( $inLifeID ) {
 
             $query = "UPDATE $tableNamePrefix"."lives SET ".
                 "eve_life_id = '$eve_life_id' WHERE id = '$inLifeID';";
+            ls_queryDatabase( $query );
+            }
+        else if( $deathAgoSec > 3600 ) {
+            // didn't find it
+            // AND this person has been dead for more than an hour
+            // stop trying to find their eve.  The chain is broken
+            // and we will never find it
+            // mark with -2
+            $query = "UPDATE $tableNamePrefix"."lives SET ".
+                "eve_life_id = '-2' WHERE id = '$inLifeID';";
             ls_queryDatabase( $query );
             }
         }
@@ -3092,6 +3114,208 @@ function ls_characterDump() {
             }        
         }    
     }
+
+
+
+function ls_purgePrepare() {
+    global $tableNamePrefix;
+    // fixme
+
+    global $usersPerPage;
+
+    $numPerList = floor( $usersPerPage / 4 );
+
+    // keep twice as many record-breaking Eves as what are shown on front
+    // page
+    // each record-breaking family isn't THAT big, in the grand scheme of things
+    $numPerList *= 2;
+
+    $query = "SELECT id, name, death_time ".
+        "FROM $tableNamePrefix"."lives ".
+        "ORDER BY lineage_depth DESC, death_time DESC ".
+        "LIMIT $numPerList;";
+    
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    echo "$numRows eves<br>";
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        $id = ls_mysqli_result( $result, $i, "id" );
+        $name = ls_mysqli_result( $result, $i, "name" );
+        $death_time = ls_mysqli_result( $result, $i, "death_time" );
+
+        if( $name != "Nameless" ) {
+            
+            echo "Looking for missing descendants from $name<br>";
+
+            $lastName = explode(" ", $name )[1];
+
+            // find lives that share Eve's name but have no eve_life_id set
+        
+            // assumes no family lives more than 6 months from Eve to last
+            // descendant
+            // current record is something like 30 days
+            
+            $whereClause = " name LIKE '% $lastName' AND eve_life_id = -1 ".
+                "AND death_time > '$death_time' ".
+                "AND death_time < DATE_ADD( '$death_time', INTERVAL 6 MONTH ) ";
+
+
+            $queryB = "SELECT COUNT(*) ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE $whereClause;";
+
+            $resultB = ls_queryDatabase( $queryB );
+    
+            $countB = ls_mysqli_result( $resultB, 0, 0 );
+
+            echo "-- Considering $countB<br>";
+            
+            
+            $queryB = "SELECT id ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE $whereClause;";
+
+            $resultB = ls_queryDatabase( $queryB );
+            
+            $numRowsB = mysqli_num_rows( $resultB );
+            
+            for( $j=0; $j<$numRowsB; $j++ ) {
+                $idB = ls_mysqli_result( $resultB, $j, "id" );
+                
+                // this will set it, if it can be computed
+                ls_getEveID( $idB );
+                }
+
+            $queryC = "SELECT COUNT(*) ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE $whereClause;";
+
+            $resultC = ls_queryDatabase( $queryC );
+    
+            $countC = ls_mysqli_result( $resultC, 0, 0 );
+
+            $fixed = $countB - $countC;
+            
+            
+            echo "-- Set eve_life_id for $fixed of them<br>";
+            }
+        }
+
+    }
+
+
+
+
+function ls_purge() {
+    global $tableNamePrefix;
+    // fixme
+
+    global $usersPerPage;
+
+    $numPerList = floor( $usersPerPage / 4 );
+
+    // keep twice as many record-breaking Eves as what are shown on front
+    // page
+    // each record-breaking family isn't THAT big, in the grand scheme of things
+    $numPerList *= 2;
+
+    $query = "SELECT id, name, lineage_depth, death_time ".
+        "FROM $tableNamePrefix"."lives ".
+        "ORDER BY lineage_depth DESC, death_time DESC ".
+        "LIMIT $numPerList;";
+    
+    
+    $result = ls_queryDatabase( $query );
+    
+    $numRows = mysqli_num_rows( $result );
+
+    echo "Record-breaking eves:<br>";
+
+    $whereClauseA = " 1 ";
+    $whereClauseB = " 0 ";
+    
+    for( $i=0; $i<$numRows; $i++ ) {
+        $id = ls_mysqli_result( $result, $i, "id" );
+        $name = ls_mysqli_result( $result, $i, "name" );
+        $lineage_depth = ls_mysqli_result( $result, $i, "lineage_depth" );
+        $death_time = ls_mysqli_result( $result, $i, "death_time" );
+        
+        $deathAgoSec = strtotime( "now" ) -
+            strtotime( $death_time );
+        
+        $deathAgo = ls_secondsToAgeSummary( $deathAgoSec );
+
+        echo "$name || $lineage_depth || $deathAgo<br>\n";
+
+        $whereClauseA = $whereClauseA .
+            " AND eve_life_id != $id  AND id != $id ";
+        $whereClauseB = $whereClauseB .
+            " OR eve_life_id = $id OR id = $id ";
+        }
+    
+
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+        "WHERE $whereClauseA ".
+        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR );";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countToDelete = ls_mysqli_result( $result, 0, 0 );
+
+
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+        "WHERE $whereClauseB ".
+        "OR death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR );";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countToKeep = ls_mysqli_result( $result, 0, 0 );
+
+
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives;";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countAll = ls_mysqli_result( $result, 0, 0 );
+
+    
+    echo "Would delete $countToDelete ".
+        "and keep $countToKeep out of $countAll lives<br>";
+
+
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+        "WHERE death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR )";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countRecent = ls_mysqli_result( $result, 0, 0 );
+
+    
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+        "WHERE death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR )";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countOld = ls_mysqli_result( $result, 0, 0 );
+
+
+    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+        "WHERE $whereClauseB;";
+
+    $result = ls_queryDatabase( $query );
+    
+    $countInRecordFams = ls_mysqli_result( $result, 0, 0 );
+
+
+    echo "There are $countRecent recent lives, $countOld old lives, and ".
+        "and $countInRecordFams lives in record-breaking lines.<br>";
+    }
+
+
 
 
 function ls_reformatNames() {
