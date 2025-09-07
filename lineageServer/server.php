@@ -1784,6 +1784,8 @@ function ls_frontPage() {
 
     $emailHashParam = "";
 
+    $email_sha1 = ls_requestFilter( "email_sha1", "/[a-f0-9]+/i", "" );
+    
     if( $email_sha1 != "" ) {
         $ticket_hash =
             ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
