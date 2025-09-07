@@ -1785,7 +1785,14 @@ function ls_frontPage() {
     $emailHashParam = "";
 
     if( $email_sha1 != "" ) {
-        $emailHashParam = "&email_sha1=$email_sha1";
+        $ticket_hash =
+            ls_requestFilter( "ticket_hash", "/[a-f0-9]+/i", "" );
+
+        $string_to_hash =
+            ls_requestFilter( "string_to_hash", "/[A-Z0-9]+/i", "0" );
+
+        $emailHashParam = "&email_sha1=$email_sha1".
+            "&ticket_hash=$ticket_hash&string_to_hash=$string_to_hash";
         }
     
     echo "[<a href=http://oldlineage.onehouronelife.com/server.php".
