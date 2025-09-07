@@ -63,6 +63,15 @@ server {
         }
 					
 
+
+    # don't serve php backup files
+    # leaks	API keys from settings.php etc.
+    location ~ \.php~$
+    {
+        deny all;
+    }
+
+
 	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
 	#
 	#location ~ \.php$ {
