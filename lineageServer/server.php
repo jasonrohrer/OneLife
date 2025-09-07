@@ -3290,6 +3290,11 @@ function ls_purge() {
     
     $countToDelete = ls_mysqli_result( $result, 0, 0 );
 
+    echo "Delete query:  DELETE FROM $tableNamePrefix"."lives ".
+        "WHERE $whereClauseA ".
+        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR );<br";
+    
+    
 
     $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
         "WHERE $whereClauseB ".
