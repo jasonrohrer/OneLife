@@ -1782,6 +1782,15 @@ function ls_frontPage() {
 
     eval( $header );
 
+    $emailHashParam = "";
+
+    if( $email_sha1 != "" ) {
+        $emailHashParam = "&email_sha1=$email_sha1";
+        }
+    
+    echo "[<a href=http://oldlineage.onehouronelife.com/server.php".
+        "?action=front_page$emailHashParam>Historic Archive</a>]";
+    
     echo "<center>";
 
     $filterToShow = $nameFilter;
