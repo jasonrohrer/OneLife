@@ -23,3 +23,11 @@ cd ~/checkout/AnotherPlanetData
 rsync faces/*.png ~/public_html/ahapLineageServer/faces/
 
 rsync objects/*.txt ~/public_html/ahapLineageServer/objects/
+
+
+
+curl http://lineage.onehouronelife.com/server.php?action=purge_prepare
+curl http://lineage.onehouronelife.com/server.php?action=purge
+
+curl http://lineage.onehouronelife.com/ahapLineageServer/server.php?action=purge_prepare
+curl http://lineage.onehouronelife.com/ahapLineageServer/server.php?action=purge

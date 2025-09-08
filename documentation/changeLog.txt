@@ -54,6 +54,14 @@ Server Fixes:
 --Added lineage server index on ( eve_life_id, death_time ) to make finding old
   lives that don't match one of the record-breaking eve lines faster.
 
+--New server at oldlineage.onehouronelife.com which has a historical archive of
+  the 11 million lives that were lived during the first 7 years of OHOL.  The
+  main family tree server now maintains only the last 365 days of lives, plus
+  all lives from the top-ten longest-line families.  This speeds up the family
+  tree server dramatically, which was so bogged by 4+ GB of data that it was
+  sometimes timing out when game servers tried to add new lives.  An hourly
+  cron job now purges lives that are more than a year old that aren't part of a
+  top-ten family.
 
 
 
