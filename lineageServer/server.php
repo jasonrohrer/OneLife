@@ -3154,7 +3154,7 @@ function ls_purgePrepare() {
         "ORDER BY lineage_depth DESC, death_time DESC ".
         "LIMIT $numPerList;";
 
-    $startTime = microtime();
+    $startTime = microtime( true );
     
     
     $result = ls_queryDatabase( $query );
@@ -3226,7 +3226,7 @@ function ls_purgePrepare() {
             }
         }
 
-    $deltaTime = microtime() - $startTime;
+    $deltaTime = microtime( true ) - $startTime;
     
     echo "Took $deltaTime seconds<br>";
     }
