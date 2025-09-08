@@ -3201,41 +3201,43 @@ function ls_purgePrepare() {
             $countB = ls_mysqli_result( $resultB, 0, 0 );
 
             echo "-- Considering $countB<br>";
-            
-            
-            $queryB = "SELECT id ".
-                "FROM $tableNamePrefix"."lives ".
-                "WHERE $whereClause;";
 
-            $startTimeB = microtime( true );
+            if( $countB > 0 ) {                
+            
+                $queryB = "SELECT id ".
+                    "FROM $tableNamePrefix"."lives ".
+                    "WHERE $whereClause;";
 
-            $resultB = ls_queryDatabase( $queryB );
+                $startTimeB = microtime( true );
 
-            $deltaTimeB = microtime( true ) - $startTimeB;
+                $resultB = ls_queryDatabase( $queryB );
+
+                $deltaTimeB = microtime( true ) - $startTimeB;
             
-            echo "Select query took $deltaTimeB:  $queryB<br>";
+                echo "Select query took $deltaTimeB:  $queryB<br>";
             
-            $numRowsB = mysqli_num_rows( $resultB );
+                $numRowsB = mysqli_num_rows( $resultB );
             
-            for( $j=0; $j<$numRowsB; $j++ ) {
-                $idB = ls_mysqli_result( $resultB, $j, "id" );
+                for( $j=0; $j<$numRowsB; $j++ ) {
+                    $idB = ls_mysqli_result( $resultB, $j, "id" );
                 
-                // this will set it, if it can be computed
-                ls_getEveID( $idB );
-                }
+                    // this will set it, if it can be computed
+                    ls_getEveID( $idB );
+                    }
 
-            $queryC = "SELECT COUNT(*) ".
-                "FROM $tableNamePrefix"."lives ".
-                "WHERE $whereClause;";
+                $queryC = "SELECT COUNT(*) ".
+                    "FROM $tableNamePrefix"."lives ".
+                    "WHERE $whereClause;";
 
-            $resultC = ls_queryDatabase( $queryC );
+                $resultC = ls_queryDatabase( $queryC );
     
-            $countC = ls_mysqli_result( $resultC, 0, 0 );
+                $countC = ls_mysqli_result( $resultC, 0, 0 );
 
-            $fixed = $countB - $countC;
+                $fixed = $countB - $countC;
             
             
-            echo "-- Set eve_life_id for $fixed of them<br>";
+                echo "-- Set eve_life_id for $fixed of them<br>";
+                }
             }
         }
 
