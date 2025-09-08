@@ -50,7 +50,7 @@ while( $numDeleted > 0 ) {
         $timeString = getElapsedTimeString( $startTime );
         
         echo "\nDeleted $numDeleted more, total deleted = $totalDeleted, ".
-            "running for $totalDeleted";
+            "running for $timeString";
         }
     else {
         $numDeleted = 0;
@@ -60,7 +60,7 @@ while( $numDeleted > 0 ) {
 
 $timeString = getElapsedTimeString( $startTime );
 
-echo "\n\nDone, deleted $totalDeleted total, running for $totalDeleted\n\n";
+echo "\n\nDone, deleted $totalDeleted total, running for $timeString\n\n";
 
 
 function ls_mysqli_result( $result, $number, $field=0 ) {
