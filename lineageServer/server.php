@@ -3137,9 +3137,6 @@ function ls_characterDump() {
 
 function ls_purgePrepare() {
     global $tableNamePrefix;
-    // fixme
-
-    $step = ls_requestFilter( "step", "/[0-9]+/i", 0 );
 
     
     global $usersPerPage;
@@ -3156,21 +3153,22 @@ function ls_purgePrepare() {
         "WHERE generation = 1 ".
         "ORDER BY lineage_depth DESC, death_time DESC ".
         "LIMIT $numPerList;";
+
+    $startTime = microtime();
     
     
     $result = ls_queryDatabase( $query );
     
     $numRows = mysqli_num_rows( $result );
 
-    echo "$numRows eves (step = $step)<br>";
+    echo "$numRows eves<br>";
     
     for( $i=0; $i<$numRows; $i++ ) {
         $id = ls_mysqli_result( $result, $i, "id" );
         $name = ls_mysqli_result( $result, $i, "name" );
         $death_time = ls_mysqli_result( $result, $i, "death_time" );
 
-        if( ( $i == $step || $step == -1 )
-            && $name != "Nameless" ) {
+        if( $name != "Nameless" ) {
             
             echo "Looking for missing descendants from $name<br>";
 
@@ -3228,6 +3226,9 @@ function ls_purgePrepare() {
             }
         }
 
+    $deltaTime = microtime() - $startTime;
+    
+    echo "Took $deltaTime seconds<br>";
     }
 
 
