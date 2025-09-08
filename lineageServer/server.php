@@ -3240,7 +3240,6 @@ function ls_purgePrepare() {
 
 function ls_purge() {
     global $tableNamePrefix;
-    // fixme
 
     global $usersPerPage;
 
@@ -3287,66 +3286,21 @@ function ls_purge() {
         }
     
 
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
+    $query =  "DELETE FROM $tableNamePrefix"."lives ".
         "WHERE $whereClauseA ".
-        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR );";
+        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR ) LIMIT 10000;";
 
     $result = ls_queryDatabase( $query );
+
+    if( $result == true ) {
+
+        $result = ls_queryDatabase( "SELECT ROW_COUNT();" );
+
+        $numDeleted = ls_mysqli_result( $result, 0, 0 );
+
+        echo "Deleted $numDeleted lives.<br>";
+        }
     
-    $countToDelete = ls_mysqli_result( $result, 0, 0 );
-
-    echo "Delete query:  DELETE FROM $tableNamePrefix"."lives ".
-        "WHERE $whereClauseA ".
-        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR );<br";
-    
-    
-
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
-        "WHERE $whereClauseB ".
-        "OR death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR );";
-
-    $result = ls_queryDatabase( $query );
-    
-    $countToKeep = ls_mysqli_result( $result, 0, 0 );
-
-
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives;";
-
-    $result = ls_queryDatabase( $query );
-    
-    $countAll = ls_mysqli_result( $result, 0, 0 );
-
-    
-    echo "Would delete $countToDelete ".
-        "and keep $countToKeep out of $countAll lives<br>";
-
-
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
-        "WHERE death_time >= DATE_SUB( NOW(), INTERVAL 1 YEAR )";
-
-    $result = ls_queryDatabase( $query );
-    
-    $countRecent = ls_mysqli_result( $result, 0, 0 );
-
-    
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
-        "WHERE death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR )";
-
-    $result = ls_queryDatabase( $query );
-    
-    $countOld = ls_mysqli_result( $result, 0, 0 );
-
-
-    $query =  "SELECT COUNT(*) FROM $tableNamePrefix"."lives ".
-        "WHERE $whereClauseB;";
-
-    $result = ls_queryDatabase( $query );
-    
-    $countInRecordFams = ls_mysqli_result( $result, 0, 0 );
-
-
-    echo "There are $countRecent recent lives, $countOld old lives, and ".
-        "and $countInRecordFams lives in record-breaking lines.<br>";
     }
 
 
