@@ -3294,9 +3294,9 @@ function ls_purge() {
 
     if( $result == true ) {
 
-        $result = ls_queryDatabase( "SELECT ROW_COUNT();" );
-
-        $numDeleted = ls_mysqli_result( $result, 0, 0 );
+        global $ls_mysqlLink;
+        
+        $numDeleted = mysqli_affected_rows( $ls_mysqlLink );
 
         echo "Deleted $numDeleted lives.<br>";
         }
