@@ -3189,8 +3189,15 @@ function ls_purgePrepare() {
                 "FROM $tableNamePrefix"."lives ".
                 "WHERE $whereClause;";
 
+            $startTimeB = microtime( true );
+            
             $resultB = ls_queryDatabase( $queryB );
-    
+
+            $deltaTimeB = microtime( true ) - $startTimeB;
+
+            echo "Count query took $deltaTimeB:  $queryB<br>";
+            
+            
             $countB = ls_mysqli_result( $resultB, 0, 0 );
 
             echo "-- Considering $countB<br>";
@@ -3200,7 +3207,13 @@ function ls_purgePrepare() {
                 "FROM $tableNamePrefix"."lives ".
                 "WHERE $whereClause;";
 
+            $startTimeB = microtime( true );
+
             $resultB = ls_queryDatabase( $queryB );
+
+            $deltaTimeB = microtime( true ) - $startTimeB;
+            
+            echo "Select query took $deltaTimeB:  $queryB<br>";
             
             $numRowsB = mysqli_num_rows( $resultB );
             
