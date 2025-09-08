@@ -38,7 +38,8 @@ while( $numDeleted > 0 ) {
         $numDeleted = 0;
         }
     }
-echo "\n\nDone, deleted $totalDeleted total.\n\n"
+echo "\n\nDone, deleted $totalDeleted total.\n\n";
+
 
 function ls_mysqli_result( $result, $number, $field=0 ) {
     mysqli_data_seek( $result, $number );
