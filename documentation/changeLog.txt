@@ -63,6 +63,9 @@ Server Fixes:
   cron job now purges lives that are more than a year old that aren't part of a
   top-ten family.
 
+--Fixed a new bug with decaying items in sub-containers, caused by the previous
+  fix.  An item in a sub container that decays was causing all items in the
+  other sub-containers in the same super-container to disappear.
 
 
 

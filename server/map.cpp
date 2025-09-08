@@ -6452,20 +6452,27 @@ void checkDecayContained( int inX, int inY, int inSubCont ) {
             setSlotEtaDecay( inX, inY, i, mapETA, inSubCont );
             }
         
-        // loop over all old slots to set/clear sub-contained items
-        // we don't want any sub-contained things to linger in slots that
-        // are now empty (when numNewContained < numContained )
-        for( int i=0; i<numContained; i++ ) {
-            if( newSubCont[i] != NULL ) {
-                setContained( inX, inY, newSubContCount[i], 
-                              newSubCont[i],
-                              i + 1 );
-                setContainedEtaDecay( inX, inY, newSubContCount[i], 
-                                      newSubContDecay[i],
-                                      i + 1 );
-                }
-            else {
-                clearAllContained( inX, inY, i + 1 );
+
+        if( inSubCont == 0 ) {
+            // we're checking decay in a top-level container
+            // (don't do this for sub-containers, because we can't
+            // have sub-sub-containers)
+
+            // loop over all old slots to set/clear sub-contained items
+            // we don't want any sub-contained things to linger in slots that
+            // are now empty (when numNewContained < numContained )
+            for( int i=0; i<numContained; i++ ) {
+                if( newSubCont[i] != NULL ) {
+                    setContained( inX, inY, newSubContCount[i], 
+                                  newSubCont[i],
+                                  i + 1 );
+                    setContainedEtaDecay( inX, inY, newSubContCount[i], 
+                                          newSubContDecay[i],
+                                          i + 1 );
+                    }
+                else {
+                    clearAllContained( inX, inY, i + 1 );
+                    }
                 }
             }
         }
