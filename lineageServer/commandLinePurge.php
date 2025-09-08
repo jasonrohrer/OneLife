@@ -17,6 +17,21 @@ $numDeleted = 1;
 
 $totalDeleted = 0;
 
+$startTime = time();
+
+
+function getElapsedTimeString( $startTime ) {
+    $elapsed = time() - $startTime;
+
+    $hours = floor($elapsed / 3600);
+    $minutes = floor(($elapsed % 3600) / 60);
+    $seconds = $elapsed % 60;
+
+    return "$hours:$minutes:$seconds";
+    }
+
+
+
 while( $numDeleted > 0 ) {
     
     $query = 
@@ -32,13 +47,20 @@ while( $numDeleted > 0 ) {
 
         $totalDeleted += $numDeleted;
 
-        echo "\nDeleted $numDeleted more, total deleted = $totalDeleted";
+        $timeString = getElapsedTimeString( $startTime );
+        
+        echo "\nDeleted $numDeleted more, total deleted = $totalDeleted, ".
+            "running for $totalDeleted";
         }
     else {
         $numDeleted = 0;
         }
     }
-echo "\n\nDone, deleted $totalDeleted total.\n\n";
+
+
+$timeString = getElapsedTimeString( $startTime );
+
+echo "\n\nDone, deleted $totalDeleted total, running for $totalDeleted\n\n";
 
 
 function ls_mysqli_result( $result, $number, $field=0 ) {
