@@ -1,0 +1,36 @@
+A multiplayer survival game of parenting and civilization building. Get born to another player as your mother. Live an entire life in one hour. Have babies of your own in the form of other players. Leave a legacy for the next generation as you help to rebuild civilization from scratch. 
+
+ 
+
+Hey folks, I'm Jason Rohrer, and I spent more than 6 years making One Hour One Life.  I did everything myself---I drew all the graphics on paper with pens and markers, I coded the entire engine from scratch, I composed and performed all of the music*, and I even made all of the sound effects.  It's a very personal game, and it's really unlike anything else that's out there.  It's also a huge game---over 4,400 fully interactive, craftable objects and over 2,400 hand-drawn sprites. The game was initially released on my own website in February of 2018 and then later that year on Steam.  Over next few years, I released 154 weekly updates as I aimed for my goal of making the largest, most comprehensive crafting game in history.
+
+Okay, so what about the game itself?
+
+First of all, you only live for an hour, where each minute marks a passing year.  You join the game server as a newborn baby, and some other randomly-chosen player is your mother.  You depend on her for your survival.  And why will she be willing to waste her valuable time and resources to keep you alive?  Because she's going to die in an hour just like everyone else, and if she wants what she accomplishes in her lifetime to have any meaning, then the next generation (aka, you) is her only hope.  And if you survive into adulthood, you may get the chance to have babies of your own---other players, just joining the server---and those babies will be the next generation that gives meaning to your own life accomplishments.
+
+Across this ever-growing family tree of generations, players are collectively conducting an enormous project:  they are rebuilding civilization from scratch.  The online game world starts out as a near-infinite expanse of wilderness (four billion meters wide from east to west, and four billion meters wide from north to south, with a total surface area of over 18,000,000,000,000,000,000 square meters, or 36,000 times bigger than Earth).  The very first player to join the server is Eve, and she starts out in the wilderness as the root of the family tree.  Eve and her immediate offspring lay the foundation for the future civilization, perhaps making a few primitive tools, cooking basic foods, and starting a small farm as they scrape out a meager existence before dying.  Future generations will build on this primitive foundation, eventually mastering more and more advanced technology, including domesticated animals, metal working, permanent buildings, engines, transportation networks, photography, electronics, and even interplanetary travel.
+
+But as real-life history has shown, civilization is fragile.  A generation that is born into the lap of luxury---on the backs of their ancestors' hard-won accomplishments---can just as easily squander their inheritance as build upon it.  Key resources run out over time, so careful management, planning, and organization are necessary to prevent an inevitable collapse.  Thus, the game graduates from the individual challenge of primitive survival in the early stages to a group organizational and leadership challenge in the later stages.  How do rules and procedures for group survival propagate across multiple generations?  What did our great grandparents have in mind for this village?
+
+The main mode in the game involves being born as a helpless baby to another player as your mother, but you can also play with your friends as twins, triplets, or quadruplets.  One baby is hard enough to take care of---any mother that can successfully take care of quadruplets deserves the eternal gratitude of you and your friends.
+
+All of this is happening on my own centrally-managed, persistent servers, and your purchase includes a lifetime account on these official servers.  After you buy the game, you can instantly connect to this world with no configuration or server set-up.  It all just works.  You also get access to the full source code, including the server code.  Technically-minded folks can run their own private servers, or even use the powerful content editor to make their own mods.
+
+And once you master interplanetary travel in the game, you will gain access to Another Hour Another Planet, which features an alien world where all game elements and artwork are made entirely by the community.
+
+I hope you'll join us as this sprawling civilization-building experiment continues to unfold.  Many tens of thousands of players have already collectively lived over 3.7 million hours in this endlessly-changing world so far. Over the life of the game, he average playtime for each player has been 22 hours, with over 1100 players logging over 500 hours each.
+
+No two lives are ever the same, and a new story always awaits on the other side of the [GET REBORN] button.
+
+
+Jason Rohrer
+
+October 2025
+
+Dover. New Hampshire
+
+
+
+
+
+*If you ever get to witness interplanetary travel, you will be treated to some special bonus music by my lifelong friend Tom Bailey.
