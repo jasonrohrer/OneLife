@@ -67,6 +67,13 @@ Server Fixes:
   fix.  An item in a sub container that decays was causing all items in the
   other sub-containers in the same super-container to disappear.
 
+--Fixed bug where etaDecay time of held object wasn't update if object does a
+  self-to-self moving transition while held.  This resulted in the same
+  transititon being triggered over and over endlessly every server frame,
+  freezing the player and spamming updates to all other players on the server.
+  Part of #1124
+
+
 
 
 Version 430    2025-January-13

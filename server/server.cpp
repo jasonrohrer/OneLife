@@ -7487,8 +7487,11 @@ void handleForcedBabyDrop(
     }
 
 
-
-static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID );
+// inForceTransition means a transition really happened here
+// and we should update the holdingEtaDecay, even if the held object
+// hasn't changed
+static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID,
+                                 char inForceTransition = false );
 
 
 
@@ -12941,7 +12944,8 @@ static TransRecord *getBareHandClothingTrans( LiveObject *nextPlayer,
 
 
 // change held as the result of a transition
-static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
+static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID,
+                                 char inForceTransition ) {
     
     LiveObject *nextPlayer = inPlayer;
 
@@ -13074,7 +13078,16 @@ static void handleHoldingChange( LiveObject *inPlayer, int inNewHeldID ) {
             setFreshEtaDecayForHeld( nextPlayer );
             }
         }
-
+    else if( inForceTransition ) {
+        // our object id didn't change
+        // but there WAS a transition that happened
+        // update our eta decay time
+        // (it might have been a self-to-self decay transition,
+        //  like for a moving object, in which case our eta decay time
+        //  is stale)
+        setFreshEtaDecayForHeld( nextPlayer );
+        }
+     
     }
 
 
@@ -18170,7 +18183,7 @@ static void handleHeldDecay(
         
         int newID = t->newTarget;
         
-        handleHoldingChange( nextPlayer, newID );
+        handleHoldingChange( nextPlayer, newID, true );
         
         if( newID == 0 &&
             nextPlayer->holdingWound &&
