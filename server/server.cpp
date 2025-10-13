@@ -12542,6 +12542,17 @@ static char addHeldToClothingContainer( LiveObject *inPlayer,
             containSize <= slotSize &&
             permitted ) {
             // room (or will swap, so we can over-pack it)
+
+            
+            // drop on ground transition?  If so, apply here
+            // as object leaves our hands
+            TransRecord *r = getPTrans( inPlayer->holdingID, -1 );
+
+            if( r != NULL && r->newActor == 0 && r->newTarget > 0 ) {
+                inPlayer->holdingID = r->newTarget;
+                setFreshEtaDecayForHeld( inPlayer );
+                }
+
             inPlayer->clothingContained[inC].
                 push_back( 
                     inPlayer->holdingID );
@@ -12766,23 +12777,39 @@ static char removeFromClothingContainerToHold( LiveObject *inPlayer,
         inPlayer->holdingID = 
             inPlayer->clothingContained[inC].
             getElementDirect( slotToRemove );
-        holdingSomethingNew( inPlayer );
 
-        inPlayer->holdingEtaDecay = 
-            inPlayer->
-            clothingContainedEtaDecays[inC].
-            getElementDirect( slotToRemove );
+        // does bare-hand action apply to this newly-held object
+        // one that results in something new in the hand and
+        // nothing on the ground?
+        
+        // if so, it is a pick-up action, and it should apply here
+        
+        TransRecord *pickupTrans = getPTrans( 0, inPlayer->holdingID );
+        
+        if( pickupTrans != NULL && pickupTrans->newActor > 0 &&
+            pickupTrans->newTarget == 0 ) {
+            
+            handleHoldingChange( inPlayer, pickupTrans->newActor );
+            }
+        else {
+            holdingSomethingNew( inPlayer );
+            
+            inPlayer->holdingEtaDecay = 
+                inPlayer->
+                clothingContainedEtaDecays[inC].
+                getElementDirect( slotToRemove );
                                     
-        timeSec_t curTime = Time::timeSec();
+            timeSec_t curTime = Time::timeSec();
 
-        if( inPlayer->holdingEtaDecay != 0 ) {
+            if( inPlayer->holdingEtaDecay != 0 ) {
                                         
-            timeSec_t offset = 
-                inPlayer->holdingEtaDecay
-                - curTime;
-            offset = offset * stretch;
-            inPlayer->holdingEtaDecay =
-                curTime + offset;
+                timeSec_t offset = 
+                    inPlayer->holdingEtaDecay
+                    - curTime;
+                offset = offset * stretch;
+                inPlayer->holdingEtaDecay =
+                    curTime + offset;
+                }
             }
 
         inPlayer->clothingContained[inC].

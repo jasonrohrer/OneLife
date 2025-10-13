@@ -73,6 +73,11 @@ Server Fixes:
   freezing the player and spamming updates to all other players on the server.
   Part of #1124
 
+--Fixed so that removing object contained in worn clothing correctly applies
+  bare-hand transition (pick up transition), and inserting held object into
+  worn clothing correctly applies use-on-ground transition (put down
+  transition).  Part of #1124
+
 
 
 
