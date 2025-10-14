@@ -31,3 +31,7 @@ SHELL=/bin/bash
 
 
 * * * * * php /home/jcr15/bulkEmailer/bulkEmailer.php
+
+
+*/20 * * * * /home/jcr15/checkout/OneLifeWorking/scripts/giveAHAPContentLeaderVOG.sh
+
