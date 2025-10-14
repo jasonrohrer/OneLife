@@ -1,6 +1,6 @@
 
 
-while read user server
+while read user server port
 do
   echo ""
   echo "Updating vogAllowAccounts.ini on $server"
