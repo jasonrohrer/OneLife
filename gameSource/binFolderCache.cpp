@@ -3,7 +3,7 @@
 #include "minorGems/formats/encodingUtils.h"
 
 
-extern int versionNumber;
+extern int dataVersionNumber;
 
 
 static char autoClear = true;
@@ -76,7 +76,7 @@ BinFolderCache initBinFolderCache( const char *inFolderName,
         return c;
         }
     
-    char *curCacheName = autoSprintf( "bin_v%d_cache.fcz", versionNumber );
+    char *curCacheName = autoSprintf( "bin_v%d_cache.fcz", dataVersionNumber );
 
 
     // clear any older version cache files

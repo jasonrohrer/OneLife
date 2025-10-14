@@ -9,6 +9,14 @@ Version 431    ???
 --Added better message after hitting the AHAP VOTE button.  Vote isn't
   submitted until you log in to the game.
 
+--Fixed binFolderCache to use dataVersionNumber in cache file name instead of
+  overall version number, which fixes a state binCache issue on AHAP.  AHAP was
+  stuck at bin caches with the name bin_v430_cache.fcz.  Now they are correctly
+  named bin_v59_cache.fcz, matching the dataVersionNumber.  Also, this improves
+  behavior for OHOL, which doesn't need to rebuild the bin caches when only the
+  client binary version number changes.  Fixes #1122
+
+
 
 
 Server Fixes:
