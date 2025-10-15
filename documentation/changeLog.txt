@@ -16,6 +16,8 @@ Version 431    ???
   behavior for OHOL, which doesn't need to rebuild the bin caches when only the
   client binary version number changes.  Fixes #1122
 
+--Updated to latest stb_vorbis code to fix some bugs and vulnerabilities.
+  Thanks npt-1707.  Fixes #1175 Fixes #1177
 
 
 
