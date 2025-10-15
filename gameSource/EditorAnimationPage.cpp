@@ -2799,7 +2799,13 @@ void EditorAnimationPage::actionPerformed( GUIComponent *inTarget ) {
                     mCurrentObjectFrameRateFactor *= obj->speedMult;
                     }
                 }
-                
+
+
+            mRandomStartPhaseCheckbox.setToggled( 
+                mCurrentAnim[ mCurrentType ]->randomStartPhase );
+    
+            mForceZeroStartCheckbox.setToggled( 
+                mCurrentAnim[ mCurrentType ]->forceZeroStart );
                 
 
             if( ! isAnimFadeNeeded( mCurrentObjectID,

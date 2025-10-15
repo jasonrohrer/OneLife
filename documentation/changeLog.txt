@@ -37,6 +37,11 @@ Version 431    ???
   Now 0 Hz as a setting has a purpose (to have the sound play exactly once,
   at the start of the animation).  Thanks DopiePanda.  Part of #1127
 
+--Fixed Animation Editor to correctly set ForceZeroStart and RandomStartPhase
+  checkboxes when switching back and forth between different animation slots
+  for a give object (moving, ground, etc.).  Before, these boxes were only
+  being correctly set when switching objects with the object picker.
+
 
 
 Server Fixes:
