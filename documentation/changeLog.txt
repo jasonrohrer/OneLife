@@ -24,6 +24,8 @@ Version 431    ???
   usually has no impact these days (limit is so high at 48).  Thanks Twisted.
   Part of #1121
 
+--Added tooltip for SERVICES button on login screen.  Part of #1121
+
 
 
 Server Fixes:

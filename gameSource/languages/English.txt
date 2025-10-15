@@ -139,7 +139,7 @@ cancel "CANCEL"
 
 services "SERVICES"
 
-servicesTip "VERIFY YOUR ACCOUNT WITH EXTERNAL SERVICES"
+servicesTip "VERIFY ACCOUNT WITH EXTERNAL SERVICES"
 
 serviceChallengeField "CHALLENGE:"
 

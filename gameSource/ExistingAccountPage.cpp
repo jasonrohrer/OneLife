@@ -194,6 +194,8 @@ ExistingAccountPage::ExistingAccountPage()
     mFamilyTreesButton.setMouseOverTip( translate( "familyTreesTip" ) );
     mTechTreeButton.setMouseOverTip( translate( "techTreeTip" ) );
     
+    mServicesButton.setMouseOverTip( translate( "servicesTip" ) );
+    
 
     int reviewPosted = SettingsManager::getIntSetting( "reviewPosted", 0 );
     
