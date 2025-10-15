@@ -19,6 +19,11 @@ Version 431    ???
 --Updated to latest stb_vorbis code to fix some bugs and vulnerabilities.
   Thanks npt-1707.  Fixes #1175 Fixes #1177
 
+--Life token message hidden from login screen as long as user has 5 or more
+  lives left.  Don't bother them with this info, because life token limit
+  usually has no impact these days (limit is so high at 48).  Thanks Twisted.
+  Part of #1121
+
 
 
 Server Fixes:

@@ -201,7 +201,11 @@ void getLifeTokenTime( int *outHours, int *outMinutes, int *outSeconds ) {
 void drawTokenMessage( doublePair inPos ) {
     int numTokens = getNumLifeTokens();
 
-    if( numTokens != -1 ) {
+    if( numTokens != -1 &&
+        // don't show this message if we have 5 or more lives left
+        // don't bother the user with this information unless they are
+        // close to running out of lives
+        numTokens < 5 ) {
         
         if( numTokens > 0 ) {
             char *message = getLifeTokenString();
