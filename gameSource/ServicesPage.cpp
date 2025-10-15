@@ -143,7 +143,7 @@ void ServicesPage::draw( doublePair inViewCenter,
                      double inViewSize ) {
     doublePair pos = { 0, 278 };
     
-    drawMessage( translate( "servicesTip" ), pos );
+    //drawMessage( translate( "servicesTip" ), pos );
 
 
     TextAlignment prev = getMessageAlign();
