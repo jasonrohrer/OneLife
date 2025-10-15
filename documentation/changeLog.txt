@@ -26,6 +26,8 @@ Version 431    ???
 
 --Added tooltip for SERVICES button on login screen.  Part of #1121
 
+--Made LOGIN button yellow to make it stand out more.  Part of #1121
+
 
 
 Server Fixes:
