@@ -90,6 +90,13 @@ then
 fi
 
 
+if [ ! -h contentSettings ]
+then
+	ln -s AnotherPlanetData/contentSettings .	
+fi
+
+
+
 if [ ! -h dataVersionNumber.txt ]
 then
 	ln -s AnotherPlanetData/dataVersionNumber.txt .	
