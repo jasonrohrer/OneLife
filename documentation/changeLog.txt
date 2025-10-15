@@ -28,6 +28,15 @@ Version 431    ???
 
 --Made LOGIN button yellow to make it stand out more.  Part of #1121
 
+--Fixed so that animations with forceZeroStart set for moving objects force the
+  animation to start at the beginning each time the object starts or stops
+  moving.  This also allows a sound to play when the object starts or stops
+  moving.  To have a sound play ONLY when an object starts or stops moving,
+  give that sound a repeat frequency of 0 Hz and a phase of 0.  Note that in
+  the previous codebase, sounds with 0 Hz repeat frequencies would never play.
+  Now 0 Hz as a setting has a purpose (to have the sound play exactly once,
+  at the start of the animation).  Thanks DopiePanda.  Part of #1127
+
 
 
 Server Fixes:

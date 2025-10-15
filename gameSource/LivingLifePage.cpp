@@ -4391,6 +4391,8 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
                         
             double phase = anim->soundAnim[s].repeatPhase;
             
+            char shouldPlaySound = false;
+            
             if( hz != 0 ) {
                 double period = 1 / hz;
                 
@@ -4407,52 +4409,64 @@ void LivingLifePage::handleAnimSound( int inSourcePlayerID,
                                period ) );
                 
                 if( newPeriods > oldPeriods ) {
-                    SoundUsage u = anim->soundAnim[s].sound;
+                    shouldPlaySound = true;
+                    }
+                }
+            else if( hz == 0 && oldTimeVal == 0 && phase == 0 ) {
+                // always play one sound right at the start
+                // if hz is 0 and phase is 0
+                // this counts as a one-time sound
+                // played right when animation starts
+                shouldPlaySound = true;
+                }
+            
+            if( shouldPlaySound ) {
+                
+                SoundUsage u = anim->soundAnim[s].sound;
                     
                     
-                    if( anim->soundAnim[s].footstep ) {
+                if( anim->soundAnim[s].footstep ) {
                         
-                        // check if we're on a floor
+                    // check if we're on a floor
 
-                        int x = lrint( inPosX );
-                        int y = lrint( inPosY );
+                    int x = lrint( inPosX );
+                    int y = lrint( inPosY );
 
-                        int i = getMapIndex( x, y );
+                    int i = getMapIndex( x, y );
                         
-                        if( i != -1 && mMapFloors[i] > 0 ) {
+                    if( i != -1 && mMapFloors[i] > 0 ) {
                             
-                            ObjectRecord *f = getObject( mMapFloors[i] );
+                        ObjectRecord *f = getObject( mMapFloors[i] );
                             
-                            if( f->usingSound.numSubSounds > 0 ) {
-                                u = f->usingSound;
-                                }
+                        if( f->usingSound.numSubSounds > 0 ) {
+                            u = f->usingSound;
                             }
                         }
+                    }
                     
                     
                     
-                    playSound( u,
-                               getVectorFromCamera( inPosX, inPosY ) );
+                playSound( u,
+                           getVectorFromCamera( inPosX, inPosY ) );
 
-                    char *des = getObject( inObjectID )->description;
+                char *des = getObject( inObjectID )->description;
                     
-                    if( inSourcePlayerID != ourID &&
-                        strstr( des, "offScreenSound" ) != NULL ) {
-                        // this object has offscreen-visible sounds
-                        // AND its animation has sounds
-                        // renew offscreen sound for each new sound played
+                if( inSourcePlayerID != ourID &&
+                    strstr( des, "offScreenSound" ) != NULL ) {
+                    // this object has offscreen-visible sounds
+                    // AND its animation has sounds
+                    // renew offscreen sound for each new sound played
                         
-                        // these have very short fade
-                        // so that we don't have a bunch of overlap
-                        addOffScreenSound(
-                            inSourcePlayerID,
-                            inPosX *
-                            CELL_D, 
-                            inPosY *
-                            CELL_D,
-                            des,
-                            0.5 );
-                        }
+                    // these have very short fade
+                    // so that we don't have a bunch of overlap
+                    addOffScreenSound(
+                        inSourcePlayerID,
+                        inPosX *
+                        CELL_D, 
+                        inPosY *
+                        CELL_D,
+                        des,
+                        0.5 );
                     }
                 }
             }
@@ -13520,6 +13534,20 @@ void LivingLifePage::step() {
                     mMapAnimationFrozenRotFrameCount[ i ] = 
                         mMapAnimationLastFrameCount[ i ];
                     
+                    if( ! mMapAnimationFrozenRotFrameCountUsed[ i ] ) {
+                        
+                        // reset frame count when we
+                        // switch to ground from moving if we have a
+                        // forceZeroStart
+                        AnimationRecord *newAnim =
+                            getAnimation( mMap[ i ], ground );
+                                    
+                        if( newAnim != NULL  && 
+                            newAnim->forceZeroStart ) {
+                            mMapAnimationFrameCount[ i ] = 0;
+                            mMapAnimationLastFrameCount[ i ] = 0;
+                            }
+                        } 
                     }
                 }
             else {
@@ -16708,6 +16736,20 @@ void LivingLifePage::step() {
                                         mMapAnimationFrameCount[ mapI ] =
                                             mMapAnimationFrozenRotFrameCount[ 
                                                 oldMapI ];
+                                        }
+                                    else {
+                                        // reset frame count when we
+                                        // switch to moving if we have a
+                                        // forceZeroStart
+                                        AnimationRecord *newAnim =
+                                            getAnimation( mMap[mapI], moving );
+                                    
+                                        if( newAnim != NULL  && 
+                                            newAnim->forceZeroStart ) {
+                                            mMapAnimationFrameCount[mapI] = 0;
+                                            mMapAnimationLastFrameCount[mapI] =
+                                                0;
+                                            }
                                         }
                                     }
                                 
