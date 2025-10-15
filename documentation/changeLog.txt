@@ -86,6 +86,9 @@ Server Fixes:
   worn clothing correctly applies use-on-ground transition (put down
   transition).  Part of #1124
 
+--Fixed Unix pull-and-build script to link contentSettings.  Thanks 
+  InTheMorning.  Fixes #1163 Fixes #1164
+
 
 
 
