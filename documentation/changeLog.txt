@@ -42,6 +42,9 @@ Version 431    ???
   for a give object (moving, ground, etc.).  Before, these boxes were only
   being correctly set when switching objects with the object picker.
 
+--Blacklisted !WORD now handles repeated last letters correctly, when before
+  they would slip through.  WORDDD now maps to XXXXXX where it used to 
+  incorrectly map to XXXXDD.  Fixes #1144
 
 
 Server Fixes:

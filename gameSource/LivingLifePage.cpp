@@ -350,6 +350,32 @@ static char *applyWordBlacklist( char *inSpeech ) {
                             next = &( found[lookI] );
                             }
                         
+                        if( lettersLeft == 0 ) {
+                            // got to end of target word, but maybe
+                            // the last letter repeats a bit more
+                            char nextLetter = found[lookI];
+                            while( nextLetter != '\0' && 
+                                   ( nextLetter == wordStart[ wordLen - 1 ] 
+                                     ||
+                                     nextLetter < 'A'
+                                     ||
+                                     nextLetter > 'Z' ) ) {
+                                // a match to the last letter in our
+                                // word, or a skippable character
+                                if( nextLetter == wordStart[ wordLen - 1 ] ) {
+                                    xIndex.push_back( lookI );
+                                    }
+                                // else skip the non-alpha character
+                                // This ensures that WORDD?DDD
+                                // maps to XXXXX?XXX correctly
+                            
+                                lookI++;
+                                nextLetter = found[lookI];
+                                }
+                            }
+                        
+                               
+                        
                         if( lettersLeft != 0 ) {
                             match = false;
                             }
