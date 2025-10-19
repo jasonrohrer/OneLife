@@ -16601,10 +16601,37 @@ void LivingLifePage::step() {
                                     LiveObject *causingPlayer =
                                         getLiveObject( - responsiblePlayerID );
 
-                                    if( causingPlayer != NULL &&
-                                        causingPlayer->holdingID 
-                                        != oldContID ) {
+                                    char swapHappened = false;
+                                    
+                                    if( causingPlayer != NULL ) {
                                         
+                                        if( causingPlayer->holdingID 
+                                            == oldContID ) {
+                                            swapHappened = true;
+                                            }
+                                        else {
+                                            // what player is holding
+                                            // does not match what used
+                                            // to be in container
+                                            // But maybe there was a bare-hand
+                                            // pick up transition that caused
+                                            // this change?
+                                            TransRecord *pickup =
+                                                getTrans( 0, oldContID );
+                                            
+                                            if( pickup != NULL &&
+                                                pickup->newActor ==
+                                                causingPlayer->holdingID ) {
+                                                swapHappened = true;
+                                                }
+                                            }
+                                        }
+                                    
+
+                                    if( ! swapHappened ) {
+                                        // a player swap action
+                                        // didn't cause this change
+                                        // to the contained item
 
                                         ObjectRecord *newObj = 
                                             getObject( newContID );

@@ -46,6 +46,14 @@ Version 431    ???
   they would slip through.  WORDDD now maps to XXXXXX where it used to 
   incorrectly map to XXXXDD.  Fixes #1144
 
+--Fixed case where swapping an object with another on a table causes the
+  now-held object to go through a transiton (like the pickup transition for a
+  goose or rubber ball).  Before, this caused the creation sound of the
+  now-on-the-table object to get played (like the creation sound of a knife or
+  a pie that is now swapped onto the table).  Thanks QuirkySmirkyIan
+  Fixes #1162
+
+
 
 Server Fixes:
 
