@@ -125,6 +125,9 @@ Server Fixes:
 --Fixed Unix pull-and-build script to link contentSettings.  Thanks 
   InTheMorning.  Fixes #1163 Fixes #1164
 
+--Killer ID and email now included in lifeLog for whoever exorcises a ghost.
+  Fixes #1165
+
 
 
 

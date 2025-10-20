@@ -23928,6 +23928,17 @@ int main( int inNumArgs, const char **inArgs ) {
 
                                     if( dist < getMaxChunkDimension() ) {
                                         otherPlayer->ghostDestroyed = true;
+                                        
+                                        if( otherPlayer->murderPerpEmail 
+                                            != NULL ) {
+                                            delete [] 
+                                                otherPlayer->murderPerpEmail;
+                                            }
+                                        otherPlayer->murderPerpEmail =
+                                            stringDuplicate(
+                                                nextPlayer->email );
+                                        otherPlayer->murderPerpID =
+                                            nextPlayer->id;
                                         }
                                     }
                                 }
