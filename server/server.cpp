@@ -23067,6 +23067,31 @@ int main( int inNumArgs, const char **inArgs ) {
                              nextPlayer->lastSayTimeSeconds > 
                              minSayGapInSeconds ) {
                         
+                        
+                        // for testing, allow a player to jump to a particular
+                        // location
+                        if( false )
+                        if( strcmp( m.saidText, "JUMP" ) == 0 ) {
+                            GridPos destPos = { 20000, 0 };
+                                               
+                            nextPlayer->xd = destPos.x;
+                            nextPlayer->xs = destPos.x;
+                            nextPlayer->yd = destPos.y;
+                            nextPlayer->ys = destPos.y;
+                            
+                            FlightDest fd = {
+                                nextPlayer->id,
+                                destPos };
+
+                            newFlightDest.push_back( fd );
+
+                            nextPlayer->firstMessageSent = false;
+                            nextPlayer->firstMapSent = false;
+                            nextPlayer->inFlight = true;
+                            }
+
+
+                        
                         nextPlayer->lastSayTimeSeconds = 
                             Time::getCurrentTime();
 
