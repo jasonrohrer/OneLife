@@ -634,6 +634,8 @@ static SimpleVector<HomePos> oldHomePosStack;
 
 // used on reconnect to decide whether to delete old home positions
 static int lastPlayerID = -1;
+static GridPos lastMapGlobalOffset = { 0, 0 };
+                                      
 
 
 
@@ -11242,8 +11244,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         if( !alreadySent ) {                            
                             char *graveMessage = 
                                 autoSprintf( "GRAVE %d %d#",
-                                             mCurMouseOverWorld.x,
-                                             mCurMouseOverWorld.y );
+                                             sendX( mCurMouseOverWorld.x ),
+                                             sendY( mCurMouseOverWorld.y ) );
                             
                             sendToServerSocket( graveMessage );
                             delete [] graveMessage;
@@ -11329,8 +11331,8 @@ void LivingLifePage::draw( doublePair inViewCenter,
                         if( !alreadySent ) {                            
                             char *ownerMessage = 
                                 autoSprintf( "OWNER %d %d#",
-                                             mCurMouseOverWorld.x,
-                                             mCurMouseOverWorld.y );
+                                             sendX( mCurMouseOverWorld.x ),
+                                             sendY( mCurMouseOverWorld.y ) );
                             
                             sendToServerSocket( ownerMessage );
                             delete [] ownerMessage;
@@ -15638,6 +15640,8 @@ void LivingLifePage::step() {
                 sscanf( tokens->getElementDirect( 1 ), "%d", &x );
                 sscanf( tokens->getElementDirect( 2 ), "%d", &y );
                 
+                applyReceiveOffset( &x, &y );
+                
                 GridPos thisPos = { x, y };
                 
                 for( int i=0; i<ownerRequestPos.size(); i++ ) {
@@ -15859,6 +15863,8 @@ void LivingLifePage::step() {
             int numRead = sscanf( message, "VU\n%d %d",
                                   &posX, &posY );
             if( numRead == 2 ) {
+                applyReceiveOffset( &posX, &posY );
+                
                 vogModeActuallyOn = true;
                 
                 vogPos.x = posX;
@@ -19688,10 +19694,17 @@ void LivingLifePage::step() {
                     // different ID than last time, delete old home markers
                     oldHomePosStack.deleteAll();
                     }
+                else if( distance( mMapGlobalOffset, 
+                                   lastMapGlobalOffset ) != 0 ) {
+                    // global offset changed, home pos are off now
+                    oldHomePosStack.deleteAll();
+                    }
+                    
                 homePosStack.push_back_other( &oldHomePosStack );
 
                 lastPlayerID = ourID;
-
+                lastMapGlobalOffset = mMapGlobalOffset;
+                
                 // we have no measurement yet
                 ourObject->lastActionSendStartTime = 0;
                 ourObject->lastResponseTimeDelta = 0;
@@ -20649,6 +20662,8 @@ void LivingLifePage::step() {
                                         
 
                                         if( numRead == 2 || numRead == 3 ) {
+                                            applyReceiveOffset( &mapX, &mapY );
+                                            
                                             addTempHomeLocation( mapX, mapY,
                                                                  person,
                                                                  personID,
@@ -20839,6 +20854,7 @@ void LivingLifePage::step() {
                 
                 
                 if( numRead == 2 ) {
+                    applyReceiveOffset( &x, &y );
                     
                     char *firstSpace = strstr( lines[i], " " );
 
@@ -27241,7 +27257,8 @@ void LivingLifePage::specialKeyDown( int inKeyCode ) {
             newPos.y += posOffset.y;
             
             char *message = autoSprintf( "VOGM %d %d#",
-                                         newPos.x, newPos.y );
+                                         sendX( newPos.x ), 
+                                         sendY( newPos.y ) );
             sendToServerSocket( message );
             delete [] message;
             }
@@ -27393,8 +27410,8 @@ void LivingLifePage::actionPerformed( GUIComponent *inTarget ) {
         
         if( objectID != -1 ) {
             char *message = autoSprintf( "VOGI %d %d %d#",
-                                         lrint( vogPos.x ), 
-                                         lrint( vogPos.y ), objectID );
+                                         sendX( lrint( vogPos.x ) ), 
+                                         sendY( lrint( vogPos.y ) ), objectID );
             
             sendToServerSocket( message );
             

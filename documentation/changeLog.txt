@@ -53,6 +53,25 @@ Version 431    ???
   a pie that is now swapped onto the table).  Thanks QuirkySmirkyIan
   Fixes #1162
 
+--The client auto-applies a global map offset if the first map chunk's
+  coordinates sent by the server are > 16536, to avoid floating point rounding
+  errors in coordinates on GPUs that use 32-bit floats.  There were several 
+  places client-side where this offset was not being correctly applied.  The 
+  first map chunk is relative to a player's birth location, so it will only 
+  have large coordinates if the player reconnects mid-life after travelling a 
+  great distance before reconnecting.  In this case, a bunch of things (like 
+  maps, owner positions, baby positions, etc.) were off.  Usually only ghosts 
+  travel very far before dying, but this bug actually affected anyone who made 
+  a long trip and then disconnected and reconnected.  Note that if you're
+  taking VERY long trips in one lifetime, you may start to see GPU sprite 
+  positioning glitches, as the rounding errors creep in.  If you're a ghost, 
+  and this is bothering you, reconnecting should fix it now.  But the bugs that
+  occurred in coordinates after reconnecting at a great distance are fixed now.
+  Note that GPU rounding issues are already handled by long-distance flights,
+  which update your birth position, making all future coordinates sent by the
+  server relative to where you land.  Fixes #1166
+
+
 
 
 Server Fixes:
