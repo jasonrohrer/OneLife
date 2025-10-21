@@ -147,6 +147,10 @@ Server Fixes:
 --Killer ID and email now included in lifeLog for whoever exorcises a ghost.
   Fixes #1165
 
+--Max radio distance is now 10M (was 100K).  Still too far for spam from 
+  Donkeytown, which is 200M away.  Fixes #1172
+
+--HungryWork now correctly applies to floor objects.
 
 
 
