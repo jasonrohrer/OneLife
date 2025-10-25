@@ -152,6 +152,10 @@ Server Fixes:
 
 --HungryWork now correctly applies to floor objects.
 
+--Periodic Placements now support randomization intervals (like every 5 hours,
+  +/- 1 hour).  Part of #1174
+
+
 
 
 Version 430    2025-January-13

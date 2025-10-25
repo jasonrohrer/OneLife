@@ -10,6 +10,11 @@
 
 #include "../gameSource/settingsToggle.h"
 
+#include "minorGems/util/random/JenkinsRandomSource.h"
+
+
+static JenkinsRandomSource randSource;
+
 
 
 typedef struct PeriodicPlacementRecord {
@@ -17,6 +22,11 @@ typedef struct PeriodicPlacementRecord {
         int populationRadius;
         double lastPlacementTime;
         double placementIntervalSeconds;
+
+        // interval is +/- this amount
+        double intervalRandomizeSeconds;
+
+        double lastRandomizeInterval;
     
         char *globalMessage;
 
@@ -39,6 +49,7 @@ static double settingReloadInterval = 30;
 
 // updates and marks live, or creates new
 static void updateRecord( int inID, int inRadius, double inInterval,
+                          double inIntervalRandomize,
                           char *inMessage ) {
     
     for( int i=0; i<records.size(); i++ ) {
@@ -48,6 +59,7 @@ static void updateRecord( int inID, int inRadius, double inInterval,
             
             r->populationRadius = inRadius;
             r->placementIntervalSeconds = inInterval;
+            r->intervalRandomizeSeconds = inIntervalRandomize;
             
             delete [] r->globalMessage;
             
@@ -61,8 +73,13 @@ static void updateRecord( int inID, int inRadius, double inInterval,
     
     // not found
     // insert new
+    double randPick = randSource.getRandomBoundedDouble( -inIntervalRandomize,
+                                                         inIntervalRandomize );
+    
     PeriodicPlacementRecord r = { inID, inRadius, Time::getCurrentTime(),
-                                  inInterval, inMessage, true };
+                                  inInterval, inIntervalRandomize,
+                                  randPick,
+                                  inMessage, true };
     records.push_back( r );
     }
 
@@ -114,17 +131,20 @@ static void reloadSettings() {
     for( int i=0; i<numParts; i++ ) {
         if( strcmp( parts[i], "" ) != 0 ) {
             /*
-            39600.0 4998 2000 ORBITAL ALIGNMENT WITH ANOTHER PLANET DETECTED.**ROCKET CONSTRUCTION LOCATION IDENTIFIED.
+            39600.0 4998 2000#ORBITAL ALIGNMENT WITH ANOTHER PLANET DETECTED.**ROCKET CONSTRUCTION LOCATION IDENTIFIED.
             */
 
             double seconds;
+            double randomizeSeconds;
             int id;
             int radius;
             
             int numRead = 
-                sscanf( parts[i], "%lf %d %d", &seconds, &id, &radius );
+                sscanf( parts[i], "%lf %lf %d %d", 
+                        &seconds, &randomizeSeconds,
+                        &id, &radius );
 
-            if( numRead == 3 ) {
+            if( numRead == 4 ) {
                 
                 char *poundLocation = strstr( parts[i], "#" );
                 
@@ -137,7 +157,7 @@ static void reloadSettings() {
                     message = stringDuplicate( "" );
                     }
                 
-                updateRecord( id, radius, seconds, message );
+                updateRecord( id, radius, seconds, randomizeSeconds, message );
                 
                 }
             }
@@ -191,7 +211,8 @@ PeriodicPlacementAction *stepPeriodicPlacements() {
     for( int i=0; i<records.size(); i++ ) {
         PeriodicPlacementRecord *r = records.getElement(i);
         
-        if( curTime - r->lastPlacementTime > r->placementIntervalSeconds ) {
+        if( curTime - r->lastPlacementTime > 
+            r->placementIntervalSeconds + r->lastRandomizeInterval ) {
             
             // found one
             
@@ -202,6 +223,12 @@ PeriodicPlacementAction *stepPeriodicPlacements() {
             a->globalMessage = stringDuplicate( r->globalMessage );
             
             r->lastPlacementTime = curTime;
+
+            // pick a new randomization amount for next interval
+            r->lastRandomizeInterval = 
+                randSource.getRandomBoundedDouble( 
+                    - r->intervalRandomizeSeconds,
+                    r->intervalRandomizeSeconds );
 
             return a;
             }
