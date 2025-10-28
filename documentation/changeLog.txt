@@ -71,6 +71,10 @@ Version 431    ???
   which update your birth position, making all future coordinates sent by the
   server relative to where you land.  Fixes #1166
 
+--Changed default log file name from log.txt to gameLog.txt.  This avoids
+  conflicting with the OHOL server, which outputs log.txt, and might be running
+  in the same folder.  Part of #1180
+
 
 
 
