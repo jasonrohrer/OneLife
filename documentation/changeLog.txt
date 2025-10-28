@@ -155,6 +155,9 @@ Server Fixes:
 --Periodic Placements now support randomization intervals (like every 5 hours,
   +/- 1 hour).  Part of #1174
 
+--Support for Eve to start her life holding an object with new contentSetting
+  eveStartsHolding.ini.  Allows AHAP Eve to start game flying around in a
+  rocket ship to pick place to land.  Fixes #1179
 
 
 

@@ -10911,6 +10911,19 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             newObject.clothing = getTriggerPlayerClothing( inEmail );
             }
         }
+    else if( newObject.isEve ) {
+        useContentSettings();
+
+        int eveStartsHoldingID = 
+            SettingsManager::getIntSetting( "eveStartsHolding", 0 );
+        
+        useMainSettings();
+        
+        if( eveStartsHoldingID != 0 ) {
+            newObject.holdingID = eveStartsHoldingID;
+            }
+        }
+    
     
     
     newObject.lineage = new SimpleVector<int>();
