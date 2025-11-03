@@ -80,6 +80,12 @@ Version 431    ???
 
 --regenerateCaches fixed to use a real dataVersionNumber.
 
+--Using %lf format specifier for a double in vsnprintf was producing crashes
+  and other undefined behavior Windows via the MinGW gcc implementation, which
+  perhaps does not support C99's introduction of %lf for printf-family
+  functions.  Replaced all of thse with %f for both client and server code.
+  %lf is for scanf-family functions only.  Seems to be the cause of #1182.
+
 
 
 

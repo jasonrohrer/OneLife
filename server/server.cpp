@@ -1689,7 +1689,7 @@ void removeAllOwnership( LiveObject *inPlayer, char inProcessInherit = true ) {
     inPlayer->ownedPositions.deleteAll();
 
     AppLog::infoF( "Removing all ownership (%d owned) for "
-                   "player %d (%s) took %lf sec",
+                   "player %d (%s) took %f sec",
                    num, inPlayer->id, inPlayer->email, 
                    Time::getCurrentTime() - startTime );
     }
@@ -21725,7 +21725,7 @@ int main( int inNumArgs, const char **inArgs ) {
                             }
                         
                         char *message = autoSprintf(
-                            "GO\n%d %d %d %d %lf %s%s eve=%d\n#",
+                            "GO\n%d %d %d %d %f %s%s eve=%d\n#",
                             m.x - nextPlayer->birthPos.x,
                             m.y - nextPlayer->birthPos.y,
                             o->id, o->displayID, 
