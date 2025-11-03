@@ -73,6 +73,21 @@ rm -f $baseFolder/settings/countingOnVsync.ini
 rm -f $baseFolder/settings/targetFrameRate.ini
 
 
+# now server settings and text files
+mkdir $baseFolder/serverSettings
+
+cp ../server/settings/*.ini $baseFolder/serverSettings
+
+cp ../server/curseWordList.txt  $baseFolder/
+cp ../server/femaleNames.txt  $baseFolder/
+cp ../server/firstNames.txt  $baseFolder/
+cp ../server/lastNames.txt  $baseFolder/
+cp ../server/maleNames.txt  $baseFolder/
+cp ../server/serverCodeVersionNumber.txt $baseFolder/
+cp ../server/wordList.txt  $baseFolder/
+
+
+
 # remove all editor backup files
 find $baseFolder -name "*~" -exec rm -f {} \;
 
