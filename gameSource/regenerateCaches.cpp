@@ -18,8 +18,23 @@
 #include "minorGems/graphics/converters/TGAImageConverter.h"
 
 
-// dummy version number for binFolderCache.cpp
-int versionNumber = 1;
+// need a valid one of these for binFolderCache.cpp
+int dataVersionNumber = 0;
+
+
+
+
+static void updateDataVersionNumber() {
+    File file( NULL, "dataVersionNumber.txt" );
+    
+    if( file.exists() ) {
+        char *contents = file.readFileContents();
+        
+        if( contents != NULL ) {
+            sscanf( contents, "%d", &dataVersionNumber );
+            }
+        }
+    }
 
 
 

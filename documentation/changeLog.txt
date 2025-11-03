@@ -78,6 +78,8 @@ Version 431    ???
 --Build scripts for Windows and Mac now copy server settings into 
   serverSettings and also copy several server .txt files.  Fixes #1181
 
+--regenerateCaches fixed to use a real dataVersionNumber.
+
 
 
 
