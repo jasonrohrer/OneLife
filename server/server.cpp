@@ -18578,6 +18578,9 @@ static GridPos getAveragePopulationPos(
 
 
 int main( int inNumArgs, const char **inArgs ) {
+    // use the serverSettings folder if it's available
+    setUseServerSettings();
+    
     useMainSettings();
     
     if( checkReadOnly() ) {

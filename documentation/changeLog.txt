@@ -163,6 +163,11 @@ Server Fixes:
   eveStartsHolding.ini.  Allows AHAP Eve to start game flying around in a
   rocket ship to pick place to land.  Fixes #1179
 
+--Server now uses serverSettings folder (instead of settings) if it exists, but
+  defaults to using settings if serverSettings does not exist.  Part of #1181
+
+
+
 
 
 Version 430    2025-January-13
