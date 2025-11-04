@@ -13318,8 +13318,17 @@ char *isNamingSay( char *inSaidString, SimpleVector<char*> *inPhraseList ) {
             // hit
             int phraseLen = strlen( testString );
             // skip spaces after
+            int spaceCount = 0;
             while( saidString[ phraseLen ] == ' ' ) {
                 phraseLen++;
+                spaceCount++;
+                }
+            if( spaceCount == 0 ) {
+                // no space after the naming phrase?
+                // then it's not a valid naming phrase!
+                // Like if they say, I AM EVERHARD
+                // we don't want to match the "I AM EVE ____" phrase.
+                continue;
                 }
             return &( saidString[ phraseLen ] );
             }

@@ -201,6 +201,9 @@ Server Fixes:
   location at next server startup, we no longer consider ghost players, who
   can walk very far afield.  Fixes #1188
 
+--Fixed to require a space after a naming phrase, to avoid bad case of
+  I AM EVERHARD matching the I AM EVE naming phrase, making the last name
+  RHARD.  Fixes #1194
 
 
 
