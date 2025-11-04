@@ -177,6 +177,10 @@ Server Fixes:
 --Server now uses serverSettings folder (instead of settings) if it exists, but
   defaults to using settings if serverSettings does not exist.  Part of #1181
 
+--DING message now sent to players within radius of 100 when one player wounds
+  another player, giving the name of the killer, the victim, and the murder
+  weapon.  Fixes #1183
+
 
 
 

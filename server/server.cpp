@@ -15513,7 +15513,58 @@ void executeKillAction( int inKillerIndex,
                                         
                     hitPlayer->murderPerpID =
                         nextPlayer->id;
-                                        
+
+                    // send DING message to nearby players
+                    const char *killerName = "UNNAMED PERSON";
+                    const char *victimName = "UNNAMED PERSON";
+                    if( nextPlayer->name != NULL ) {
+                        killerName = nextPlayer->name;
+                        }
+                    if( hitPlayer->name != NULL ) {
+                        victimName = hitPlayer->name;
+                        }
+
+                    ObjectRecord *weapon = getObject( nextPlayer->holdingID,
+                                                      true );
+                    char *weaponName;
+
+                    if( weapon != NULL ) {
+                        weaponName = stringDuplicate( weapon->description );
+                        stripDescriptionComment( weaponName );
+                        }
+                    else {
+                        weaponName = stringDuplicate( "UNKNOWN WEAPON" );
+                        }
+
+
+                    char *message = autoSprintf( "%s HAS JUST WOUNDED %s**"
+                                                 "WITH THE %s.", 
+                                                 killerName, victimName,
+                                                 weaponName );
+                    delete [] weaponName;
+                    
+                    // send only to nearby players, and 
+                    // NOT to victim or perp
+                    for( int pm=0; pm<players.size(); pm++ ) {
+                        LiveObject *messagePlayer = players.getElement( pm );
+            
+                        if( messagePlayer == nextPlayer ||
+                            messagePlayer == hitPlayer ||
+                            messagePlayer->error ) {
+                            continue;
+                            }
+
+                        if( distance( getPlayerPos( hitPlayer ), 
+                                      getPlayerPos( messagePlayer ) ) > 100 ) {
+                            // only consider nearby players
+                            continue;
+                            }
+                        sendGlobalMessage( message, messagePlayer );
+                        }
+                    
+                    delete [] message;
+                    
+                    
                     // brand this player as a murderer
                     nextPlayer->everKilledAnyone = true;
 
