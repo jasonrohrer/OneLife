@@ -185,6 +185,11 @@ Server Fixes:
   (before, there was a missed case where you could feed drugs to the elderly).
   Part of #1185
 
+--Got rid of weird case in server code that allowed UBABY when holding non-food
+ (or empty handed) on elderly to put clothing on them or swap their clothing,
+ since this wasn't working in the vanilla client anyway, and it could be used
+ to steal backpacks, etc.  Part of #1185
+
 
 
 

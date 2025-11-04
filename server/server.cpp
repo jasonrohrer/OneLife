@@ -26092,18 +26092,8 @@ int main( int inNumArgs, const char **inArgs ) {
                                                   false, 
                                                   babyAge, -1, &hitIndex );
 
-                                if( hitPlayer == NULL ||
-                                    hitPlayer == nextPlayer ) {
-                                    // try click on elderly
-                                    hitPlayer = 
-                                        getHitPlayer( m.x, m.y, m.id,
-                                                      false, -1, 
-                                                      55, &hitIndex );
-                                    }
-
-
                                if( hitPlayer != NULL && holdingDrugs ) {
-                                    // can't even feed anyone drugs
+                                    // can't even feed babies drugs
                                     // too confusing
                                     hitPlayer = NULL;
                                     }

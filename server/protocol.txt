@@ -1211,7 +1211,7 @@ BABY is special case of USE action taken on a baby to pick them up.
 UBABY is a special case of SELF applied to a baby (to feed baby food
 	  or add/remove clothing from baby).  Also works on elderly.
       Note that server currently allows UBABY to feed anyone food, but
-      only putting clothing on babies and elderly.
+      only putting clothing on babies.
       ALSO:  UBABY is used for healing wounded players.
       Essentially, any action where held item is used on another player.
       Should be called UOTHER, but UBABY is used for historical reasons.
