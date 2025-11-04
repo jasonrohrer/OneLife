@@ -4029,6 +4029,7 @@ int longestShutdownLine = -1;
 void handleShutdownDeath( LiveObject *inPlayer,
                           int inX, int inY ) {
     if( inPlayer->curseStatus.curseLevel == 0 &&
+        ! inPlayer->isGhost &&
         inPlayer->parentChainLength > longestShutdownLine ) {
         
         // never count a cursed player as a long line

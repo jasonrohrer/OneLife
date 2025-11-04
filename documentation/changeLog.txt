@@ -197,6 +197,10 @@ Server Fixes:
   are supposed to be limited and used only when necessary.  Other players who
   are not cursed are supposed to be anonymous.  Fixes #1185
 
+--During shutdown, when considering position of longest lineage for Eve
+  location at next server startup, we no longer consider ghost players, who
+  can walk very far afield.  Fixes #1188
+
 
 
 
