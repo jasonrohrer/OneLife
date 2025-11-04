@@ -26091,12 +26091,6 @@ int main( int inNumArgs, const char **inArgs ) {
                                     getHitPlayer( m.x, m.y, m.id,
                                                   false, 
                                                   babyAge, -1, &hitIndex );
-                                
-                                if( hitPlayer != NULL && holdingDrugs ) {
-                                    // can't even feed baby drugs
-                                    // too confusing
-                                    hitPlayer = NULL;
-                                    }
 
                                 if( hitPlayer == NULL ||
                                     hitPlayer == nextPlayer ) {
@@ -26106,7 +26100,14 @@ int main( int inNumArgs, const char **inArgs ) {
                                                       false, -1, 
                                                       55, &hitIndex );
                                     }
-                                
+
+
+                               if( hitPlayer != NULL && holdingDrugs ) {
+                                    // can't even feed anyone drugs
+                                    // too confusing
+                                    hitPlayer = NULL;
+                                    }
+ 
                                 if( ( hitPlayer == NULL ||
                                       hitPlayer == nextPlayer )
                                     &&

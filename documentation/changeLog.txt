@@ -181,6 +181,9 @@ Server Fixes:
   another player, giving the name of the killer, the victim, and the murder
   weapon.  Fixes #1183
 
+--Fixed so that you can't feed drugs to anyone, since it's too confusing
+  (before, there was a missed case where you could feed drugs to the elderly).
+  Part of #1185
 
 
 
