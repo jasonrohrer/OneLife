@@ -186,9 +186,9 @@ Server Fixes:
   Part of #1185
 
 --Got rid of weird case in server code that allowed UBABY when holding non-food
- (or empty handed) on elderly to put clothing on them or swap their clothing,
- since this wasn't working in the vanilla client anyway, and it could be used
- to steal backpacks, etc.  Part of #1185
+  (or empty handed) on elderly to put clothing on them or swap their clothing,
+  since this wasn't working in the vanilla client anyway, and it could be used
+  to steal backpacks, etc.  Part of #1185
 
 --Fixed missing check that player actually has another player cursed before
   carrying out the FORGIVE action sever-side, which returns their curse name.
