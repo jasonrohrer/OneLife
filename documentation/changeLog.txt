@@ -190,6 +190,14 @@ Server Fixes:
  since this wasn't working in the vanilla client anyway, and it could be used
  to steal backpacks, etc.  Part of #1185
 
+--Fixed missing check that player actually has another player cursed before
+  carrying out the FORGIVE action sever-side, which returns their curse name.
+  This allowed people to spam FORGIVE actions for everyone to determine to
+  curse name for everyone, even for people that they had never cursed.  Curses
+  are supposed to be limited and used only when necessary.  Other players who
+  are not cursed are supposed to be anonymous.  Fixes #1185
+
+
 
 
 

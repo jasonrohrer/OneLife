@@ -23586,7 +23586,10 @@ int main( int inNumArgs, const char **inArgs ) {
                                 }
                             }
                         
-                        if( otherToForgive != NULL ) {
+                        if( otherToForgive != NULL &&
+                            isCursed( nextPlayer->email, 
+                                      otherToForgive->email ) ) {
+                            
                             clearDBCurse( nextPlayer->id, 
                                           nextPlayer->email, 
                                           otherToForgive->email );
