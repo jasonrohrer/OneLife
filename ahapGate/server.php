@@ -1520,7 +1520,7 @@ function ag_getContentLeader() {
     global $tableNamePrefix;
 
     // will die on failure
-    $email = ag_checkTicketServerSeqHash();
+    $email = ag_checkTicketServerSeqHash( "" );
 
     
     ag_updateContentLeader();

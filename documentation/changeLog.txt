@@ -208,6 +208,9 @@ Server Fixes:
 --ahapGate now keeps same content leader as before in the event of a tie vote.
   Fixes #1196
 
+--Fixed a missing parameter bug in ahapGate.
+
+
 
 
 
