@@ -205,6 +205,9 @@ Server Fixes:
   I AM EVERHARD matching the I AM EVE naming phrase, making the last name
   RHARD.  Fixes #1194
 
+--ahapGate now keeps same content leader as before in the event of a tie vote.
+  Fixes #1196
+
 
 
 
