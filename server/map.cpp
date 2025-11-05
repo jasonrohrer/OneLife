@@ -1138,8 +1138,10 @@ static int computeMapBiomeIndex( int inX, int inY,
 
 
 
+
 // old code, separate height fields per biome that compete
 // and create a patchwork layout
+/*
 static int computeMapBiomeIndexOld( int inX, int inY, 
                                  int *outSecondPlaceIndex = NULL,
                                  double *outSecondPlaceGap = NULL ) {
@@ -1211,7 +1213,7 @@ static int computeMapBiomeIndexOld( int inX, int inY,
     
     return pickedBiome;
     }
-
+*/
 
 
 
