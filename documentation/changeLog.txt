@@ -210,6 +210,10 @@ Server Fixes:
 
 --Fixed a missing parameter bug in ahapGate.
 
+--maxFlightDistance pushed from 10,000 up to 500,000.  Tutorials are put
+  1,000,000 away, and Donkeytown is 200,000,000 away, so this allows much
+  longer-distance flight without allowing flilghts into tutorial or d-town.
+
 
 
 
