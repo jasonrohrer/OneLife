@@ -214,6 +214,11 @@ Server Fixes:
   1,000,000 away, and Donkeytown is 200,000,000 away, so this allows much
   longer-distance flight without allowing flilghts into tutorial or d-town.
 
+--Fixed so that we don't ignore landing pads closer than 250 manhattan distance
+  if there are no pads further out.  Before, if the only pads were closer than
+  250, you'd annoyingly land at the pad closest to you, regardless of flight
+  direction.  Now, if all pads are closer than 250, you will land at the
+  closest one in the flight direction.  Fixes #1198
 
 
 

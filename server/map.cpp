@@ -9841,6 +9841,11 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
     GridPos closestPos;
     double closestDist = DBL_MAX;
 
+    if( flightLandingPos.size() == 0 ) {
+        *outFound = false;
+        return closestPos;
+        }
+    
     double maxDist = SettingsManager::getDoubleSetting( "maxFlightDistance",
                                                         10000 );
     
@@ -9848,39 +9853,55 @@ GridPos getNextCloseLandingPos( GridPos inCurPos,
         maxDist = DBL_MAX;
         }
 
-    for( int i=0; i<flightLandingPos.size(); i++ ) {
-        GridPos thisPos = flightLandingPos.getElementDirect( i );
+    
+    // don't consider landing at spots closer than 250,250 manhattan
+    // to takeoff spot
+    // unless we fail to find one in our first trial
+    // then consider closer spots too
+    int trialMinDist[2] = { 250, 0 };
 
-        if( tooClose( inCurPos, thisPos, 250 ) ) {
-            // don't consider landing at spots closer than 250,250 manhattan
-            // to takeoff spot
-            continue;
-            }
 
+    for( int trial=0; trial<2; trial++ ) {
+        int minDist = trialMinDist[trial];
         
-        if( isInDir( inCurPos, thisPos, inDir ) ) {
-            double dist = distance( inCurPos, thisPos );
+        for( int i=0; i<flightLandingPos.size(); i++ ) {
+            GridPos thisPos = flightLandingPos.getElementDirect( i );
+
+            if( tooClose( inCurPos, thisPos, minDist ) ) {
             
-            if( dist > maxDist ) {
                 continue;
                 }
 
-            if( dist < closestDist ) {
-                // check if this is still a valid landing pos
-                int oID = getMapObject( thisPos.x, thisPos.y );
-                
-                if( oID <=0 ||
-                    ! getObject( oID )->isFlightLanding ) {
-                    
-                    // not even a valid landing pos anymore
-                    flightLandingPos.deleteElement( i );
-                    i--;
+        
+            if( isInDir( inCurPos, thisPos, inDir ) ) {
+                double dist = distance( inCurPos, thisPos );
+            
+                if( dist > maxDist ) {
                     continue;
                     }
-                closestDist = dist;
-                closestPos = thisPos;
-                closestIndex = i;
+
+                if( dist < closestDist ) {
+                    // check if this is still a valid landing pos
+                    int oID = getMapObject( thisPos.x, thisPos.y );
+                
+                    if( oID <=0 ||
+                        ! getObject( oID )->isFlightLanding ) {
+                    
+                        // not even a valid landing pos anymore
+                        flightLandingPos.deleteElement( i );
+                        i--;
+                        continue;
+                        }
+                    closestDist = dist;
+                    closestPos = thisPos;
+                    closestIndex = i;
+                    }
                 }
+            }
+        
+        if( closestIndex != -1 ) {
+            // found, no need for another trial
+            break;
             }
         }
     
