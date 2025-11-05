@@ -282,7 +282,7 @@ class ObjectPickable : public Pickable {
             if( strcmp( inFieldName, "behind" ) == 0 ) {
                 return inO->drawBehindPlayer;
                 }
-            if( strcmp( inFieldName, "hugFloor" ) == 0 ) {
+            if( strcmp( inFieldName, "hugfloor" ) == 0 ) {
                 return inO->floorHugging;
                 }
 
