@@ -17142,8 +17142,10 @@ static void findExpertForPlayer( LiveObject *inPlayer,
         for( int i=0; i<players.size(); i++ ) {
             LiveObject *p = players.getElement( i );
             
-            if( p->isTutorial || p->curseStatus.curseLevel > 0 ) {
+            if( p->isTutorial || p->curseStatus.curseLevel > 0
+                || p->isGhost ) {
                 // skip tutorial or donkeytown players
+                // also skip ghosts
                 continue;
                 }
             

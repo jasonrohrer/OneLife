@@ -220,6 +220,8 @@ Server Fixes:
   direction.  Now, if all pads are closer than 250, you will land at the
   closest one in the flight direction.  Fixes #1198
 
+--Ghost are now ignored when finding closest expert for waystone.  Fixes #1199
+
 
 
 
