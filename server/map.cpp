@@ -393,6 +393,9 @@ static char metaDBOpen = false;
 static DB statueDB;
 static char statueDBOpen = false;
 
+static DB statueTimeDB;
+static char statueTimeDBOpen = false;
+
 
 
 static int randSeed = 124567;
@@ -4006,6 +4009,27 @@ char initMap() {
     
     statueDBOpen = true;
     
+
+    error = DB_open( &statueTimeDB, 
+                     "statueTime.db", 
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     // starting size doesn't matter here
+                     500,
+                     8, // two 32-bit ints, xy
+                     8  // one 64-bit double, representing an ETA time
+                        // in whatever binary format and byte order
+                        // "double" on the server platform uses
+                     );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening statueTime KissDB", error );
+        return false;
+        }
+    
+    statueTimeDBOpen = true;
+
+
+
     // populate statueDB from file, if it exists
     const char *statueFileName = "statueForceLoad.txt";
     
@@ -4016,12 +4040,16 @@ char initMap() {
         
         while( true ) {
             // format:
-            //  x,y#
+            //  x,y,statue_time#
             // followed by rest of line which is database entry string
             int x, y;
-            int numRead = fscanf( statueLoadFile, "%d,%d#", &x, &y );
+            double statueTime;
             
-            if( numRead != 2 ) {
+            int numRead = fscanf( statueLoadFile, "%d,%d,%lf#", 
+                                  &x, &y,
+                                  &statueTime );
+            
+            if( numRead != 3 ) {
                 break;
                 }
             
@@ -4042,7 +4070,7 @@ char initMap() {
                 c++;
                 }
             
-            addStatueData( x, y, buffer );
+            addStatueData( x, y, statueTime, buffer );
             }
         
         fclose( statueLoadFile );
@@ -4858,7 +4886,10 @@ void freeMap( char inSkipCleanup ) {
         DB_close( &statueDB );
         statueDBOpen = false;
         }
-    
+    if( statueTimeDBOpen ) {
+        DB_close( &statueTimeDB );
+        statueTimeDBOpen = false;
+        }
 
     writeEveRadius();
     writeEveLocation();
@@ -9875,15 +9906,23 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
 
 
-char getStatueData( int inX, int inY, char *inBuffer ) {
+char getStatueData( int inX, int inY, 
+                    timeSec_t *outStatueTime, char *outBuffer ) {
 
     unsigned char key[8];    
     intPairToKey( inX, inX, key );
 
-    int result = DB_get( &statueDB, key, (unsigned char *)inBuffer );
+    int result = DB_get( &statueDB, key, (unsigned char *)outBuffer );
 
     if( result == 0 ) {
-        return true;
+        unsigned char value[8];
+        
+        result = DB_get( &statueTimeDB, key, value );
+        
+        if( result == 0 ) {
+            *outStatueTime = valueToTime( value );
+            return true;
+            }
         }
 
     return false;
@@ -9891,13 +9930,21 @@ char getStatueData( int inX, int inY, char *inBuffer ) {
 
 
 
-void addStatueData( int inX, int inY, const char *inDataString ) {
+void addStatueData( int inX, int inY, 
+                    timeSec_t inStatueTime, const char *inDataString ) {
+    
     unsigned char key[8];    
     intPairToKey( inX, inX, key );
 
     DB_put( &statueDB, key, (unsigned char *)inDataString );
     
-    printf( "Inserting statue data at (%d,%d): %s\n", inX, inY, inDataString );
+    unsigned char value[8];
+    timeToValue( inStatueTime, value );
+    
+    DB_put( &statueTimeDB, key, value );
+
+    printf( "Inserting statue data at (%d,%d)[time=%f]: %s\n", 
+            inX, inY, inStatueTime, inDataString );
     }
 
 

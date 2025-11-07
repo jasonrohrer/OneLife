@@ -190,6 +190,8 @@ GRAVE_MOVE (GM)
 
 GRAVE_OLD (GO)
 
+STATUE_INFO (ST)
+
 OWNER_LIST (OW)
 
 FOLLOWING (FW)
@@ -853,6 +855,34 @@ Same semantics for eve= tag at end as for LN message.
 
 
 
+
+
+
+ST
+po_id age statue_age underscored_name clothing_set final_words_text
+
+
+Provides info about a statue.
+In response to a STATUE message from client.
+
+po_id is player's display object ID
+age is their age depicted in the statue
+
+statue_age is how long ago the satue was built (in in-game years)
+
+underscored_name is name with spaces replaced by _
+If player has no name, this will be ~ character instead.
+
+clothing_set is in format described for PU message above.
+
+final_words_text must not contain # or newline.
+
+
+
+
+
+
+
 OW
 x y p_id p_id p_id ... p_id
 #
@@ -1139,6 +1169,7 @@ JUMP x y#
 EMOT x y e#
 DIE x y#
 GRAVE x y#
+STATUE x y#
 OWNER x y#
 FORCE x y#
 PING x y unique_id#
@@ -1297,6 +1328,11 @@ APVT for Another Planet servers and clients only, specifies this user's vote
      login, each and every time client logs in.  Thus, we can tell when
      a client's vote gets stale if they haven't joined the server in a while.
      x and y are ignored, and can be 0.
+
+GRAVE
+STATUE
+       Used by client to request grave and statue info for a given x,y location.
+
 
 
 
