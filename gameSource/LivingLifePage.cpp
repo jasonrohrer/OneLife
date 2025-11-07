@@ -13245,7 +13245,7 @@ void LivingLifePage::checkForStatueAtPosition( int inWorldX, int inWorldY ) {
 
     // else send request
     char *message = 
-        autoSprintf( "STATUE%d %d#",
+        autoSprintf( "STATUE %d %d#",
                      sendX( inWorldX ), sendY( inWorldY ) );
     sendToServerSocket( message );
     delete [] message;
