@@ -4977,15 +4977,27 @@ void LivingLifePage::drawMapCell( int inMapI,
             if( si != NULL ) {
                 toggleGrayscaleDrawing( true );
 
-                ObjectRecord *personObject = getObject( si->displayID );
-
-                if( personObject != NULL ) {
-                    drawObject( personObject, passPos,
-                                0, false, false, si->personAgeYears,
-                                0, false, false,
+                char unused;
+                
+                drawObjectAnim( si->displayID, 2, ground, 
+                                0,
+                                0,
+                                ground,
+                                0,
+                                0,
+                                &unused,
+                                endAnimType,
+                                endAnimType,
+                                passPos,
+                                0,
+                                false,
+                                false,
+                                si->personAgeYears,
+                                false,
+                                false,
+                                false,
                                 si->clothing,
-                                0, NULL, NULL );
-                    }
+                                NULL );
 
                 toggleGrayscaleDrawing( false );
                 }
