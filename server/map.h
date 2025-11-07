@@ -295,7 +295,9 @@ int addMetadata( int inObjectID, unsigned char *inBuffer );
 //
 // displayID|age|name|
 //           hat|tunic|frontShoe|backShoe|bottom|backpack|
-//           final words
+//           final_words
+// name and final words have spaces replaced with _
+// they are - if either name or final words are blank
 #define MAP_STATUE_DATA_LENGTH 210
 
 // inBuffer must be at least MAP_STATUE_DATA_LENGTH bytes

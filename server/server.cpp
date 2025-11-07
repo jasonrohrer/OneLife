@@ -3079,6 +3079,7 @@ typedef enum messageType {
     JUMP,
     DIE,
     GRAVE,
+    STATUE,
     OWNER,
     FORCE,
     MAP,
@@ -3326,6 +3327,9 @@ ClientMessage parseMessage( LiveObject *inPlayer, char *inMessage ) {
         }
     else if( strcmp( nameBuffer, "GRAVE" ) == 0 ) {
         m.type = GRAVE;
+        }
+    else if( strcmp( nameBuffer, "STATUE" ) == 0 ) {
+        m.type = STATUE;
         }
     else if( strcmp( nameBuffer, "OWNER" ) == 0 ) {
         m.type = OWNER;
@@ -18435,8 +18439,10 @@ static char messageFloodCheck( LiveObject *inPlayer, messageType inType ) {
     // or GRAVE messages all at once
     // (And note that OWNER and GRAVE messages don't result in anything being
     //  sent to nearby players)
+    // Same with walking into an area with a lot of statues.
     if( inType == OWNER ||
-        inType == GRAVE ) {
+        inType == GRAVE ||
+        inType == STATUE ) {
         return false;
         }
     
@@ -21809,6 +21815,61 @@ int main( int inNumArgs, const char **inArgs ) {
                     
                     delete [] defaultO.name;
                     delete defaultO.lineage;
+                    }
+                else if( m.type == STATUE ) {
+                    // immediately send ST response
+                    timeSec_t statueTime;
+
+                    char dataBuffer[MAP_STATUE_DATA_LENGTH];
+                    memset( dataBuffer, 0, MAP_STATUE_DATA_LENGTH );
+
+                    char found = getStatueData( m.x, m.y,
+                                                &statueTime, dataBuffer );
+                    
+                    if( found ) {
+                        double statueAge = computeAge( statueTime );
+                        int displayID;
+                        double age;
+                        char nameBuffer[100];
+                        char finalWordsBuffer[100];
+                        int hat, tunic, frontShoe, backShoe, bottom, backpack;
+
+                        int i = 0;
+                        while( dataBuffer[i] != '\0' ) {
+                            if( dataBuffer[i] == '|' ) {
+                                dataBuffer[i] = ' ';
+                                }
+                            i++;
+                            }
+                        
+                        int numRead = sscanf(
+                            dataBuffer,
+                            "%d %lf %99s %d %d %d %d %d %d %99s",
+                            &displayID,
+                            &age, nameBuffer,
+                            &hat, &tunic, &frontShoe, 
+                            &backShoe, &bottom, &backpack,
+                            finalWordsBuffer );
+
+                        if( numRead == 10 ) {
+                            char *message = autoSprintf( 
+                                "ST\n"
+                                "%d %d %d %f %f %s %d;%d;%d;%d;%d;%d %s\n#",
+                                m.x, m.y, displayID, age, statueAge,
+                                nameBuffer,
+                                hat, tunic, frontShoe, backShoe, 
+                                bottom, backpack,
+                                finalWordsBuffer );
+                            
+                            sendMessageToPlayer( nextPlayer, message, 
+                                             strlen( message ) );
+                            delete [] message;
+                            }
+                        else {
+                            printf( "Bad data string found in statue db: %s",
+                                    dataBuffer );
+                            }
+                        }
                     }
                 else if( m.type == OWNER ) {
                     // immediately send OW response

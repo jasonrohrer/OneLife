@@ -4037,7 +4037,8 @@ char initMap() {
 
     if( statueLoadFile != NULL ) {
         char buffer[ MAP_STATUE_DATA_LENGTH ];
-        
+        memset( buffer, 0, MAP_STATUE_DATA_LENGTH );
+
         while( true ) {
             // format:
             //  x,y,statue_time#
