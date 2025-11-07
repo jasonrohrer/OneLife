@@ -859,7 +859,8 @@ Same semantics for eve= tag at end as for LN message.
 
 
 ST
-po_id age statue_age underscored_name clothing_set final_words_text
+x y po_id age statue_age underscored_name clothing_set underscored_final_words_text
+#
 
 
 Provides info about a statue.
@@ -873,9 +874,11 @@ statue_age is how long ago the satue was built (in in-game years)
 underscored_name is name with spaces replaced by _
 If player has no name, this will be ~ character instead.
 
-clothing_set is in format described for PU message above.
+clothing_set is in format described for PU message above, but it will NOT
+have anything contained in it
 
-final_words_text must not contain # or newline.
+underscored_final_words_text has spaces replaced by _ and - if they said
+nothing.
 
 
 

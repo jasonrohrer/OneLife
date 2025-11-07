@@ -501,6 +501,8 @@ typedef struct ObjectRecord {
         // the rocket
         char rideRocket;
         
+        char isStatue;
+        
 
         // if enabled, object can only be created if nearPopFraction
         // of active players on server are within nearPopDistance of creation
