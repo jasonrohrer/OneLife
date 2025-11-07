@@ -390,6 +390,10 @@ static DB metaDB;
 static char metaDBOpen = false;
 
 
+static DB statueDB;
+static char statueDBOpen = false;
+
+
 
 static int randSeed = 124567;
 //static JenkinsRandomSource randSource( randSeed );
@@ -3985,6 +3989,22 @@ char initMap() {
     
 
 
+
+    error = DB_open( &statueDB, 
+                     "statue.db", 
+                     KISSDB_OPEN_MODE_RWCREAT,
+                     // starting size doesn't matter here
+                     500,
+                     8, // two 32-bit ints, xy
+                     MAP_STATUE_DATA_LENGTH
+                     );
+    
+    if( error ) {
+        AppLog::errorF( "Error %d opening statue KissDB", error );
+        return false;
+        }
+    
+    statueDBOpen = true;
     
 
 
@@ -4789,6 +4809,11 @@ void freeMap( char inSkipCleanup ) {
         metaDBOpen = false;
         }
     
+    if( statueDBOpen ) {
+        DB_close( &statueDB );
+        statueDBOpen = false;
+        }
+    
 
     writeEveRadius();
     writeEveLocation();
@@ -4847,6 +4872,8 @@ void wipeMapFiles() {
     deleteFileByName( "mapTime.db" );
     deleteFileByName( "playerStats.db" );
     deleteFileByName( "meta.db" );
+    deleteFileByName( "statue.db" );
+
     
     deleteFileByName( "mapDummyRecall.txt" );
     deleteFileByName( "lastEveLocation.txt" );
@@ -9799,6 +9826,31 @@ int addMetadata( int inObjectID, unsigned char *inBuffer ) {
 
     
     return mapID;
+    }
+
+
+
+char getStatueData( int inX, int inY, char *inBuffer ) {
+
+    unsigned char key[8];    
+    intPairToKey( inX, inX, key );
+
+    int result = DB_get( &statueDB, key, (unsigned char *)inBuffer );
+
+    if( result == 0 ) {
+        return true;
+        }
+
+    return false;
+    }
+
+
+
+void addStatueData( int inX, int inY, const char *inDataString ) {
+    unsigned char key[8];    
+    intPairToKey( inX, inX, key );
+
+    DB_put( &statueDB, key, (unsigned char *)inDataString );
     }
 
 
