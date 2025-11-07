@@ -984,7 +984,7 @@ typedef struct LiveObject {
         const char *errorCauseString;
 
         char rodeRocket;
-        
+        GridPos rodeRocketLocation;
 
         int customGraveID;
         
@@ -18547,6 +18547,96 @@ void removeOwnership( int inX, int inY ) {
 
 
 
+// inString can be null, returned string will be "-"
+// returned string newly allocated, destroyed by caller
+static char *prepareRocketString( char *inString ) {
+    char *s;
+    if( inString == NULL ) {
+        s = stringDuplicate( "-" );
+        }
+    else {
+        s = stringDuplicate( inString );
+            
+        int i = 0;
+        while( s[i] != '\0' ) {
+            if( s[i] == ' ' ) {
+                s[i] = '_';
+                }
+            i++;
+            }
+        }
+    return s;
+    }
+
+
+void buildPostRocketStatue( LiveObject *inPlayer, GridPos inPos ) {
+    int x = inPos.x;
+    int y = inPos.y;
+    
+
+    useContentSettings();
+    
+    int statueObjectID =
+        SettingsManager::getIntSetting( "postRocketStatueObject", -1 );
+
+    useMainSettings();
+    
+
+    if( statueObjectID == -1 ) {
+        AppLog::errorF( "Player %d rode rocket at %d,%d but no "
+                        "postRocketStatueObject "
+                        "set in conentSettings, so we can't build statue.",
+                        inPlayer->id, x, y );
+        return;
+        }
+
+    setMapObject( x, y, statueObjectID );
+        
+    // stick data in statue database
+        
+    int clothingIDs[ NUM_CLOTHING_PIECES ];
+    for( int i=0; i< NUM_CLOTHING_PIECES; i++ ) {
+        ObjectRecord *co = clothingByIndex( inPlayer->clothing, i );
+        if( co == NULL ) {
+            clothingIDs[i] = 0;
+            }
+        else {
+            clothingIDs[i] = co->id;
+            }
+        }
+        
+    char *name = prepareRocketString( inPlayer->name );
+    char *finalWords = prepareRocketString( inPlayer->lastSay );
+    timeSec_t statueTime = Time::timeSec();
+    //        displayID|age|name|
+    //           hat|tunic|frontShoe|backShoe|bottom|backpack|
+    //           final_words
+    char *data = autoSprintf( "%d|%0.2f|%s|"
+                              "%d|%d|%d|%d|%d|%d|"
+                              "%s",
+                              inPlayer->displayID,
+                              computeAge( inPlayer ),
+                              name,
+                              clothingIDs[0],
+                              clothingIDs[1],
+                              clothingIDs[2],
+                              clothingIDs[3],
+                              clothingIDs[4],
+                              clothingIDs[5],
+                              finalWords );
+                                  
+    delete [] name;
+    delete [] finalWords;
+ 
+    addStatueData( x, y,
+                   statueTime,
+                   data );
+        
+    delete [] data;   
+    }
+
+
+
 void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
     int rocketEnabled =
         SettingsManager::getIntSetting( "rocketEnabled", 0 );
@@ -18575,6 +18665,8 @@ void startAHAPGrant( int inX, int inY, LiveObject *inPlayer ) {
         }
 
     inPlayer->rodeRocket = true;
+    inPlayer->rodeRocketLocation.x = inX;
+    inPlayer->rodeRocketLocation.y = inY;
     
     inPlayer->dying = true;
     inPlayer->dyingETA = Time::getCurrentTime() + rocketAnimationTime;
@@ -27940,8 +28032,9 @@ int main( int inNumArgs, const char **inArgs ) {
                 
                 char male = ! getFemale( nextPlayer );
                 
-                if( ! nextPlayer->isTutorial )
-                recordPlayerLineage( nextPlayer->email, 
+                if( ! nextPlayer->isTutorial ) {
+                    
+                    recordPlayerLineage( nextPlayer->email, 
                                      age,
                                      nextPlayer->id,
                                      nextPlayer->parentID,
@@ -27950,6 +28043,14 @@ int main( int inNumArgs, const char **inArgs ) {
                                      nextPlayer->name,
                                      nextPlayer->lastSay,
                                      male );
+                    
+                    if( nextPlayer->rodeRocket ) {
+                        buildPostRocketStatue( nextPlayer,
+                                               nextPlayer->rodeRocketLocation );
+                        }
+                    }
+                
+                
 
 
                 // both tutorial and non-tutorial players
