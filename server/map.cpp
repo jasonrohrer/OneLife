@@ -4006,6 +4006,51 @@ char initMap() {
     
     statueDBOpen = true;
     
+    // populate statueDB from file, if it exists
+    const char *statueFileName = "statueForceLoad.txt";
+    
+    FILE *statueLoadFile = fopen( statueFileName, "r" );
+
+    if( statueLoadFile != NULL ) {
+        char buffer[ MAP_STATUE_DATA_LENGTH ];
+        
+        while( true ) {
+            // format:
+            //  x,y#
+            // followed by rest of line which is database entry string
+            int x, y;
+            int numRead = fscanf( statueLoadFile, "%d,%d#", &x, &y );
+            
+            if( numRead != 2 ) {
+                break;
+                }
+            
+            char *read = fgets( buffer, sizeof( buffer ), statueLoadFile );
+
+            if( read == NULL ) {
+                // failed to read line
+                break;
+                }
+
+            // terminate at first newline character (don't include them)
+            int c = 0;
+            while( read[c] != '\0' ) {
+                if( read[c] == '\n' || read[c] == '\r' ) {
+                    read[c] = '\0';
+                    break;
+                    }
+                c++;
+                }
+            
+            addStatueData( x, y, buffer );
+            }
+        
+        fclose( statueLoadFile );
+        }
+    
+
+
+
 
 
     if( lookTimeDBEmpty && cellsLookedAtToInit > 0 ) {
@@ -9851,6 +9896,8 @@ void addStatueData( int inX, int inY, const char *inDataString ) {
     intPairToKey( inX, inX, key );
 
     DB_put( &statueDB, key, (unsigned char *)inDataString );
+    
+    printf( "Inserting statue data at (%d,%d): %s\n", inX, inY, inDataString );
     }
 
 
