@@ -4955,6 +4955,42 @@ void LivingLifePage::drawMapCell( int inMapI,
             }
         
 
+        if( oRecord->isStatue ) {
+            int x = inMapI % mMapD;
+            int y = inMapI / mMapD;
+            
+            int worldY = y + mMapOffsetY - mMapD / 2;
+
+            int worldX = x + mMapOffsetX - mMapD / 2;
+            
+            GridPos worldPos = { worldX, worldY };
+            
+            StatueInfo *si = NULL;
+            
+            for( int s=0; s<mStatueInfo.size(); s++ ) {
+                if( equal( mStatueInfo.getElement(s)->worldPos, worldPos ) ) {
+                    si = mStatueInfo.getElement( s );
+                    break;
+                    }
+                }
+
+            if( si != NULL ) {
+                toggleGrayscaleDrawing( true );
+
+                ObjectRecord *personObject = getObject( si->displayID );
+
+                if( personObject != NULL ) {
+                    drawObject( personObject, passPos,
+                                0, false, false, si->personAgeYears,
+                                0, false, false,
+                                si->clothing,
+                                0, NULL, NULL );
+                    }
+
+                toggleGrayscaleDrawing( false );
+                }
+            }
+
 
 
 
@@ -13232,15 +13268,12 @@ void LivingLifePage::displayPhoto( const char *inPhotoID, char inNegative ) {
 void LivingLifePage::checkForStatueAtPosition( int inWorldX, int inWorldY ) {
     
     GridPos worldPos = { inWorldX, inWorldY };
-    char found = false;
+
     for( int s=0; s<mStatueInfo.size(); s++ ) {
         if( equal( mStatueInfo.getElement(s)->worldPos, worldPos ) ) {
-            found = true;
-            break;
+            // already present
+            return;
             }
-        }
-    if( found ) {
-        return;
         }
 
     // else send request
