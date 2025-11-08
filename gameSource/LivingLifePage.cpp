@@ -4975,31 +4975,61 @@ void LivingLifePage::drawMapCell( int inMapI,
                 }
 
             if( si != NULL ) {
-                toggleGrayscaleDrawing( true );
 
                 char unused;
                 
-                drawObjectAnim( si->displayID, 2, ground, 
-                                0,
-                                0,
-                                ground,
-                                0,
-                                0,
-                                &unused,
-                                endAnimType,
-                                endAnimType,
-                                passPos,
-                                0,
-                                false,
-                                false,
-                                si->personAgeYears,
-                                false,
-                                false,
-                                false,
-                                si->clothing,
-                                NULL );
+                ObjectAnimPack p = 
+                    drawObjectAnimPacked( 
+                        si->displayID, ground, 
+                        0,
+                        0,
+                        ground,
+                        0,
+                        0,
+                        &unused,
+                        endAnimType,
+                        endAnimType,
+                        passPos,
+                        0,
+                        false,
+                        false,
+                        si->personAgeYears,
+                        false,
+                        false,
+                        false,
+                        si->clothing,
+                        NULL,
+                        0,
+                        NULL, NULL );
+                
+                toggleGrayscaleDrawing( true );
+                
+                drawObjectAnim( p );
 
                 toggleGrayscaleDrawing( false );
+
+                // this is safe to do only if statue object
+                // has +noHighlight
+
+                startAddingToStencil( false, true, 0.01 );
+                drawObjectAnim( p );
+                
+                startDrawingThroughStencil();
+                
+                toggleMultiplicativeBlend( true );
+                
+                ObjectRecord *testObject = getObject( 1596 );
+                drawObject( testObject, passPos,
+                            0, false, false, 0,
+                            0,
+                            false,
+                            false,
+                            getEmptyClothingSet(),
+                            0, NULL, NULL );
+                
+                toggleMultiplicativeBlend( false );
+                
+                stopStencil();
                 }
             }
 
