@@ -224,6 +224,10 @@ Server Fixes:
 
 --Ghosts are now ignored when picking heir for property.  Part of #1201
 
+--Ghosts now stop being leaders when they become ghosts.  Ghosts are no longer
+  considered to inherit leadership.  Final part of #1201
+
+
 
 
 Version 430    2025-January-13

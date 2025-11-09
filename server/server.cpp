@@ -4073,6 +4073,9 @@ static SimpleVector<int> newEmotTTLs;
 
 static SimpleVector<int> newGhostPlayers;
 
+static void leaderDied( LiveObject *inLeader );
+
+
 
 double computeAge( LiveObject *inPlayer ) {
     double age = computeAge( inPlayer->lifeStartTimeSeconds );
@@ -4100,6 +4103,9 @@ double computeAge( LiveObject *inPlayer ) {
 
             inPlayer->alreadyCheckedGhostChance = true;
             inPlayer->isGhost = true;
+            
+            // they don't keep leadership as ghost
+            leaderDied( inPlayer );
             
             newGhostPlayers.push_back( inPlayer->id );
             
@@ -17512,7 +17518,8 @@ static void leaderDied( LiveObject *inLeader ) {
                 &&
                 distance( location, getPlayerPos( otherPlayer ) ) <= maxDistance
                 &&
-                ! isExiled( inLeader, otherPlayer ) ) {
+                ! isExiled( inLeader, otherPlayer ) &&
+                ! otherPlayer-isGhost ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
@@ -17527,7 +17534,8 @@ static void leaderDied( LiveObject *inLeader ) {
                 LiveObject *otherPlayer = directFollowers.getElementDirect( i );
                 
                 if( otherPlayer->fitnessScore > fittestFitness &&
-                    ! isExiled( inLeader, otherPlayer ) ) {
+                    ! isExiled( inLeader, otherPlayer ) &&
+                    ! otherPlayer->isGhost ) {
                     
                     fittestFitness = otherPlayer->fitnessScore;
                     fittestFollower = otherPlayer;
@@ -17547,7 +17555,8 @@ static void leaderDied( LiveObject *inLeader ) {
                 if( otherPlayer->fitnessScore > fittestFitness 
                     &&
                     distance( location, getPlayerPos( otherPlayer ) ) 
-                    <= maxDistance ) {
+                    <= maxDistance &&
+                    ! otherPlayer->isGhost ) {
                 
                     fittestFitness = otherPlayer->fitnessScore;
                     fittestFollower = otherPlayer;
@@ -17562,7 +17571,8 @@ static void leaderDied( LiveObject *inLeader ) {
                         directFollowers.getElementDirect( i );
             
                     // ignore exile status this time
-                    if( otherPlayer->fitnessScore > fittestFitness ) {
+                    if( otherPlayer->fitnessScore > fittestFitness &&
+                        ! otherPlayer->isGhost ) {
                         
                         fittestFitness = otherPlayer->fitnessScore;
                         fittestFollower = otherPlayer;
