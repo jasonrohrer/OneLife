@@ -5017,7 +5017,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                     // this is safe to do only if statue object
                     // has +noHighlight
 
-                    startAddingToStencil( false, true, 0.01 );
+                    startAddingToStencil( false, true, 0.95 );
                     drawObjectAnim( p );
                 
                     startDrawingThroughStencil();
