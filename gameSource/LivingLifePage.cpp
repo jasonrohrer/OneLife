@@ -5002,7 +5002,7 @@ void LivingLifePage::drawMapCell( int inMapI,
                         0,
                         NULL, NULL );
                 
-                toggleGrayscaleDrawing( true );
+                toggleGrayscaleDrawing( true, 0.6, 32 );
                 
                 drawObjectAnim( p );
 
