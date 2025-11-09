@@ -17519,7 +17519,7 @@ static void leaderDied( LiveObject *inLeader ) {
                 distance( location, getPlayerPos( otherPlayer ) ) <= maxDistance
                 &&
                 ! isExiled( inLeader, otherPlayer ) &&
-                ! otherPlayer-isGhost ) {
+                ! otherPlayer->isGhost ) {
                 
                 fittestFitness = otherPlayer->fitnessScore;
                 fittestFollower = otherPlayer;
