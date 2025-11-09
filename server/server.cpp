@@ -6937,6 +6937,166 @@ static void forcePlayerToRead( LiveObject *inPlayer,
 
 
 
+
+static const char *numberToWords( int inNumber );
+
+
+static void replaceSpacesWithUnderscores( char *inString ) {
+    char *s = inString;
+    int i = 0;
+    while( s[i] != '\0' ) {
+        if( s[i] == ' ' ) {
+            s[i] = '_';
+            }
+        i++;
+        }
+    }
+
+
+static void replaceUnderscoresWithSpaces( char *inString ) {
+    char *s = inString;
+    int i = 0;
+    while( s[i] != '\0' ) {
+        if( s[i] == '_' ) {
+            s[i] = ' ';
+            }
+        i++;
+        }
+    }
+
+
+static void playerReadsStatue( LiveObject *inPlayer,
+                               int inX, int inY ) {
+    char buffer[ MAP_STATUE_DATA_LENGTH ];
+    timeSec_t statueTime;
+    
+    char found = getStatueData( inX, inY, &statueTime, buffer );
+    
+    if( ! found ) {
+        makePlayerSay( inPlayer, (char*)":FORGOTTEN STATUE" );
+        return;
+        }
+    // fixme
+    double deltaSeconds = 
+        Time::getCurrentTime() - statueTime;
+    
+    double age = deltaSeconds * getAgeRate();
+    
+    char *ageString = NULL;
+    
+    if( age < 1 ) {
+        ageString = stringDuplicate( "JUST NOW" );
+        }
+    else if( age < 2 ) {
+        ageString = stringDuplicate( "ONE YEAR AGO" );
+        }
+    if( age < 20 ) {
+        ageString = autoSprintf( "%s YEARS AGO", 
+                                 numberToWords( (int)floor( age ) ) );
+        }
+    else if( age < 200 ) {
+        ageString = autoSprintf( "%s DECADES AGO", 
+                                 numberToWords( (int)floor( age / 10 ) ) );
+        }
+    else if( age < 2000 ) {
+        ageString = autoSprintf( "%s CENTURIES AGO", 
+                                 numberToWords( (int)floor( age / 100 ) ) );
+        }
+    else if( age < 20000 ) {
+        ageString = autoSprintf( "%s MILLENNIA AGO", 
+                                 numberToWords( (int)floor( age / 1000 ) ) );
+        }
+    else if( age < 200000 ) {
+        ageString = autoSprintf( "%s MYRIAD YEARS AGO", 
+                                 numberToWords( (int)floor( age / 10000 ) ) );
+        }
+    else if( age < 2000000 ) {
+        ageString = autoSprintf( "%s HUNDRED MILLENNIA AGO", 
+                                 numberToWords( (int)floor( age / 100000 ) ) );
+        }
+    else if( age < 20000000 ) {
+        ageString = autoSprintf( 
+            "%s THOUSAND MILLENNIA AGO", 
+            numberToWords( (int)floor( age / 1000000 ) ) );
+        }
+    else if( age < 200000000 ) {
+        ageString = autoSprintf( 
+            "%s THOUSAND MYRIAD YEARS AGO", 
+            numberToWords( (int)floor( age / 10000000 ) ) );
+        }
+    else if( age < 2000000000 ) {
+        ageString = autoSprintf( 
+            "%s HUNDRED THOUSAND MILLENNIA AGO", 
+            numberToWords( (int)floor( age / 100000000 ) ) );
+        }
+    else if( age < 20000000000 ) {
+        ageString = autoSprintf( 
+            "%s MILLION MILLENIA AGO", 
+            numberToWords( (int)floor( age / 1000000000 ) ) );
+        }
+    else if( age < 200000000000 ) {
+        ageString = autoSprintf( 
+            "%s MILLION MYRIAD YEARS AGO", 
+            numberToWords( (int)floor( age / 10000000000 ) ) );
+        }  
+    else if( age < 2000000000000 ) {
+        ageString = autoSprintf( 
+            "%s HUNDRED MILLION MILLENIA AGO", 
+            numberToWords( (int)floor( age / 100000000000 ) ) );
+        }
+    else if( age < 20000000000000 ) {
+        ageString = autoSprintf( 
+            "%s BILLION MILLENIA AGO", 
+            numberToWords( (int)floor( age / 1000000000000 ) ) );
+        }
+    else if( age < 200000000000000 ) {
+        ageString = autoSprintf( 
+            "%s BILLION MYRIAD YEARS AGO", 
+            numberToWords( (int)floor( age / 10000000000000 ) ) );
+        }
+    else {
+        // will become "MANY HUNDRED BILLION MILLENIA" if
+        // we go over 20 here
+        // but we still support correct number scaling all the way up
+        // to 3 billion years of real-world time
+        // (each year in real world is roughly 500K in-game years)
+        ageString = autoSprintf( 
+            "%s HUNDRED BILLION MILLENIA AGO", 
+            numberToWords( (int)floor( age / 100000000000000 ) ) );
+        }
+
+    int numParts;
+    char **parts = split( buffer, "|", &numParts );
+    
+    char *playerSays = NULL;
+    
+    if( numParts == 10 ) {
+        char *name = parts[2];
+        char *lastWords = parts[9];
+        
+        replaceUnderscoresWithSpaces( name );
+        replaceUnderscoresWithSpaces( lastWords );
+        
+        playerSays = autoSprintf( ":%s LEFT THE PLANET %s AND SAID: %s",
+                                  name, ageString, lastWords );
+        }
+    else {
+        playerSays = 
+            autoSprintf( ":AN UNKNOWN PERSON FLEW AWAY %s", ageString );
+        }
+    for( int i=0; i<numParts; i++ ) {
+        delete [] parts[i];
+        }
+    delete [] parts;
+    
+    delete [] ageString;
+    
+    makePlayerSay( inPlayer, playerSays );
+    
+    delete [] playerSays;
+    }
+
+
 char canPlayerUseTool( LiveObject *inPlayer, int inToolID );
 
 
@@ -16414,12 +16574,8 @@ static char *getToolSetDescription( ObjectRecord *inToolO ) {
                     }
                 }
             // now replace any _ with ' '
-            tagLen = strlen( tagPos );
-            for( int i=0; i<tagLen; i++ ) {
-                if( tagPos[i] == '_' ) {
-                    tagPos[i] = ' ';
-                    }
-                }
+            replaceUnderscoresWithSpaces( tagPos );
+
             char *newDes = stringDuplicate( tagPos );
             delete [] des;
             des = newDes;
@@ -16872,7 +17028,7 @@ void applyHungryWorkCost( LiveObject *inPlayer, int inHungryWorkCost ) {
 
 
 
-const char *numberToWords( int inNumber ) {
+static const char *numberToWords( int inNumber ) {
     switch( inNumber ) {
         case 1:
             return "ONE";
@@ -18568,13 +18724,7 @@ static char *prepareRocketString( char *inString ) {
     else {
         s = stringDuplicate( inString );
             
-        int i = 0;
-        while( s[i] != '\0' ) {
-            if( s[i] == ' ' ) {
-                s[i] = '_';
-                }
-            i++;
-            }
+        replaceSpacesWithUnderscores( s );
         }
     return s;
     }
@@ -24733,6 +24883,13 @@ int main( int inNumArgs, const char **inArgs ) {
                                                          targetObj );
                                     }
                                 
+                                // handle statue case
+                                if( targetObj->permanent &&
+                                    targetObj->isStatue ) {
+                                    
+                                    playerReadsStatue( nextPlayer,
+                                                       m.x, m.y );
+                                    }
 
                                 // try using object on this target 
                                 
