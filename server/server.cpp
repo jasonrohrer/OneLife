@@ -1283,6 +1283,7 @@ static LiveObject *findFittestOffspring( int inPlayerID, int inSkipID,
         LiveObject *otherPlayer = players.getElement( j );
         
         if( ! otherPlayer->error &&
+            ! otherPlayer->isGhost && 
             otherPlayer->id != inPlayerID &&
             otherPlayer->id != inSkipID ) {
             
