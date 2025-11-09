@@ -503,6 +503,11 @@ typedef struct ObjectRecord {
         
         char isStatue;
         
+        // primarily used by statue
+        // id of an object with a multiplicative blend sprite
+        // that should be overlayed over our statue
+        int overlayID;
+        
 
         // if enabled, object can only be created if nearPopFraction
         // of active players on server are within nearPopDistance of creation

@@ -5008,28 +5008,30 @@ void LivingLifePage::drawMapCell( int inMapI,
 
                 toggleGrayscaleDrawing( false );
 
-                // this is safe to do only if statue object
-                // has +noHighlight
+                // does statue object have a +overlay?
 
-                startAddingToStencil( false, true, 0.01 );
-                drawObjectAnim( p );
+                if( oRecord->overlayID > 0 ) {
+                    ObjectRecord *overlayObject
+                        = getObject( oRecord->overlayID );
+
+                    // this is safe to do only if statue object
+                    // has +noHighlight
+
+                    startAddingToStencil( false, true, 0.01 );
+                    drawObjectAnim( p );
                 
-                startDrawingThroughStencil();
+                    startDrawingThroughStencil();
                 
-                toggleMultiplicativeBlend( true );
+                    drawObject( overlayObject, passPos,
+                                0, false, false, 0,
+                                0,
+                                false,
+                                false,
+                                getEmptyClothingSet(),
+                                0, NULL, NULL );
                 
-                ObjectRecord *testObject = getObject( 1596 );
-                drawObject( testObject, passPos,
-                            0, false, false, 0,
-                            0,
-                            false,
-                            false,
-                            getEmptyClothingSet(),
-                            0, NULL, NULL );
-                
-                toggleMultiplicativeBlend( false );
-                
-                stopStencil();
+                    stopStencil();
+                    }
                 }
             }
 
