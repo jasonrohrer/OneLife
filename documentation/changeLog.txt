@@ -227,6 +227,10 @@ Server Fixes:
 --Ghosts now stop being leaders when they become ghosts.  Ghosts are no longer
   considered to inherit leadership.  Final part of #1201
 
+--Ghosts no longer counted in countLivingPlayers(), and countLivingPlayers()
+  used to toggle special biomes instead of just raw player count.  Some other
+  things (like Languages), still depend on raw player count.  Fixes #1202
+
 
 
 

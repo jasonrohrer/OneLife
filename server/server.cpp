@@ -8461,7 +8461,10 @@ static int isPlayerCountable( LiveObject *p, int inLineageEveID,
     if( p->vogMode ) {
         return false;
         }
-    
+    if( p->isGhost ) {
+        return false;
+        }
+
     if( inLineageEveID != -1 &&
         p->lineageEveID != inLineageEveID ) {
         return false;
@@ -8595,7 +8598,7 @@ static int countHelplessBabies() {
 
 
 // counts only those inside barrier, if barrier on
-// always ignores tutorial and donkytown players
+// always ignores tutorial and donkytown players and ghosts
 static int countLivingPlayers() {
     
     int barrierRadius = 
@@ -19582,7 +19585,7 @@ int main( int inNumArgs, const char **inArgs ) {
             monumentStep();
             
             char specialBiomeStatusChanged = 
-                updateSpecialBiomes( players.size() );
+                updateSpecialBiomes( countLivingPlayers() );
             
             if( specialBiomeStatusChanged ) {
                 for( int i=0; i< players.size(); i++ ) {
