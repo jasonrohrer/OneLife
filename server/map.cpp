@@ -4039,6 +4039,8 @@ char initMap() {
         char buffer[ MAP_STATUE_DATA_LENGTH ];
         memset( buffer, 0, MAP_STATUE_DATA_LENGTH );
 
+        int linesLoaded = 0;
+        
         while( true ) {
             // format:
             //  x,y,statue_time#
@@ -4072,7 +4074,11 @@ char initMap() {
                 }
             
             addStatueData( x, y, statueTime, buffer );
+            linesLoaded++;
             }
+        
+        printf( "Added %d lines of statue data from statueForceLoad.txt\n",
+                linesLoaded );
         
         fclose( statueLoadFile );
         }
@@ -9948,7 +9954,7 @@ char getStatueData( int inX, int inY,
                     timeSec_t *outStatueTime, char *outBuffer ) {
 
     unsigned char key[8];    
-    intPairToKey( inX, inX, key );
+    intPairToKey( inX, inY, key );
 
     int result = DB_get( &statueDB, key, (unsigned char *)outBuffer );
 
@@ -9972,7 +9978,7 @@ void addStatueData( int inX, int inY,
                     timeSec_t inStatueTime, const char *inDataString ) {
     
     unsigned char key[8];    
-    intPairToKey( inX, inX, key );
+    intPairToKey( inX, inY, key );
 
     DB_put( &statueDB, key, (unsigned char *)inDataString );
     
@@ -9980,9 +9986,6 @@ void addStatueData( int inX, int inY,
     timeToValue( inStatueTime, value );
     
     DB_put( &statueTimeDB, key, value );
-
-    printf( "Inserting statue data at (%d,%d)[time=%f]: %s\n", 
-            inX, inY, inStatueTime, inDataString );
     }
 
 
