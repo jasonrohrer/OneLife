@@ -4543,6 +4543,44 @@ char initMap() {
         delete specialPlacements;
         }
     
+
+    useContentSettings();
+    int statueObjectID = SettingsManager::getIntSetting( "statueObject", 0 );
+    useMainSettings();
+    
+    if( statueObjectID > 0 ) {
+        // make sure there is a statue base object at every location
+        // in the map that we have statue data for
+
+        // fixme
+        DB_Iterator dbi;
+    
+    
+        DB_Iterator_init( &statueDB, &dbi );
+    
+        unsigned char key[8];
+    
+        unsigned char value[MAP_STATUE_DATA_LENGTH];
+
+        int numSet = 0;
+        while( DB_Iterator_next( &dbi, key, value ) > 0 ) {
+            int x = valueToInt( key );
+            int y = valueToInt( &( key[4] ) );
+            
+            setMapObjectRaw( x, y, statueObjectID );
+
+            numSet++;
+            }
+
+        AppLog::infoF( "Placed %d statue bases in map.", numSet );
+        }
+    else {
+        AppLog::info( "No statueObject set in contentSettings, "
+                      "not placing any statue bases in map." );
+        }
+    
+
+
     
     reseedMap( false );
         
