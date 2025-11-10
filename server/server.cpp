@@ -7031,7 +7031,7 @@ static void playerReadsStatue( LiveObject *inPlayer,
         }
     else if( age < 20000000000 ) {
         ageString = autoSprintf( 
-            "%s MILLION MILLENIA AGO", 
+            "%s MILLION MILLENNIA AGO", 
             numberToWords( (int)floor( age / 1000000000 ) ) );
         }
     else if( age < 200000000000 ) {
@@ -7041,12 +7041,12 @@ static void playerReadsStatue( LiveObject *inPlayer,
         }  
     else if( age < 2000000000000 ) {
         ageString = autoSprintf( 
-            "%s HUNDRED MILLION MILLENIA AGO", 
+            "%s HUNDRED MILLION MILLENNIA AGO", 
             numberToWords( (int)floor( age / 100000000000 ) ) );
         }
     else if( age < 20000000000000 ) {
         ageString = autoSprintf( 
-            "%s BILLION MILLENIA AGO", 
+            "%s BILLION MILLENNIA AGO", 
             numberToWords( (int)floor( age / 1000000000000 ) ) );
         }
     else if( age < 200000000000000 ) {
@@ -7055,13 +7055,13 @@ static void playerReadsStatue( LiveObject *inPlayer,
             numberToWords( (int)floor( age / 10000000000000 ) ) );
         }
     else {
-        // will become "MANY HUNDRED BILLION MILLENIA" if
+        // will become "MANY HUNDRED BILLION MILLENNIA" if
         // we go over 20 here
         // but we still support correct number scaling all the way up
         // to 3 billion years of real-world time
         // (each year in real world is roughly 500K in-game years)
         ageString = autoSprintf( 
-            "%s HUNDRED BILLION MILLENIA AGO", 
+            "%s HUNDRED BILLION MILLENNIA AGO", 
             numberToWords( (int)floor( age / 100000000000000 ) ) );
         }
 
