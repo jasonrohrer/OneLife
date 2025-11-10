@@ -175,6 +175,9 @@ else if( $action == "purge_prepare" ) {
 else if( $action == "purge" ) {
     ls_purge();
     }
+else if( $action == "map_ids" ) {
+    ls_mapIDs();
+    }
 // disable this one for now, no longer needed
 else if( false && $action == "reformat_names" ) {
     ls_reformatNames();
@@ -718,6 +721,24 @@ function ls_showData( $checkPassword = true ) {
     <INPUT TYPE="Submit" VALUE="Recompute Depth">
     </FORM>
         <hr>
+
+<?php   
+
+    // form for mapping player ids on a server to rocket-ride info
+?>
+        <td>
+        Map Player IDs:<br>
+            <FORM ACTION="server.php" METHOD="post">
+    <INPUT TYPE="hidden" NAME="action" VALUE="map_ids">  
+
+          IDs (one per line):<br>
+             <TEXTAREA NAME="player_ids" COLS=40 ROWS=10></TEXTAREA><br>
+    Server Name:
+    <INPUT TYPE="text" MAXLENGTH=40 SIZE=20 NAME="server"><br>
+
+    <INPUT TYPE="Submit" VALUE="Generate">
+    </FORM>
+        </td>
 <?php
 
 
@@ -918,7 +939,8 @@ function ls_getSequenceNumberForEmail( $inEmail ) {
 
 
 // can be called if server doesn't exist yet, and a record is created
-function ls_getServerID( $inServer ) {
+// returns -1 if not found and $inCreate is false
+function ls_getServerID( $inServer, $inCreate=false ) {
     global $tableNamePrefix;
     
     $query = "SELECT id FROM $tableNamePrefix"."servers ".
@@ -928,6 +950,10 @@ function ls_getServerID( $inServer ) {
     $numRows = mysqli_num_rows( $result );
 
     if( $numRows < 1 ) {
+        if( ! $inCreate ) {
+            return -1;
+            }
+        
         $query = "INSERT INTO $tableNamePrefix". "servers SET " .
             "server = '$inServer' ".
             "ON DUPLICATE KEY UPDATE server = '$inServer' ;";
@@ -3299,6 +3325,69 @@ function ls_purge() {
         $numDeleted = mysqli_affected_rows( $ls_mysqlLink );
 
         echo "Deleted $numDeleted lives.<br>";
+        }
+    
+    }
+
+
+function ls_mapIDs() {
+    global $tableNamePrefix;
+    
+    $server = ls_requestFilter( "server", "/[A-Z0-9.\-]+/i", "" );
+
+    if( $server == "" ) {
+        echo "Must provide server name.";
+        return;
+        }
+    $serverID = ls_getServerID( $server, false );
+
+    if( $serverID == -1 ) {
+        echo "Unknown server:  $server";
+        return;
+        }
+    
+    $player_ids = "";
+    if( isset( $_REQUEST[ "player_ids" ] ) ) {
+        $player_ids = $_REQUEST[ "player_ids" ];
+        }
+
+    $idList = preg_split( "/\s+/", $player_ids );
+
+    foreach( $idList as $id ) {
+        $id = ls_filter( $id, "/[0-9]+/i", "" );
+
+        if( $id != "" ) {
+            $query = "SELECT name, age, display_id, last_words ".
+                "FROM $tableNamePrefix"."lives ".
+                "WHERE server_id = $serverID AND player_id = $id;";
+            $result = ls_queryDatabase( $query );
+
+            $numRows = mysqli_num_rows( $result );
+            if( $numRows < 1 ) {
+                echo "No life found for player_id: $id";
+                return;
+                }
+            $name = ls_mysqli_result( $result, 0, "name" );
+            $display_id = ls_mysqli_result( $result, 0, "display_id" );
+            $last_words = ls_mysqli_result( $result, 0, "last_words" );
+            $age = ls_mysqli_result( $result, 0, "age" );
+
+            $name = strtoupper( $name );
+            $last_words = strtoupper( $last_words );
+
+            $name = preg_replace( '/ /', '_', $name );
+            $last_words = preg_replace( '/ /', '_', $last_words );
+
+            if( $name == "NAMELESS" ) {
+                $name = "-";
+                }
+            if( $last_words == "" ) {
+                $last_words = "-";
+                }
+            $age = number_format( $age, 2 );
+            
+            echo "$display_id|$age|$name|0|0|0|0|0|0|$last_words<br>";
+            }
         }
     
     }
