@@ -1,1 +1,1 @@
-grep rocket_ride_completed lifeLog/* | sed "s/.*D //" | sed "s/ F.*//" | sed "s/ M.*//" | sed "s/ [0-9a-z._-]*@[0-9a-z._-]* / /i"
+grep rocket_ride_completed lifeLog/* | sed "s/.*D //" | sed "s/ F / /" | sed "s/ M / /" | sed "s/ rocket_ride_completed.*//" | sed "s/ [0-9a-z._-]*@[0-9a-z._-]* / /i" | sed "s/age=//" | sed "s/(//" | sed "s/)//" | sed "s/,/ /"
