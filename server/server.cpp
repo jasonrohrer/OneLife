@@ -6990,7 +6990,7 @@ static void playerReadsStatue( LiveObject *inPlayer,
     else if( age < 2 ) {
         ageString = stringDuplicate( "ONE YEAR AGO" );
         }
-    if( age < 20 ) {
+    else if( age < 20 ) {
         ageString = autoSprintf( "%s YEARS AGO", 
                                  numberToWords( (int)floor( age ) ) );
         }
