@@ -231,6 +231,10 @@ Server Fixes:
   used to toggle special biomes instead of just raw player count.  Some other
   things (like Languages), still depend on raw player count.  Fixes #1202
 
+--forceSpawnAccounts.ini now supports 2 switch for forcing player to be born as
+  baby with specific displayID.  Forced-spawn players now have their forced
+  name transmitted correctly upon spawning.
+
 
 
 

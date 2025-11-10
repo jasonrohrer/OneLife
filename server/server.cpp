@@ -1158,7 +1158,9 @@ typedef struct LiveObject {
         char postVogMode;
         
         char forceSpawn;
-        
+
+        char forcedName;
+        char forcedNameSent;
 
         // list of positions owned by this player
         SimpleVector<GridPos> ownedPositions;
@@ -8972,6 +8974,9 @@ static void setupToolSlots( LiveObject *inPlayer ) {
 
 
 typedef struct ForceSpawnRecord {
+        // true means get born as baby
+        // false means spawn at pos/age given
+        char getBorn;
         GridPos pos;
         double age;
         char *firstName;
@@ -9007,12 +9012,20 @@ char getForceSpawn( char *inEmail, ForceSpawnRecord *outRecordToFill ) {
 
             char emailBuff[100];
             
+            // 1 to force spawn at location
+            // 2 to force display id and clothes but let them
+            //   get born as a baby
             int on = 0;
             
             sscanf( lines[i],
                     "%99s %d", emailBuff, &on );
 
-            if( on == 1 ) {
+            if( on > 0 ) {
+                outRecordToFill->getBorn = false;
+                
+                if( on == 2 ) {
+                    outRecordToFill->getBorn = true;
+                    }
                 
                 outRecordToFill->firstName = new char[20];
                 outRecordToFill->lastName = new char[20];
@@ -10289,6 +10302,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     
     char forceSpawn = false;
+    char forceDisplayID = false;
     ForceSpawnRecord forceSpawnInfo;
     
     if( SettingsManager::getIntSetting( "forceAllPlayersEve", 0 ) ) {
@@ -10298,7 +10312,17 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         forceSpawn = getForceSpawn( inEmail, &forceSpawnInfo );
     
         if( forceSpawn ) {
-            parentChoices.deleteAll();
+            
+            if( ! forceSpawnInfo.getBorn ) {
+                parentChoices.deleteAll();
+                }
+            else {
+                // keep parent choices
+                // just use forceSpawnInfo to set display ID and clothes
+                // for baby
+                forceSpawn = false;
+                forceDisplayID = true;
+                }
             }
         }
 
@@ -11355,23 +11379,30 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         currentTime + 
         computeFoodDecrementTimeSeconds( &newObject );
 
+    
+    newObject.forcedName = false;
+    
+    if( forceSpawn || forceDisplayID ) {
+        if( forceSpawn ) {
+            newObject.forceSpawn = true;
+            newObject.xs = forceSpawnInfo.pos.x;
+            newObject.ys = forceSpawnInfo.pos.y;
+            newObject.xd = forceSpawnInfo.pos.x;
+            newObject.yd = forceSpawnInfo.pos.y;
         
-    if( forceSpawn ) {
-        newObject.forceSpawn = true;
-        newObject.xs = forceSpawnInfo.pos.x;
-        newObject.ys = forceSpawnInfo.pos.y;
-        newObject.xd = forceSpawnInfo.pos.x;
-        newObject.yd = forceSpawnInfo.pos.y;
+            newObject.birthPos = forceSpawnInfo.pos;
         
-        newObject.birthPos = forceSpawnInfo.pos;
-        
-        newObject.lifeStartTimeSeconds = 
-            Time::getCurrentTime() -
-            forceSpawnInfo.age * ( 1.0 / getAgeRate() );
+            newObject.lifeStartTimeSeconds = 
+                Time::getCurrentTime() -
+                forceSpawnInfo.age * ( 1.0 / getAgeRate() );
+            }
         
         newObject.name = autoSprintf( "%s %s", 
                                       forceSpawnInfo.firstName,
                                       forceSpawnInfo.lastName );
+        newObject.forcedName = true;
+        newObject.forcedNameSent = false;
+        
         newObject.displayID = forceSpawnInfo.displayID;
         
         newObject.clothing.hat = getObject( forceSpawnInfo.hatID, true );
@@ -21062,6 +21093,11 @@ int main( int inNumArgs, const char **inArgs ) {
             if( nextPlayer->numToolSlots == -1 ) {
                 
                 setupToolSlots( nextPlayer );
+                }
+
+            if( nextPlayer->forcedName && ! nextPlayer->forcedNameSent ) {
+                playerIndicesToSendNamesAbout.push_back( i );
+                nextPlayer->forcedNameSent = true;
                 }
 
 
