@@ -4987,7 +4987,6 @@ void wipeMapFiles() {
     deleteFileByName( "mapTime.db" );
     deleteFileByName( "playerStats.db" );
     deleteFileByName( "meta.db" );
-    deleteFileByName( "statue.db" );
 
     
     deleteFileByName( "mapDummyRecall.txt" );
