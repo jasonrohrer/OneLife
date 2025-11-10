@@ -22111,7 +22111,9 @@ int main( int inNumArgs, const char **inArgs ) {
                             char *message = autoSprintf( 
                                 "ST\n"
                                 "%d %d %d %f %f %s %d;%d;%d;%d;%d;%d %s\n#",
-                                m.x, m.y, displayID, age, statueAge,
+                                m.x - nextPlayer->birthPos.x,
+                                m.y - nextPlayer->birthPos.y,
+                                displayID, age, statueAge,
                                 nameBuffer,
                                 hat, tunic, frontShoe, backShoe, 
                                 bottom, backpack,
