@@ -235,6 +235,8 @@ Server Fixes:
   baby with specific displayID.  Forced-spawn players now have their forced
   name transmitted correctly upon spawning.
 
+--Ghosts no longer earn curse tokens.  Fixes #1210
+
 
 
 

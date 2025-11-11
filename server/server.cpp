@@ -29972,7 +29972,9 @@ int main( int inNumArgs, const char **inArgs ) {
                     LiveObject *nextPlayer = players.getElement(j);
                     
                     // don't give mid-life tokens to twins or cursed players
+                    // or ghosts
                     if( ! nextPlayer->isTwin &&
+                        ! nextPlayer->isGhost &&
                         nextPlayer->curseStatus.curseLevel == 0 &&
                         strcmp( nextPlayer->email, email ) == 0 ) {
                         
