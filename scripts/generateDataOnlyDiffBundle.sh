@@ -67,6 +67,7 @@ steamcmd +login "jasonrohrergames" +quit
 if [ $# -ne 2 ]
 then
 	echo ""
+	echo "Getting latest Steam build id..."
 	echo ""
 	lastBuildID=`~/checkout/OneLifeWorking/scripts/getLatestSteamBuildID.sh`
 	
