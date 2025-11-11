@@ -7079,8 +7079,22 @@ static void playerReadsStatue( LiveObject *inPlayer,
         replaceUnderscoresWithSpaces( name );
         replaceUnderscoresWithSpaces( lastWords );
         
-        playerSays = autoSprintf( ":%s LEFT THE PLANET %s AND SAID: %s",
-                                  name, ageString, lastWords );
+        const char *workingName = name;
+        
+        if( strcmp( workingName, "-" ) == 0 ) {
+            workingName = "A NAMLESS PERSON";
+            }
+        if( strcmp( lastWords, "-" ) == 0 ) {
+            playerSays = autoSprintf( 
+                ":%s LEFT THE PLANET %s AND SAID NOTHING. "
+                "JUST GAVE US A GLANCE... "
+                "JUST GAVE US A VERY SAD, SAD BACKWARD GLANCE...",
+                workingName, ageString, lastWords );
+            }
+        else {
+            playerSays = autoSprintf( ":%s LEFT THE PLANET %s AND SAID: %s",
+                                      workingName, ageString, lastWords );
+            }
         }
     else {
         playerSays = 
