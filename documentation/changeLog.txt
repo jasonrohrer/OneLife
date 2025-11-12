@@ -3,6 +3,12 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Version 433    ??
+
+--Whoops.  Obliterated the GRAVE_OLD case in LivingLifePage when I created the
+  new STATUE_INFO case.  Restored that GRAVE_OLD code.
+
+
 
 Version 432    2025-November-11
 
