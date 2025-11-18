@@ -15337,6 +15337,70 @@ static void interruptAnyKillEmots( int inPlayerID,
 
 
 
+static char getClueInfo( int *outPos, char *outLetter ) {
+    char *contMixed = 
+        SettingsManager::getSettingContents( "secretMessage" );
+    char *cont = stringToUpperCase( contMixed );
+            
+    delete [] contMixed;
+                    
+    int contLen = strlen( cont );
+                    
+    if( clueIndicesLeftToGive.size() == 0 ) {
+        // all have been given (or this is our first clue)
+        // refill with valid indices
+        for( int i=0; i<contLen; i++ ) {
+            if( cont[i] != ' ' 
+                &&
+                cont[i] != '\n' ) {
+                clueIndicesLeftToGive.push_back( i );
+                }
+            }
+        }
+                    
+    char found = false;
+    
+    if( clueIndicesLeftToGive.size() > 0 ) {
+        int i = 
+            randSource.getRandomBoundedInt( 
+                0, 
+                clueIndicesLeftToGive.size() - 1 );
+                        
+        int letterPick = 
+            clueIndicesLeftToGive.getElementDirect( i );
+        clueIndicesLeftToGive.deleteElement( i );
+
+        *outPos = letterPick + 1;
+        *outLetter = cont[ letterPick ];
+        found = true;
+        }
+    
+    delete [] cont;
+    
+    return found;
+    }
+
+
+
+static void sendGenericClueMessage( LiveObject *inPlayer) {
+    int letterPosition;
+    char letter;
+    char gotClue = getClueInfo( &letterPosition, &letter );
+
+    if( gotClue ) {
+
+        char *message = 
+            autoSprintf( 
+                "A LONG-LOST CLUE,**"
+                "MY WORD IS TRUE:  %d : %c",
+                letterPosition, letter );
+                        
+        sendGlobalMessage( message, inPlayer );
+        delete [] message;
+        }
+    }
+
+
 static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
                                             LiveObject *hitPlayer,
                                             TransRecord *woundHit,
@@ -15384,48 +15448,22 @@ static void setPerpetratorHoldingAfterKill( LiveObject *nextPlayer,
                     }
                 
                 if( newVictimEmot ) {
-                
-                    char *contMixed = 
-                        SettingsManager::getSettingContents( "secretMessage" );
-                    char *cont = stringToUpperCase( contMixed );
-            
-                    delete [] contMixed;
-                    
-                    int contLen = strlen( cont );
-                    
-                    if( clueIndicesLeftToGive.size() == 0 ) {
-                        // all have been given (or this is our first clue)
-                        // refill with valid indices
-                        for( int i=0; i<contLen; i++ ) {
-                            if( cont[i] != ' ' 
-                                &&
-                                cont[i] != '\n' ) {
-                                clueIndicesLeftToGive.push_back( i );
-                                }
-                            }
-                        }
-                    
-                    
-                    if( clueIndicesLeftToGive.size() > 0 ) {
-                        int i = 
-                            randSource.getRandomBoundedInt( 
-                                0, 
-                                clueIndicesLeftToGive.size() - 1 );
-                        
-                        int letterPick = 
-                            clueIndicesLeftToGive.getElementDirect( i );
-                        clueIndicesLeftToGive.deleteElement( i );
-                        
+                    // specialty message for headless horseman
+                    int letterPosition;
+                    char letter;
+                    char gotClue = getClueInfo( &letterPosition, &letter );
+
+                    if( gotClue ) {
+
                         char *message = 
                             autoSprintf( 
                                 "ANOTHER NECK HAS MET YOUR SWORD.**"
                                 "ANOTHER CLUE (I KEEP MY WORD):  %d : %c",
-                                letterPick + 1, cont[letterPick] );
+                                letterPosition, letter );
                         
                         sendGlobalMessage( message, nextPlayer );
                         delete [] message;
                         }
-                    delete [] cont;
                     }
                 else {
                     char *message = 
@@ -25589,6 +25627,12 @@ int main( int inNumArgs, const char **inArgs ) {
                                                 
                                                 startAHAPGrant(
                                                     m.x, m.y, nextPlayer );
+                                                }
+                                            if( newO != NULL &&
+                                                newO->giveClue ) {
+                                                
+                                                sendGenericClueMessage(
+                                                    nextPlayer );
                                                 }
                                             }
                                         }

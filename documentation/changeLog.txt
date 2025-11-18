@@ -8,6 +8,10 @@ Server Fixes:
 --Fixed so that periodic placements only go in empty spots and never replace an
   existing map object.
 
+--Support for object that can +giveClue when it is created by a player through
+  a transition (instead of just if the player is holding it and causing a
+  victim emote in someone else).
+
 
 
 
