@@ -19833,13 +19833,27 @@ int main( int inNumArgs, const char **inArgs ) {
                     GridPos placePos = { avePos.x + xRad,
                                          avePos.y + yRad };
                     
-
-                    setMapObject( placePos.x, placePos.y, 
-                                  placement->objectID );
-                    
-                    if( strcmp( placement->globalMessage, "" ) != 0 ) {
-                        sendGlobalMessage( placement->globalMessage );
+                    int tryCount = 0;
+                    while( tryCount < 20 &&
+                           getMapObject( placePos.x, placePos.y ) != 0 ) {
+                        // search diagonally away for empty spot
+                        placePos.x -= 5;
+                        placePos.y -= 5;
+                        tryCount++;
                         }
+
+                    if( getMapObject( placePos.x, placePos.y ) == 0 ) {
+                        // found empty spot
+                        setMapObject( placePos.x, placePos.y, 
+                                      placement->objectID );
+                    
+                        if( strcmp( placement->globalMessage, "" ) != 0 ) {
+                            sendGlobalMessage( placement->globalMessage );
+                            }
+                        }
+                    // else gave up without finding empty spot
+                    // NEVER just replace an object with a periodic placement
+                    
                     }
                 
                 delete [] placement->globalMessage;

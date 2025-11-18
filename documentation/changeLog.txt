@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+Server Fixes:
+
+--Fixed so that periodic placements only go in empty spots and never replace an
+  existing map object.
+
+
+
+
 Version 434    2025-November-11
 
 --Whoops.  Obliterated the GRAVE_OLD case in LivingLifePage when I created the
