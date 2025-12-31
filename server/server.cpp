@@ -2090,7 +2090,7 @@ int getPlayerDisplayID( int inID ) {
 char isPlayerIgnoredForEvePlacement( int inID ) {
     LiveObject *o = getLiveObject( inID );
     if( o != NULL ) {
-        return ( o->curseStatus.curseLevel > 0 ) || o->isTutorial;
+        return ( o->curseStatus.curseLevel > 0 ) || o->isTutorial || o->isGhost;
         }
 
     // player id doesn't even exist
@@ -3822,6 +3822,7 @@ static void restockPostWindowFamilies() {
         
         if( ! o->error &&
             ! o->isTutorial &&
+            ! o->isGhost &&
             o->curseStatus.curseLevel == 0 &&
             familyLineageEveIDsAfterEveWindow.getElementIndex( 
                 o->lineageEveID ) == -1 ) {
@@ -3891,6 +3892,7 @@ static void logFamilyCounts() {
                 
                 if( ! o->error &&
                     ! o->isTutorial &&
+                    ! o->isGhost &&
                     o->curseStatus.curseLevel == 0 &&
                     o->lineageEveID == lineageEveID ) {
                     
@@ -10928,6 +10930,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             if( player->error || 
                 ! player->connected ||
                 player->isTutorial ||
+                player->isGhost ||
                 player->vogMode ) {
                 continue;
                 }
@@ -17190,6 +17193,7 @@ void sendNearPopSpeech( LiveObject *inPlayer,
             
             if( ! otherPlayer->error &&
                 ! otherPlayer->isTutorial &&
+                ! otherPlayer->isGhost &&
                 otherPlayer->curseStatus.curseLevel == 0 ) {
                 
                 totalCount++;
@@ -17245,6 +17249,7 @@ char isNearPopBlocked( LiveObject *inPlayer,
         
         if( ! otherPlayer->error &&
             ! otherPlayer->isTutorial &&
+            ! otherPlayer->isGhost &&
             otherPlayer->curseStatus.curseLevel == 0 ) {
             
             totalCount++;
@@ -19819,6 +19824,7 @@ int main( int inNumArgs, const char **inArgs ) {
         
                     if( ! o->error &&
                         ! o->isTutorial &&
+                        ! o->isGhost &&
                         o->curseStatus.curseLevel == 0 ) {
                         
                         population.push_back( o );

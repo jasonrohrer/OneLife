@@ -12,6 +12,9 @@ Server Fixes:
   a transition (instead of just if the player is holding it and causing a
   victim emote in someone else).
 
+--Fixed so that ghosts are ignored for nearPop stuff, periodic placements, and
+  Eve placements.
+
 
 
 
