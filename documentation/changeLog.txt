@@ -18,6 +18,9 @@ Server Fixes:
 --Fixed so that decay is set correctly for obeject that eveStartsHolding.
   Fixes #1230
 
+--Fixed so that tapout triggers set decay on objects changed by tapout.
+  Fixes #1228
+
 
 
 

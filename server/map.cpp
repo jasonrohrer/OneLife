@@ -7581,7 +7581,7 @@ static char runTapoutOperation( int inX, int inY,
                 }
             
             if( newTarget != -1 ) {
-                setMapObjectRaw( x, y, newTarget );
+                setMapObject( x, y, newTarget );
 
                 if( newTarget != id &&
                     isOwnedAtAll( id ) &&
