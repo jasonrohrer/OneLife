@@ -11103,7 +11103,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
 
     newObject.holdingID = 0;
-
+    newObject.holdingEtaDecay = 0;
 
     if( areTriggersEnabled() ) {
         int id = getTriggerPlayerDisplayID( inEmail );
@@ -11137,6 +11137,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         if( eveStartsHoldingID != 0 ) {
             newObject.holdingID = eveStartsHoldingID;
+            
+            setFreshEtaDecayForHeld( &newObject );
             }
         }
     
@@ -11176,7 +11178,6 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.actionAttempt = 0;
     newObject.actionTarget.x = 0;
     newObject.actionTarget.y = 0;
-    newObject.holdingEtaDecay = 0;
     newObject.heldOriginValid = 0;
     newObject.heldOriginX = 0;
     newObject.heldOriginY = 0;

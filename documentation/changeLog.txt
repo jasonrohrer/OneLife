@@ -15,6 +15,9 @@ Server Fixes:
 --Fixed so that ghosts are ignored for nearPop stuff, periodic placements, and
   Eve placements.
 
+--Fixed so that decay is set correctly for obeject that eveStartsHolding.
+  Fixes #1230
+
 
 
 
