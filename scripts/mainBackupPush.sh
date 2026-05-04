@@ -16,6 +16,31 @@ mysqldump -u jcr15_olForumU --password=$passwordForums jcr15_olForums > ~/backup
 gzip -f ~/backups/ol_forums_$date.mysql
 
 
+
+
+# now all website php stuff, which contains settings files
+# that have been modified from git versions
+
+dirName=ol_webPHP_$date
+dirPath=/home/jcr15/backups/$dirName
+
+rm -rf $dirPath
+mkdir $dirPath
+
+cd /home/jcr15/public_html
+find . -type f -name '*.php' -exec cp --parents -t $dirPath {} +
+
+cd /home/jcr15/backups
+
+tar czf $dirName.tar.gz $dirName
+
+rm -r $dirName
+
+
+
+
+
+
 cd ~/checkout/OneLife/server/
 # this bundles local lifelog and lifeLog_serverX folders together
 tar czf ~/backups/lifeLog_$date.tar.gz lifeLog lifeLog_*
