@@ -164,6 +164,9 @@ static int newPlayerFoodEatingBonus = 5;
 // first 10 hours of living
 static double newPlayerFoodBonusHalfLifeSeconds = 36000;
 
+// 20 hours
+static double accountUntrustedTotalLifeSeconds = 72000;
+
 
 
 static double indoorFoodDecrementSecondsBonus = 20.0;
@@ -6813,7 +6816,9 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
 
     if( isCurse ) {
         if( inPlayer->curseStatus.curseLevel == 0 &&
-            hasCurseToken( inPlayer->email ) ) {
+            hasCurseToken( inPlayer->email ) &&
+            ! isAccountUntrusted( inPlayer ) ) {
+            // no curse tokens for untrusted accounts
             inPlayer->curseTokenCount = 1;
             }
         else {
@@ -9225,6 +9230,17 @@ static char isEmailAliveButDisconnected( char *inEmail ) {
 
 
 
+static char isAccountUntrusted( LiveObject *inPlayerObject ) {
+    if( isUsingStatsServer() && 
+        ! inPlayerObject->lifeStats.error &&
+        ( inPlayerObject->lifeStats.lifeTotalSeconds <
+          accountUntrustedTotalLifeSeconds ) ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 static char isNewPlayer( LiveObject *inPlayerObject,
                          int inMinLives = -1, int inMinHours = -1 ) {
@@ -9452,6 +9468,10 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         SettingsManager::getFloatSetting( "newPlayerFoodBonusHalfLifeSeconds",
                                           36000 );
 
+    accountUntrustedTotalLifeSeconds =
+        SettingsManager::getFloatSetting( "accountUntrustedTotalLifeSeconds",
+                                          72000 );
+
     babyBirthFoodDecrement = 
         SettingsManager::getIntSetting( "babyBirthFoodDecrement", 10 );
 
@@ -9621,6 +9641,11 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // score as suspect (too few data points, noisy)
 
         // don't give them any special roles based on a high fitness score
+        newObject.fitnessScore = 0;
+        }
+    else if( isAccountUntrusted( &newObject ) ) {
+        // an untrusted account with too few play hours
+        // no special roles either
         newObject.fitnessScore = 0;
         }
     
@@ -11155,8 +11180,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     newObject.usedGhostDestroyLongWords = new SimpleVector<char*>();
 
 
-    if( newObject.curseStatus.curseLevel == 0 &&
-        hasCurseToken( inEmail ) ) {
+    if( newObject.curseStatus.curseLevel == 0
+        &&
+        hasCurseToken( inEmail )
+        &&
+        ! isAccountUntrusted( &newObject ) ) {
+        // no curse tokens for untrusted accounts
         newObject.curseTokenCount = 1;
         }
     else {
@@ -30052,9 +30081,11 @@ int main( int inNumArgs, const char **inArgs ) {
                     
                     // don't give mid-life tokens to twins or cursed players
                     // or ghosts
+                    // or untrusted accounts
                     if( ! nextPlayer->isTwin &&
                         ! nextPlayer->isGhost &&
                         nextPlayer->curseStatus.curseLevel == 0 &&
+                        ! isAccountUntrusted( nextPlayer ) &&
                         strcmp( nextPlayer->email, email ) == 0 ) {
                         
                         nextPlayer->curseTokenCount = 1;

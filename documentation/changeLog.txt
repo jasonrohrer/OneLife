@@ -21,6 +21,10 @@ Server Fixes:
 --Fixed so that tapout triggers set decay on objects changed by tapout.
   Fixes #1228
 
+--Untrusted accounts with less than 20 total lived hours cannot curse, and have
+  their fitness scores set to 0 internally on the server (not on the
+  leaderboard), so they are last picked to inherit things.
+
 
 
 
