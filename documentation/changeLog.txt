@@ -3,7 +3,7 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
-Version 436   ???
+Version 436   2026-May-9
 
 --Support for twin_count 0 to specify same family on friends-only-mode servers,
   where twin_code is used to pick a deterministic, unguessable location on the
