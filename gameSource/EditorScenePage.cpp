@@ -1218,6 +1218,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
             // for main floor, and left and right hugging floor
             // 0 to skip a pass
             int passIDs[3] = { 0, 0, 0 };
+            char fullTileHuggingFloor = false;
             
             if( f->oID > 0 ) {
                 passIDs[0] = f->oID;
@@ -1254,7 +1255,19 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                         drawHuggingFloor = true;
                         }
                     }
-                
+
+                if( passIDs[1] > 0 && passIDs[1] == passIDs[2] ) {
+                    // Same floor is auto-extending into this wall tile
+                    // from both sides.  Draw it once as a synthetic
+                    // hugging floor instead of drawing two adjacent
+                    // stenciled halves, which can disappear on some
+                    // OpenGL drivers.
+                    passIDs[0] = passIDs[1];
+                    passIDs[1] = 0;
+                    passIDs[2] = 0;
+                    fullTileHuggingFloor = true;
+                    }
+
 
                 if( ! drawHuggingFloor ) {
                     continue;
@@ -1290,7 +1303,7 @@ void EditorScenePage::drawUnderComponents( doublePair inViewCenter,
                     startDrawingThroughStencil();
                     }
                 
-                if( p > 0 ) {
+                if( p > 0 || fullTileHuggingFloor ) {
                     // floor hugging pass
 
                     int numLayers = getObject( oID )->numSprites;
