@@ -23910,7 +23910,15 @@ int main( int inNumArgs, const char **inArgs ) {
                         char joiningPosse = false;
                         if( isPosseJoiningSay( m.saidText ) ) {
                             joiningPosse = true;
-                            if( nextPlayer->isTwin ) {
+
+                            if( isAccountUntrusted( nextPlayer ) ) {
+                                const char *message = 
+                                    "YOUR ACCOUNT IS TOO NEW.**"
+                                    "YOU CANNOT JOIN A POSSE.";
+                                sendGlobalMessage( (char*)message, nextPlayer );
+                                joiningPosse = false;
+                                }
+                            else if( nextPlayer->isTwin ) {
                                 const char *message = 
                                     "TWINS CANNOT JOIN POSSES.";
                                 sendGlobalMessage( (char*)message, nextPlayer );

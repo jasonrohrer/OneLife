@@ -27,6 +27,8 @@ Server Fixes:
 
 --Untrusted accounts cannot be followed.
 
+--Untrusted accounts cannot join posses.
+
 
 
 
