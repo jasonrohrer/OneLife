@@ -25,6 +25,10 @@ Server Fixes:
   their fitness scores set to 0 internally on the server (not on the
   leaderboard), so they are last picked to inherit things.
 
+--Untrusted accounts cannot be followed.
+
+
+
 
 
 

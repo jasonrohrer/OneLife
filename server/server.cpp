@@ -6488,6 +6488,17 @@ SimpleVector<ChangePosition> newLocationSpeechPos;
 
 
 
+static char isAccountUntrusted( LiveObject *inPlayerObject ) {
+    if( isUsingStatsServer() && 
+        ! inPlayerObject->lifeStats.error &&
+        ( inPlayerObject->lifeStats.lifeTotalSeconds <
+          accountUntrustedTotalLifeSeconds ) ) {
+        return true;
+        }
+    return false;
+    }
+
+
 
 char *isCurseNamingSay( char *inSaidString );
 
@@ -9230,15 +9241,7 @@ static char isEmailAliveButDisconnected( char *inEmail ) {
 
 
 
-static char isAccountUntrusted( LiveObject *inPlayerObject ) {
-    if( isUsingStatsServer() && 
-        ! inPlayerObject->lifeStats.error &&
-        ( inPlayerObject->lifeStats.lifeTotalSeconds <
-          accountUntrustedTotalLifeSeconds ) ) {
-        return true;
-        }
-    return false;
-    }
+
 
 
 
@@ -24226,6 +24229,13 @@ int main( int inNumArgs, const char **inArgs ) {
                                    otherToFollow = nextPlayer;
                                    }
                                }
+                            }
+
+                        if( otherToFollow != NULL ) {
+                            // untrusted accounts cannot be followed
+                            if( isAccountUntrusted( otherToFollow ) ) {
+                                otherToFollow = NULL;
+                                }
                             }
                         
                         if( otherToFollow != NULL ) {
