@@ -6476,6 +6476,7 @@ static LiveObject *getPlayerByEmail( char *inEmail ) {
 
 static int usePersonalCurses = 0;
 
+static char friendsOnlyMode = 0;
 
 
 
@@ -9289,6 +9290,7 @@ static void getFriendCoordsFromTwinCode( char *inTwinCode,
         digest = computeRawSHA1Digest( (char*)"twin code missing" );
         }
 
+    
     // generate seed from first 4 bytes of hashed twin code
     friendSource.reseed( digest[0]
                          |
@@ -9298,22 +9300,37 @@ static void getFriendCoordsFromTwinCode( char *inTwinCode,
                          |
                          digest[3] << 24 );
 
+    // split map into 1,000,000x1,000,000 cells (each cell is 4000 wide)
+
+    int  cellX = friendSource.getRandomBoundedInt( -500000, +500000 );
+
+    // reseed with different bytes from digest befor picking y
+    // this uses 64 bits of entropy from the digest
+    // I'm not sure if this helps.
+    friendSource.reseed( digest[4]
+                         |
+                         digest[5] << 8
+                         |
+                         digest[6] << 16
+                         |
+                         digest[7] << 24 );
+
     delete [] digest;
 
-    // split map into 4000x4000 cells (each cell is 1,000,000 wide)
-
-    int  cellX = friendSource.getRandomBoundedInt( -2000, +2000 );
-    int  cellY = friendSource.getRandomBoundedInt( -2000, +2000 );
+    
+    int  cellY = friendSource.getRandomBoundedInt( -500000, +500000 );
 
     // these are in +/- 2 billion
-    int centerX = cellX * 1000000;
-    int centerY = cellY * 1000000;
+    int centerX = cellX * 4000;
+    int centerY = cellY * 4000;
 
     
-    // now wiggle deterministically by +/- 250,000
+    // now wiggle deterministically by +/- 2000
+    // don't bother grabbing more bytes of entropy for this fine-grained
+    // wiggle, since we already used 64 bits for the coarse positioning
 
-    centerX += friendSource.getRandomBoundedInt( -250000, +25000 );
-    centerY += friendSource.getRandomBoundedInt( -250000, +25000 );
+    centerX += friendSource.getRandomBoundedInt( -2000, +2000 );
+    centerY += friendSource.getRandomBoundedInt( -2000, +2000 );
 
     AppLog::infoF( "Generated coordinates (%d, %d) from twin code %s",
                    centerX, centerY, inTwinCode );
@@ -9382,8 +9399,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
         }
 
-    char friendsOnlyMode = SettingsManager::getIntSetting( "friendsOnlyMode",
-                                                           0 );
+    friendsOnlyMode = SettingsManager::getIntSetting( "friendsOnlyMode",
+                                                      0 );
 
 
     // new behavior:
@@ -17506,7 +17523,12 @@ static LiveObject *getPlayerByName( char *inName,
 
 
 static void findExpertForPlayer( LiveObject *inPlayer, 
-                                 ObjectRecord *inTouchedObject ) {    
+                                 ObjectRecord *inTouchedObject ) {
+
+    if( friendsOnlyMode ) {
+        // expert waystones don't function in friendsOnlyMode servers
+        return;
+        }
 
     int race = getSpecialistRace( inTouchedObject );
     

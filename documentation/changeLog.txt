@@ -10,6 +10,8 @@ Version 436   ???
   map for Eve spawns, and non-Eves are born only to people with their same twin
   code.
 
+--Friends-only-mode servers disable expert waystones.
+
 
 
 
