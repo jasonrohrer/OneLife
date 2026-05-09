@@ -710,6 +710,8 @@ typedef struct LiveObject {
         // but is still on list
         char *origEmail;
 
+        char *twinCode;
+
         int id;
         
         float fitnessScore;
@@ -2597,6 +2599,9 @@ void quitCleanup() {
             }
         if( nextPlayer->origEmail != NULL  ) {
             delete [] nextPlayer->origEmail;
+            }
+        if( nextPlayer->twinCode != NULL  ) {
+            delete [] nextPlayer->twinCode;
             }
         if( nextPlayer->lastBabyEmail != NULL  ) {
             delete [] nextPlayer->lastBabyEmail;
@@ -9268,6 +9273,70 @@ static char isNewPlayer( LiveObject *inPlayerObject,
 
 
 
+static void getFriendCoordsFromTwinCode( char *inTwinCode,
+                                         int  *outX,
+                                         int  *outY ) {
+    JenkinsRandomSource friendSource;
+
+    unsigned char *digest;
+
+    if( inTwinCode != NULL ) {
+        digest = computeRawSHA1Digest( inTwinCode );
+        }
+    else {
+        // if they didn't supply a twin code, send them all to the
+        // same location
+        digest = computeRawSHA1Digest( (char*)"twin code missing" );
+        }
+
+    // generate seed from first 4 bytes of hashed twin code
+    friendSource.reseed( digest[0]
+                         |
+                         digest[1] << 8
+                         |
+                         digest[2] << 16
+                         |
+                         digest[3] << 24 );
+
+    delete [] digest;
+
+    // split map into 4000x4000 cells (each cell is 1,000,000 wide)
+
+    int  cellX = friendSource.getRandomBoundedInt( -2000, +2000 );
+    int  cellY = friendSource.getRandomBoundedInt( -2000, +2000 );
+
+    // these are in +/- 2 billion
+    int centerX = cellX * 1000000;
+    int centerY = cellY * 1000000;
+
+    
+    // now wiggle deterministically by +/- 250,000
+
+    centerX += friendSource.getRandomBoundedInt( -250000, +25000 );
+    centerY += friendSource.getRandomBoundedInt( -250000, +25000 );
+
+    AppLog::infoF( "Generated coordinates (%d, %d) from twin code %s",
+                   centerX, centerY, inTwinCode );
+    *outX = centerX;
+    *outY = centerY;
+    }
+
+
+static char twinCodesEqual( char  *inCodeA,
+                            char  *inCodeB ) {
+
+    if( inCodeA == NULL
+        ||
+        inCodeB == NULL ) {
+        return ( inCodeA == inCodeB );
+        }
+
+    return ( strcmp( inCodeA, inCodeB ) == 0 );
+    }
+
+    
+
+
 // inAllowOrForceReconnect is 0 for forbidden reconnect, 1 to allow, 
 // 2 to require
 // returns ID of new player,
@@ -9280,6 +9349,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                            CurseStatus inCurseStatus,
                            PastLifeStats inLifeStats,
                            float inFitnessScore,
+                           char *inTwinCode = NULL,
                            // set to -2 to force Eve
                            int inForceParentID = -1,
                            int inForceDisplayID = -1,
@@ -9311,7 +9381,9 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                 }
             }
         }
-    
+
+    char friendsOnlyMode = SettingsManager::getIntSetting( "friendsOnlyMode",
+                                                           0 );
 
 
     // new behavior:
@@ -9563,7 +9635,12 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     newObject.email = inEmail;
     newObject.origEmail = NULL;
-    
+
+    newObject.twinCode = NULL;
+
+    if( inTwinCode != NULL ) {
+        newObject.twinCode = stringDuplicate( inTwinCode );
+        }
 
     newObject.lastBabyEmail = NULL;
 
@@ -9770,6 +9847,15 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             if( player->vogMode ) {
                 continue;
                 }
+
+            if( friendsOnlyMode
+                &&
+                ! twinCodesEqual( inTwinCode,
+                                  player->twinCode ) ) {
+                // in friends-only mode, twin codes must match
+                continue;
+                }
+                
 
             GridPos motherPos = getPlayerPos( player );
             int homeStatus = isBirthland( motherPos.x, motherPos.y,
@@ -10086,6 +10172,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                     }
                 
                 if( player->vogMode ) {
+                    continue;
+                    }
+
+                if( friendsOnlyMode
+                    &&
+                    ! twinCodesEqual( inTwinCode,
+                                      player->twinCode ) ) {
+                    // in friends-only mode, twin codes must match
                     continue;
                     }
             
@@ -10984,11 +11078,23 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
 
         int startX, startY;
-        char didEveRespawn =
-            getEvePosition( newObject.email, 
-                            newObject.id, &startX, &startY, 
-                            &otherPeoplePos, allowEveRespawn, 
-                            incrementEvePlacement );
+        char didEveRespawn;
+
+        if( friendsOnlyMode ) {
+            // force low-pop behavior where we count all eves as respawning
+            didEveRespawn = true;
+
+            // position Eve in a deterministic way based on twin code
+            getFriendCoordsFromTwinCode( inTwinCode,
+                                         &startX,
+                                         &startY );
+            }
+        else {
+            didEveRespawn = getEvePosition( newObject.email, 
+                                            newObject.id, &startX, &startY, 
+                                            &otherPeoplePos, allowEveRespawn, 
+                                            incrementEvePlacement );
+            }
         
         
         if( newObject.isEve ) {
@@ -11929,7 +12035,9 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
         
         nextLogInTwin = true;
         firstTwinID = -1;
-        
+
+        // pass the twin code in for the first player, so they get born
+        // to the right parent in case of friends-only server mode
         int newID = processLoggedInPlayer( false,
                                            inConnection.sock,
                                            inConnection.sockBuffer,
@@ -11937,7 +12045,8 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel,
                                            inConnection.lifeStats,
-                                           inConnection.fitnessScore );
+                                           inConnection.fitnessScore,
+                                           inConnection.twinCode );
         tempTwinEmails.deleteAll();
         
         if( newID == -1 ) {
@@ -12028,6 +12137,11 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    anyTwinCurseLevel,
                                    nextConnection->lifeStats,
                                    nextConnection->fitnessScore,
+                                   // don't pass twin code here for
+                                   // subsequent menbers of group, since
+                                   // their parent (or pos) is already
+                                   // forced to be the same as first member
+                                   NULL,
                                    parent,
                                    displayID,
                                    forcedEvePos,
@@ -20599,15 +20713,11 @@ int main( int inNumArgs, const char **inArgs ) {
                         processWaitingTwinConnection( *nextConnection );
                         }
                     else {
-                        if( nextConnection->twinCode != NULL ) {
-                            delete [] nextConnection->twinCode;
-                            nextConnection->twinCode = NULL;
-                            }
 
-                        if( nextConnection->ipAddress != NULL ) {
-                            delete [] nextConnection->ipAddress;
-                            nextConnection->ipAddress = NULL;
-                            }
+                        // case where twinCount is 0
+                        // but twinCode is non-NULL
+                        // might be a samFam request
+                        // on a server that supports that
                         
                         processLoggedInPlayer( 
                             nextConnection->reconnectOnly ? 2 : true,
@@ -20617,7 +20727,18 @@ int main( int inNumArgs, const char **inArgs ) {
                             nextConnection->tutorialNumber,
                             nextConnection->curseStatus,
                             nextConnection->lifeStats,
-                            nextConnection->fitnessScore );
+                            nextConnection->fitnessScore,
+                            nextConnection->twinCode );
+
+                        if( nextConnection->twinCode != NULL ) {
+                            delete [] nextConnection->twinCode;
+                            nextConnection->twinCode = NULL;
+                            }
+
+                        if( nextConnection->ipAddress != NULL ) {
+                            delete [] nextConnection->ipAddress;
+                            nextConnection->ipAddress = NULL;
+                            }
                         }
                                                         
                     newConnections.deleteElement( i );
@@ -20768,8 +20889,10 @@ int main( int inNumArgs, const char **inArgs ) {
                                     // count it as if they're not even
                                     // asking to be twins
                                     nextConnection->twinCount = 0;
-                                    delete [] nextConnection->twinCode;
-                                    nextConnection->twinCode = NULL;
+
+                                    // BUT keep the twinCode, in case
+                                    // they are requesting sameFam mode
+                                    // with a twin count of 0
                                     }
                                 
                                 }
@@ -20901,6 +21024,24 @@ int main( int inNumArgs, const char **inArgs ) {
                                             *nextConnection );
                                         }
                                     else {
+
+                                        // case where twinCount is 0
+                                        // but twinCode is non-NULL
+                                        // might be a samFam request
+                                        // on a server that supports that
+                                        
+                                        processLoggedInPlayer(
+                                            nextConnection->reconnectOnly ? 
+                                            2 : true,
+                                            nextConnection->sock,
+                                            nextConnection->sockBuffer,
+                                            nextConnection->email,
+                                            nextConnection->tutorialNumber,
+                                            nextConnection->curseStatus,
+                                            nextConnection->lifeStats,
+                                            nextConnection->fitnessScore,
+                                            nextConnection->twinCode );
+                                        
                                         if( nextConnection->twinCode != NULL ) {
                                             delete [] nextConnection->twinCode;
                                             nextConnection->twinCode = NULL;
@@ -20912,16 +21053,7 @@ int main( int inNumArgs, const char **inArgs ) {
                                             nextConnection->ipAddress = NULL;
                                             }
                                         
-                                        processLoggedInPlayer(
-                                            nextConnection->reconnectOnly ? 
-                                            2 : true,
-                                            nextConnection->sock,
-                                            nextConnection->sockBuffer,
-                                            nextConnection->email,
-                                            nextConnection->tutorialNumber,
-                                            nextConnection->curseStatus,
-                                            nextConnection->lifeStats,
-                                            nextConnection->fitnessScore );
+                                        
                                         }
                                                                         
                                     newConnections.deleteElement( i );
@@ -32846,6 +32978,9 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 if( nextPlayer->origEmail != NULL  ) {
                     delete [] nextPlayer->origEmail;
+                    }
+                if( nextPlayer->twinCode != NULL  ) {
+                    delete [] nextPlayer->twinCode;
                     }
                 if( nextPlayer->lastBabyEmail != NULL ) {
                     delete [] nextPlayer->lastBabyEmail;

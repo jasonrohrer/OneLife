@@ -111,7 +111,7 @@ tutorial_number specifies the tutorial map number to load, or 0 for normal game.
 twin_code_hash is optional.  The sha1 hash of the twin code.
 
 twin_count is mandatory if twin_code_hash is present.  How many twins are in
-the party, total.
+the party, total.  Use 0 for friends-only mode, on servers that support that.
 
 
 
