@@ -12,6 +12,10 @@ Version 436   2026-May-9
 
 --Friends-only-mode servers disable expert waystones.
 
+--Fixed wall-hugging floor glitch that affected certain graphics cards.
+  Thanks to Twisted for discovering, and AdamCoulterOz for fixing.
+
+
 
 
 
