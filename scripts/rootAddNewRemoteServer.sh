@@ -121,4 +121,11 @@ ssh -n -o StrictHostKeychecking=no jcr13@$subdomain.onehouronelife.com '~/checko
 EOSU2
 
 
+echo ""
+
+echo "Don't forget to make sure REAL server/settings/*SharedSecret.ini files get put in place for the new server."
+
+echo ""
+
+
 echo "Done with new server setup"
