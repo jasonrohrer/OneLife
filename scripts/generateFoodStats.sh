@@ -10,6 +10,14 @@ sh makePrintFoodLogStatsHTML
 
 while read user server port
 do
+	if [ "$server" = "friends.onehouronelife.com" ]
+	then
+		echo ""
+		echo "Skipping food logs for $server"
+		echo ""
+		continue
+	fi
+	
   echo ""
   echo "Using rsync to sync all food logs from $server"
   echo ""

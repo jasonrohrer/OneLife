@@ -9,6 +9,9 @@ Server Fixes:
 --Friends coordinate picking now uses a server-side secret, to make offline
   guess-and-test brute force impossible.
 
+--Removing life/curse and food logs from public data for friends server.
+
+
 
 
 Version 436   2026-May-9

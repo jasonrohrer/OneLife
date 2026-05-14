@@ -10,6 +10,15 @@ sh makePrintLifeLogStatsHTML
 
 while read user server port
 do
+
+	if [ "$server" = "friends.onehouronelife.com" ]
+	then
+		echo ""
+		echo "Skipping life and curse logs for $server"
+		echo ""
+		continue
+	fi
+		
   echo ""
   echo "Using rsync to sync all life logs and curse logs from $server"
   echo ""
