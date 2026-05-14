@@ -9274,48 +9274,64 @@ static char isNewPlayer( LiveObject *inPlayerObject,
 
 
 
-static void getFriendCoordsFromTwinCode( char *inTwinCode,
+static void getFriendCoordsFromTwinCode( const char *inTwinCode,
                                          int  *outX,
                                          int  *outY ) {
     JenkinsRandomSource friendSource;
 
-    unsigned char *digest;
-
-    if( inTwinCode != NULL ) {
-        digest = computeRawSHA1Digest( inTwinCode );
+    if( curseSecret == NULL ) {
+        curseSecret = 
+            SettingsManager::getStringSetting( 
+                "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
         }
-    else {
+
+    if( strcmp( curseSecret, "sdfmlk3490sadfm3ug9324" ) == 0
+        ||
+        strcmp( curseSecret, "secret_phrase" ) == 0 ) {
+        
+        AppLog::error( "No statsServerSharedSecret set, sending all friends "
+                       "to (0,0) to avoid a false sense of security." );
+        *outX = 0;
+        *outY = 0;
+        
+        return;
+        }
+    
+    
+    if( inTwinCode == NULL ) {
         // if they didn't supply a twin code, send them all to the
         // same location
-        digest = computeRawSHA1Digest( (char*)"twin code missing" );
+        inTwinCode = "(null)";
         }
 
+    char *codePlusSecretHmacHex = hmac_sha1( curseSecret, inTwinCode );
+    
+    unsigned char *digest = computeRawSHA1Digest( codePlusSecretHmacHex );
+
+    delete [] codePlusSecretHmacHex;
+    
     
     // generate seed from first 4 bytes of hashed twin code
-    friendSource.reseed( digest[0]
+    friendSource.reseed( (unsigned int)( digest[0] )
                          |
-                         digest[1] << 8
+                         (unsigned int)( digest[1] ) << 8
                          |
-                         digest[2] << 16
+                         (unsigned int)( digest[2] ) << 16
                          |
-                         digest[3] << 24 );
+                         (unsigned int)( digest[3] ) << 24 );
 
     // split map into 1,000,000x1,000,000 cells (each cell is 4000 wide)
 
     int  cellX = friendSource.getRandomBoundedInt( -500000, +500000 );
 
-    // reseed with different bytes from digest befor picking y
-    // this uses 64 bits of entropy from the digest
-    // I'm not sure if this helps.
-    friendSource.reseed( digest[4]
+    // reseed with different bytes from digest before picking y
+    friendSource.reseed( (unsigned int)( digest[4] )
                          |
-                         digest[5] << 8
+                         (unsigned int)( digest[5] ) << 8
                          |
-                         digest[6] << 16
+                         (unsigned int)( digest[6] ) << 16
                          |
-                         digest[7] << 24 );
-
-    delete [] digest;
+                         (unsigned int)( digest[7] ) << 24 );
 
     
     int  cellY = friendSource.getRandomBoundedInt( -500000, +500000 );
@@ -9326,17 +9342,38 @@ static void getFriendCoordsFromTwinCode( char *inTwinCode,
 
     
     // now wiggle deterministically by +/- 2000
-    // don't bother grabbing more bytes of entropy for this fine-grained
-    // wiggle, since we already used 64 bits for the coarse positioning
 
+    // reseed for each wiggle dir
+    friendSource.reseed( (unsigned int)( digest[8] )
+                         |
+                         (unsigned int)( digest[9] ) << 8
+                         |
+                         (unsigned int)( digest[10] ) << 16
+                         |
+                         (unsigned int)( digest[11] ) << 24 );
+    
     centerX += friendSource.getRandomBoundedInt( -2000, +2000 );
-    centerY += friendSource.getRandomBoundedInt( -2000, +2000 );
 
+
+    friendSource.reseed( (unsigned int)( digest[12] )
+                         |
+                         (unsigned int)( digest[13] ) << 8
+                         |
+                         (unsigned int)( digest[14] ) << 16
+                         |
+                         (unsigned int)( digest[15] ) << 24 );
+    
+    centerY += friendSource.getRandomBoundedInt( -2000, +2000 );
+    
+    delete [] digest;
+
+    
     AppLog::infoF( "Generated coordinates (%d, %d) from twin code %s",
                    centerX, centerY, inTwinCode );
     *outX = centerX;
     *outY = centerY;
     }
+
 
 
 static char twinCodesEqual( char  *inCodeA,

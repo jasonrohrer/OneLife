@@ -3,6 +3,14 @@ This file only list changes to game code.  Changes to content can be found here:
 http://onehouronelife.com/updateLog.php
 
 
+
+Server Fixes:
+
+--Friends coordinate picking now uses a server-side secret, to make offline
+  guess-and-test brute force impossible.
+
+
+
 Version 436   2026-May-9
 
 --Support for twin_count 0 to specify same family on friends-only-mode servers,
