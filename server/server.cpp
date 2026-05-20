@@ -9388,6 +9388,29 @@ static char twinCodesEqual( char  *inCodeA,
     return ( strcmp( inCodeA, inCodeB ) == 0 );
     }
 
+
+
+char isAccountSpecial( char *inEmail ) {
+
+    SimpleVector<char *> *list =
+        SettingsManager::getSetting( "specialAccounts" );
+
+    char hit = false;
+    
+    for( int i = 0; i < list->size(); i++ ) {
+
+        if( stringCompareIgnoreCase( inEmail,
+                                     list->getElementDirect( i ) ) == 0 ) {
+            hit = true;
+            break;
+            }
+        }
+
+    list->deallocateStringElements();
+    delete list;
+
+    return hit;
+    }
     
 
 
@@ -9413,6 +9436,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
 
     usePersonalCurses = SettingsManager::getIntSetting( "usePersonalCurses",
                                                         0 );
+
+    char special = isAccountSpecial( inEmail );
     
     if( usePersonalCurses ) {
         // ignore what old curse system said
@@ -9885,6 +9910,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     clearOffspringLineageID( newObject.email );
     
 
+    if( ! special )
     for( int p=0; p<3; p++ ) {
     
         for( int i=0; i<numPlayers; i++ ) {
@@ -10143,7 +10169,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
         }
     
-    
+
+    if( ! special ) {
     if( parentChoices.size() > 1 ) {
         // filter them so that we avoid mothers who WE have curse-blocked
         // (only if we have a choice)
@@ -10277,6 +10304,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         
         AppLog::infoF( "Found %d d-town mothers", parentChoices.size() );
         }
+        }  // end if( ! special )
+    
     
 
     
@@ -10379,13 +10408,17 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
 
 
-
+    if( ! special )
     if( parentChoices.size() == 0 && 
         ( numBirthLocationsCurseBlocked > 0 || 
           ( numBirthLocationsSidsBlocked > 0
             && numPlayers >= dieCycleDonkeytownThreshold ) ) ) {
         AppLog::infoF( "No available mothers in d-town, "
                        "sending a new Eve to donkeytown" );
+        }
+
+    if( special ) {
+        AppLog::infoF( "Account for %s is special.", inEmail );
         }
 
     
@@ -11095,7 +11128,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         // Eve's curse status
         char seekingCursed = false;
         
-        if( newObject.curseStatus.curseLevel > 0 ) {
+        if( special ||
+            newObject.curseStatus.curseLevel > 0 ) {
             seekingCursed = true;
             }
         
@@ -11169,7 +11203,8 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
             }
         
 
-        if( newObject.curseStatus.curseLevel > 0 ) {
+        if( special ||
+            newObject.curseStatus.curseLevel > 0 ) {
             // keep cursed players away by sticking them in Donkeytown 
 
             // 200M away in X pushing out away from 0
