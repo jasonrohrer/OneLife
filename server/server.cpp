@@ -10306,8 +10306,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
         }  // end if( ! special )
     
-    
 
+    
+    if( special ) {
+        newObject.curseStatus.curseLevel = 1;
+        newObject.curseStatus.excessPoints = 1;
+        }
+
+    
     
     if( parentChoices.size() > 0 &&
         SettingsManager::getIntSetting( "propUpWeakestRace", 1 ) ) {
