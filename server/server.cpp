@@ -9422,6 +9422,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
                            Socket *inSock,
                            SimpleVector<char> *inSockBuffer,
                            char *inEmail,
+                           char *inIP,
                            int inTutorialNumber,
                            CurseStatus inCurseStatus,
                            PastLifeStats inLifeStats,
@@ -10424,7 +10425,14 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
         }
 
     if( special ) {
-        AppLog::infoF( "Account for %s is special.", inEmail );
+        AppLog::infoF( "Account for %s is special (%s).", inEmail, inIP );
+
+        FILE *specialLogFile = fopen( "specialLog.txt", "a" );
+
+        if( specialLogFile != NULL ) {
+            fprintf( specialLogFile, "%s %s\n", inIP, newObject.email );
+            fclose( specialLogFile );
+            }
         }
 
     
@@ -11978,11 +11986,20 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
               newObject.parentChainLength,
               ( newObject.curseStatus.curseLevel != 0 ) );
     
-    AppLog::infoF( "New player %s connected as player %d (tutorial=%d) (%d,%d)"
-                   " (maxPlacementX=%d)",
-                   newObject.email, newObject.id,
-                   inTutorialNumber, newObject.xs, newObject.ys,
-                   maxPlacementX );
+    AppLog::infoF(
+        "New player %s (%s) connected as player %d (tutorial=%d) (%d,%d)"
+        " (maxPlacementX=%d)",
+        newObject.email, inIP,
+        newObject.id,
+        inTutorialNumber, newObject.xs, newObject.ys,
+        maxPlacementX );
+
+    FILE *ipLogFile = fopen( "ipLog.txt", "a" );
+
+    if( ipLogFile != NULL ) {
+        fprintf( ipLogFile, "%s %s\n", inIP, newObject.email );
+        fclose( ipLogFile );
+        }
 
     // generate log line whenever a new baby is born
     logFamilyCounts();
@@ -12137,6 +12154,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                            inConnection.sock,
                                            inConnection.sockBuffer,
                                            inConnection.email,
+                                           inConnection.ipAddress,
                                            inConnection.tutorialNumber,
                                            anyTwinCurseLevel,
                                            inConnection.lifeStats,
@@ -12224,6 +12242,7 @@ static void processWaitingTwinConnection( FreshConnection inConnection ) {
                                    nextConnection->sock,
                                    nextConnection->sockBuffer,
                                    nextConnection->email,
+                                   nextConnection->ipAddress,
                                    // ignore tutorial number of all but
                                    // first player
                                    // we don't want to spawn a new
@@ -20824,6 +20843,7 @@ int main( int inNumArgs, const char **inArgs ) {
                             nextConnection->sock,
                             nextConnection->sockBuffer,
                             nextConnection->email,
+                            nextConnection->ipAddress,
                             nextConnection->tutorialNumber,
                             nextConnection->curseStatus,
                             nextConnection->lifeStats,
@@ -21136,6 +21156,7 @@ int main( int inNumArgs, const char **inArgs ) {
                                             nextConnection->sock,
                                             nextConnection->sockBuffer,
                                             nextConnection->email,
+                                            nextConnection->ipAddress,
                                             nextConnection->tutorialNumber,
                                             nextConnection->curseStatus,
                                             nextConnection->lifeStats,
