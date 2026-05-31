@@ -2836,21 +2836,24 @@ static const char *getCurseWord( char *inSenderEmail,
                 "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
         }
     
-    char *emailPlusSecret;
+    char *emailString;
 
     if( cursesUseSenderEmail ) {
-        emailPlusSecret =
-            autoSprintf( "%s_%s_%s", inSenderEmail, inEmail, curseSecret );
+        emailString =
+            autoSprintf( "%s_%s", inSenderEmail, inEmail );
         }
     else {
-        emailPlusSecret = 
-            autoSprintf( "%s_%s", inEmail, curseSecret );
+        emailString = stringDuplicate( inEmail );
         }
+
+    char *secretHash = hmac_sha1( curseSecret, emailString );
+
+    delete [] emailString;
     
-    unsigned int c = crc32( (unsigned char*)emailPlusSecret, 
-                            strlen( emailPlusSecret ) );
+    unsigned int c = crc32( (unsigned char*)secretHash, 
+                            strlen( secretHash ) );
     
-    delete [] emailPlusSecret;
+    delete [] secretHash;
 
     curseSource.reseed( c );
     
@@ -2881,13 +2884,17 @@ static const char *getPropertyNameWord( int inX, int inY, int inWordIndex ) {
                 "statsServerSharedSecret", "sdfmlk3490sadfm3ug9324" );
         }
     
-    char *coordsPlusSecret = 
-        autoSprintf( "%d_%d_%s", inX, inY, curseSecret );
+    char *coordsString = 
+        autoSprintf( "%d_%d", inX, inY );
+
+    char *secretHash = hmac_sha1( curseSecret, coordsString );
+
+    delete [] coordsString;
     
-    unsigned int c = crc32( (unsigned char*)coordsPlusSecret, 
-                            strlen( coordsPlusSecret ) );
+    unsigned int c = crc32( (unsigned char*)secretHash, 
+                            strlen( secretHash ) );
     
-    delete [] coordsPlusSecret;
+    delete [] secretHash;
 
     curseSource.reseed( c );
     
