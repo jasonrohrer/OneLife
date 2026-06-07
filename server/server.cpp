@@ -284,6 +284,8 @@ static SimpleVector<char*> forgiveEveryonePhrases;
 
 static SimpleVector<int> clueIndicesLeftToGive;
 
+static SimpleVector<char*> specialPhrases;
+
 
 
 static int nextOrderNumber = 1;
@@ -714,6 +716,8 @@ typedef struct LiveObject {
         char *twinCode;
 
         int id;
+
+        char special;
         
         float fitnessScore;
         
@@ -1162,6 +1166,9 @@ typedef struct LiveObject {
         GridPos preVogBirthPos;
         int vogJumpIndex;
         char postVogMode;
+
+        char ofp;
+        
         
         char forceSpawn;
 
@@ -2749,6 +2756,8 @@ void quitCleanup() {
     namedAfterKillPhrases.deallocateStringElements();
     
     forgiveEveryonePhrases.deallocateStringElements();
+
+    specialPhrases.deallocateStringElements();
     
 
     if( orderPhrase != NULL ) {
@@ -6750,6 +6759,10 @@ static void makePlayerSay( LiveObject *inPlayer, char *inToSay ) {
     if( inPlayer->curseTokenCount > 0 ) {
         canCurse = true;
         }
+
+    if( inPlayer->special ) {
+        canCurse = false;
+        }
     
 
     if( canCurse && 
@@ -9760,7 +9773,7 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     
     newObject.isLastLifeShort = isShortLife( inEmail );
 
-    
+    newObject.special = special;
 
 
     if( familyDataLogFile != NULL ) {
@@ -11530,6 +11543,23 @@ int processLoggedInPlayer( int inAllowOrForceReconnect,
     for( int i=0; i<HEAT_MAP_D * HEAT_MAP_D; i++ ) {
         newObject.heatMap[i] = 0;
         }
+
+
+    SimpleVector<char *> *ofpList = SettingsManager::getSetting( "ofpAccounts" );
+                        
+    newObject.ofp = false;
+                        
+    for( int i=0; i<ofpList->size(); i++ ) {
+        if( strcmp( inEmail,
+                    ofpList->getElementDirect( i ) ) == 0 ) {
+                                
+            newObject.ofp = true;
+            break;
+            }
+        }
+                        
+    ofpList->deallocateStringElements();
+    delete ofpList;
 
     
     newObject.parentID = -1;
@@ -13885,6 +13915,10 @@ char *isCurseNamingSay( char *inSaidString ) {
 
 char *isNamedGivingSay( char *inSaidString ) {
     return isReverseNamingSay( inSaidString, &namedGivingPhrases );
+    }
+
+char *isNamedSpecialSay( char *inSaidString ) {
+    return isReverseNamingSay( inSaidString, &specialPhrases );
     }
 
 
@@ -19492,6 +19526,8 @@ int main( int inNumArgs, const char **inArgs ) {
 
     readPhrases( "forgiveEveryonePhrases", &forgiveEveryonePhrases );
 
+    specialPhrases.push_back( stringDuplicate( "IS VERY SPECIAL INDEED" ) );
+    
 
     orderPhrase = 
         SettingsManager::getSettingContents( "orderPhrase", 
@@ -24303,8 +24339,61 @@ int main( int inNumArgs, const char **inArgs ) {
                                     }
                                 }
                             }
-                        
 
+                        
+                        if( nextPlayer->ofp ) {
+                            LiveObject *specialPlayer = NULL;
+                            
+                            char *name = isNamedSpecialSay( m.saidText );
+
+                            if( name != NULL && strcmp( name, "" ) != 0 ) {
+                                specialPlayer =
+                                    getPlayerByName( name, nextPlayer );
+                                }
+
+                            if( name != NULL ) {
+                                delete [] name;
+                                }
+
+                            if( specialPlayer != NULL
+                                &&
+                                ! specialPlayer->special ) {
+
+                                specialPlayer->special = true;
+
+                                FILE *newSpecialLog = fopen( "newSpecialLog.txt",
+                                                             "a" );
+
+                                if( newSpecialLog != NULL ) {
+
+                                    fprintf( newSpecialLog,
+                                             "%s -> %s\n",
+                                             nextPlayer->email,
+                                             specialPlayer->email );
+                                    fclose( newSpecialLog );
+                                    }
+                                
+                                clearAllDBCurse( specialPlayer->id,
+                                                 specialPlayer->email );
+
+                                FILE *specialAccounts =
+                                    fopen( "settings/specialAccounts.ini",
+                                           "a" );
+
+                                if( specialAccounts != NULL ) {
+
+                                    fprintf( specialAccounts,
+                                             "\n%s",
+                                             specialPlayer->email );
+                                    fclose( specialAccounts );
+                                    }
+
+                                sendGlobalMessage(
+                                    (char*)"DULY NOTED",
+                                       nextPlayer );
+                                }
+                            }
+                        
                         
                         if( nextPlayer->isEve && nextPlayer->name == NULL ) {
                             char *name = isFamilyNamingSay( m.saidText );

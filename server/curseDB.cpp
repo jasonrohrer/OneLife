@@ -336,6 +336,18 @@ void initCurseDB() {
         }
     
     dbCountOpen = rebuildCountDB();
+
+    
+    // at startup, special accounts forgive everyone they have cursed
+    SimpleVector<char *> *list =
+        SettingsManager::getSetting( "specialAccounts" );
+    
+    for( int i = 0; i < list->size(); i++ ) {
+
+        nextEveryoneForgiverList.push_back( list->getElementDirect( i ) );
+        }
+
+    delete list;
     }
 
 
