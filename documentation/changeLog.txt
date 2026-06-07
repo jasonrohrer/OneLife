@@ -16,6 +16,9 @@ Server Fixes:
   CRC.  This will cause curse names to change, but also make it much harder to
   map email address to their matching curse names.
 
+--Added instrumentation to log slow server steps and give a time profile.
+
+
 
 
 

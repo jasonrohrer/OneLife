@@ -69,6 +69,7 @@ offspringTracker.cpp \
 ipBanList.cpp \
 ahapGate.cpp \
 periodicPlacements.cpp \
+timeLogger.cpp \
 
 
 GAME_GRAPHICS = 

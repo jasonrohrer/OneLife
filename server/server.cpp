@@ -65,6 +65,7 @@
 #include "offspringTracker.h"
 #include "ipBanList.h"
 #include "periodicPlacements.h"
+#include "timeLogger.h"
 
 
 #include "minorGems/util/random/JenkinsRandomSource.h"
@@ -19800,7 +19801,8 @@ int main( int inNumArgs, const char **inArgs ) {
         }
     */
 
-
+    double  longestStepTime = 0;
+    
     while( !quit ) {
 
         double curStepTime = Time::getCurrentTime();
@@ -19939,7 +19941,8 @@ int main( int inNumArgs, const char **inArgs ) {
             
             }
         
-
+       logTime( "periodicStepProcessing" );
+       
         if( periodicStepThisStep ) {
             
             apocalypseStep();
@@ -20207,6 +20210,9 @@ int main( int inNumArgs, const char **inArgs ) {
                 }
             purgeStaleCravings( lowestCravingID );
             }
+
+        logTime( "periodicStepProcessing" );
+        
         
         
         int numLive = players.size();
@@ -20426,11 +20432,15 @@ int main( int inNumArgs, const char **inArgs ) {
         // we thus use zero CPU as long as no messages or new connections
         // come in, and only wake up when some timed action needs to be
         // handled
+
+        double timeSpentPolling = Time::getCurrentTime();
         
         readySock = sockPoll.wait( (int)( pollTimeout * 1000 ) );
+
+        timeSpentPolling = Time::getCurrentTime() - timeSpentPolling;
         
         
-        
+        logTime( "fieldIncomingConnection" );
         
         if( readySock != NULL && !readySock->isSocket ) {
             // server ready
@@ -20617,10 +20627,18 @@ int main( int inNumArgs, const char **inArgs ) {
     
                 }
             }
-        
 
+        logTime( "fieldIncomingConnection" );
+
+        
+        logTime( "stepTriggers" );
+        
         stepTriggers();
         
+        logTime( "stepTriggers" );
+        
+
+        logTime( "processingNewConnections" );
         
         // listen for messages from new connections
         double currentTime = Time::getCurrentTime();
@@ -21247,7 +21265,11 @@ int main( int inNumArgs, const char **inArgs ) {
                 }
             }
             
+        logTime( "processingNewConnections" );
 
+
+        logTime( "connectionCleanUp" );
+        
 
         // make sure all twin-waiting sockets are still connected
         for( int i=0; i<waitingForTwinConnections.size(); i++ ) {
@@ -21327,8 +21349,13 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 }
             }
+
+        logTime( "connectionCleanUp" );
+
     
 
+        logTime( "tutorialLoading" );
+        
         // step tutorial map load for player at front of line
         
         // 5 ms
@@ -21391,6 +21418,7 @@ int main( int inNumArgs, const char **inArgs ) {
             }
         
 
+        logTime( "tutorialLoading" );
 
         
     
@@ -21445,6 +21473,8 @@ int main( int inNumArgs, const char **inArgs ) {
 
         
         timeSec_t curLookTime = Time::timeSec();
+
+        logTime( "processIncomingClientMessages" );
         
         for( int i=0; i<numLive; i++ ) {
             LiveObject *nextPlayer = players.getElement( i );
@@ -28205,7 +28235,11 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 }
             }
+        logTime( "processIncomingClientMessages" );
 
+
+
+        logTime( "activeKillStates" );
         
         // process pending KILL actions
         for( int i=0; i<activeKillStates.size(); i++ ) {
@@ -28314,8 +28348,13 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 }
             }
+
+        logTime( "activeKillStates" );
+        
         
 
+
+        logTime( "postMessageChecks" );
 
         // now that messages have been processed for all
         // loop over and handle all post-message checks
@@ -29975,6 +30014,10 @@ int main( int inNumArgs, const char **inArgs ) {
             }
         
 
+        logTime( "postMessageChecks" );
+        
+        
+
         
         // check for any that have been individually flagged, but
         // aren't on our list yet (updates caused by external triggers)
@@ -30339,10 +30382,16 @@ int main( int inNumArgs, const char **inArgs ) {
 
         // add changes from auto-decays on map, 
         // mixed with player-caused changes
+
+        logTime( "stepMap" );
+        
         stepMap( &mapChanges, &mapChangesPos );
         
+        logTime( "stepMap" );
         
 
+        logTime( "specialMessageSending" );
+        
         
         if( periodicStepThisStep ) {
 
@@ -30821,11 +30870,14 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 }
             }
-        
+
+        logTime( "specialMessageSending" );
+
 
         
         // send moves and updates to clients
-        
+        logTime( "sendMovesAndUpdates" );
+
         
         SimpleVector<int> playersReceivingPlayerUpdate;
         
@@ -32910,7 +32962,10 @@ int main( int inNumArgs, const char **inArgs ) {
 
                 }
             }
-
+        
+        logTime( "sendMovesAndUpdates" );
+        
+        logTime( "endOfLoopCleanup" );
 
         for( int u=0; u<moveList.size(); u++ ) {
             MoveRecord *r = moveList.getElement( u );
@@ -33142,7 +33197,44 @@ int main( int inNumArgs, const char **inArgs ) {
                 quit = true;
                 }
             }
-        }
+        
+        logTime( "endOfLoopCleanup" );
+        
+
+        double totalStepTime = Time::getCurrentTime() - curStepTime;
+
+        totalStepTime -= timeSpentPolling;
+
+        if( totalStepTime > longestStepTime ) {
+            FILE *longStepLogFile = fopen( "longStepLog.txt", "a" );
+
+            if( longStepLogFile != NULL ) {
+                time_t timeT = time( NULL );
+    
+                char *dateString = stringDuplicate( ctime( &timeT ) );
+    
+    
+                // this date string ends with a newline...
+                // get rid of it
+                dateString[ strlen(dateString) - 1 ] = '\0';
+                
+                fprintf( longStepLogFile,
+                         "%s:  %f: long step took %f sec\n",
+                         dateString,
+                         Time::getCurrentTime(),
+                         totalStepTime );
+                
+                delete [] dateString;
+
+                printTimeLog( longStepLogFile );
+                
+                fclose( longStepLogFile );
+                }
+            longestStepTime = totalStepTime;
+            }
+
+        clearTimeLog();
+        }   // end of   while( !quit ) {
     
     // stop listening on server socket immediately, before running
     // cleanup steps.  Cleanup may take a while, and we don't want to leave
