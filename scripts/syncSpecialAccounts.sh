@@ -1,6 +1,13 @@
 
+
+# grab official list from bs2
+
+scp bigserver2.onehouronelife.com:checkout/OneLife/server/settings/specialAccounts.ini .
+
+
 # feed file through grep to add newlines at the end of each line
 # otherwise, read skips the last line if it doesn't end with newline
+
 while read user server port
 do
 
