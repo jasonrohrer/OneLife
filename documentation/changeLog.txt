@@ -21,6 +21,8 @@ Server Fixes:
 --Degenerate KILL command on your own ID is now blocked.  Some modded clients
   were exploiting this.
 
+--Blocked long-distance probing of statue and grave locations.
+
 
 
 

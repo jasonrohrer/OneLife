@@ -22430,176 +22430,212 @@ int main( int inNumArgs, const char **inArgs ) {
                     }
                 else if( m.type == GRAVE ) {
                     // immediately send GO response
-                    
-                    int id = getGravePlayerID( m.x, m.y );
-                    
-                    DeadObject *o = NULL;
-                    for( int i=0; i<pastPlayers.size(); i++ ) {
-                        DeadObject *oThis = pastPlayers.getElement( i );
+
+                    // ignore if it's too far away
+                    // they can't sound for grave info all around the map
+
+                    GridPos targetPos = { m.x, m.y };
+
+                    if( distance( getPlayerPos( nextPlayer ),
+                                  targetPos )
+                        >
+                        chunkDimensionX * 2 ) {
                         
-                        if( oThis->id == id ) {
-                            o = oThis;
-                            break;
-                            }
+                        setPlayerDisconnected(
+                            nextPlayer,
+                            "Long-distance grave sounding detected" );
                         }
+                    else {
                     
-                    SimpleVector<int> *defaultLineage = 
-                        new SimpleVector<int>();
+                        int id = getGravePlayerID( m.x, m.y );
                     
-                    defaultLineage->push_back( 0 );
-                    DeadObject defaultO = 
-                        { 0,
-                          0,
-                          stringDuplicate( "~" ),
-                          defaultLineage,
-                          0,
-                          0 };
-                    
-                    if( o == NULL ) {
-                        // check for living player too 
-                        for( int i=0; i<players.size(); i++ ) {
-                            LiveObject *oThis = players.getElement( i );
-                            
+                        DeadObject *o = NULL;
+                        for( int i=0; i<pastPlayers.size(); i++ ) {
+                            DeadObject *oThis = pastPlayers.getElement( i );
+                        
                             if( oThis->id == id ) {
-                                defaultO.id = oThis->id;
-                                defaultO.displayID = oThis->displayID;
-                            
-                                if( oThis->name != NULL ) {
-                                    delete [] defaultO.name;
-                                    defaultO.name = 
-                                        stringDuplicate( oThis->name );
-                                    }
-                            
-                                defaultO.lineage->push_back_other( 
-                                    oThis->lineage );
-                            
-                                defaultO.lineageEveID = oThis->lineageEveID;
-                                defaultO.lifeStartTimeSeconds =
-                                    oThis->lifeStartTimeSeconds;
-                                defaultO.deathTimeSeconds =
-                                    oThis->deathTimeSeconds;
+                                o = oThis;
+                                break;
                                 }
                             }
-                        }
+                    
+                        SimpleVector<int> *defaultLineage = 
+                            new SimpleVector<int>();
+                    
+                        defaultLineage->push_back( 0 );
+                        DeadObject defaultO = 
+                            { 0,
+                              0,
+                              stringDuplicate( "~" ),
+                              defaultLineage,
+                              0,
+                              0 };
+                    
+                        if( o == NULL ) {
+                            // check for living player too 
+                            for( int i=0; i<players.size(); i++ ) {
+                                LiveObject *oThis = players.getElement( i );
+                            
+                                if( oThis->id == id ) {
+                                    defaultO.id = oThis->id;
+                                    defaultO.displayID = oThis->displayID;
+                            
+                                    if( oThis->name != NULL ) {
+                                        delete [] defaultO.name;
+                                        defaultO.name = 
+                                            stringDuplicate( oThis->name );
+                                        }
+                            
+                                    defaultO.lineage->push_back_other( 
+                                        oThis->lineage );
+                            
+                                    defaultO.lineageEveID = oThis->lineageEveID;
+                                    defaultO.lifeStartTimeSeconds =
+                                        oThis->lifeStartTimeSeconds;
+                                    defaultO.deathTimeSeconds =
+                                        oThis->deathTimeSeconds;
+                                    }
+                                }
+                            }
                     
 
-                    if( o == NULL ) {
-                        o = &defaultO;
-                        }
-
-                    if( o != NULL ) {
-                        char *formattedName;
-                        
-                        if( o->name != NULL ) {
-                            char found;
-                            formattedName =
-                                replaceAll( o->name, " ", "_", &found );
-                            }
-                        else {
-                            formattedName = stringDuplicate( "~" );
+                        if( o == NULL ) {
+                            o = &defaultO;
                             }
 
-                        SimpleVector<char> linWorking;
+                        if( o != NULL ) {
+                            char *formattedName;
                         
-                        for( int j=0; j<o->lineage->size(); j++ ) {
-                            char *mID = 
-                                autoSprintf( 
-                                    " %d",
-                                    o->lineage->getElementDirect( j ) );
-                            linWorking.appendElementString( mID );
-                            delete [] mID;
-                            }
-                        char *linString = linWorking.getElementString();
-                        
-                        double age;
-                        
-                        if( o->deathTimeSeconds > 0 ) {
-                            // "age" in years since they died 
-                            age = computeAge( o->deathTimeSeconds );
-                            }
-                        else {
-                            // grave of unknown person
-                            // let client know that age is bogus
-                            age = -1;
-                            }
-                        
-                        char *message = autoSprintf(
-                            "GO\n%d %d %d %d %f %s%s eve=%d\n#",
-                            m.x - nextPlayer->birthPos.x,
-                            m.y - nextPlayer->birthPos.y,
-                            o->id, o->displayID, 
-                            age,
-                            formattedName, linString,
-                            o->lineageEveID );
-                        printf( "Processing %d,%d from birth pos %d,%d\n",
-                                m.x, m.y, nextPlayer->birthPos.x,
-                                nextPlayer->birthPos.y );
-                        
-                        delete [] formattedName;
-                        delete [] linString;
+                            if( o->name != NULL ) {
+                                char found;
+                                formattedName =
+                                    replaceAll( o->name, " ", "_", &found );
+                                }
+                            else {
+                                formattedName = stringDuplicate( "~" );
+                                }
 
-                        sendMessageToPlayer( nextPlayer, message, 
-                                             strlen( message ) );
-                        delete [] message;
-                        }
+                            SimpleVector<char> linWorking;
+                        
+                            for( int j=0; j<o->lineage->size(); j++ ) {
+                                char *mID = 
+                                    autoSprintf( 
+                                        " %d",
+                                        o->lineage->getElementDirect( j ) );
+                                linWorking.appendElementString( mID );
+                                delete [] mID;
+                                }
+                            char *linString = linWorking.getElementString();
+                        
+                            double age;
+                        
+                            if( o->deathTimeSeconds > 0 ) {
+                                // "age" in years since they died 
+                                age = computeAge( o->deathTimeSeconds );
+                                }
+                            else {
+                                // grave of unknown person
+                                // let client know that age is bogus
+                                age = -1;
+                                }
+                        
+                            char *message = autoSprintf(
+                                "GO\n%d %d %d %d %f %s%s eve=%d\n#",
+                                m.x - nextPlayer->birthPos.x,
+                                m.y - nextPlayer->birthPos.y,
+                                o->id, o->displayID, 
+                                age,
+                                formattedName, linString,
+                                o->lineageEveID );
+                            printf( "Processing %d,%d from birth pos %d,%d\n",
+                                    m.x, m.y, nextPlayer->birthPos.x,
+                                    nextPlayer->birthPos.y );
+                        
+                            delete [] formattedName;
+                            delete [] linString;
+
+                            sendMessageToPlayer( nextPlayer, message, 
+                                                 strlen( message ) );
+                            delete [] message;
+                            }
                     
-                    delete [] defaultO.name;
-                    delete defaultO.lineage;
+                        delete [] defaultO.name;
+                        delete defaultO.lineage;
+                        }
                     }
                 else if( m.type == STATUE ) {
                     // immediately send ST response
-                    timeSec_t statueTime;
-
-                    char dataBuffer[MAP_STATUE_DATA_LENGTH];
-                    memset( dataBuffer, 0, MAP_STATUE_DATA_LENGTH );
-
-                    char found = getStatueData( m.x, m.y,
-                                                &statueTime, dataBuffer );
                     
-                    if( found ) {
-                        double statueAge = computeAge( statueTime );
-                        int displayID;
-                        double age;
-                        char nameBuffer[100];
-                        char finalWordsBuffer[100];
-                        int hat, tunic, frontShoe, backShoe, bottom, backpack;
+                    // ignore if it's too far away
+                    // they can't sound for statue info all around the map
 
-                        int i = 0;
-                        while( dataBuffer[i] != '\0' ) {
-                            if( dataBuffer[i] == '|' ) {
-                                dataBuffer[i] = ' ';
-                                }
-                            i++;
-                            }
+                    GridPos targetPos = { m.x, m.y };
+
+                    if( distance( getPlayerPos( nextPlayer ),
+                                  targetPos )
+                        >
+                        chunkDimensionX * 2 ) {
                         
-                        int numRead = sscanf(
-                            dataBuffer,
-                            "%d %lf %99s %d %d %d %d %d %d %99s",
-                            &displayID,
-                            &age, nameBuffer,
-                            &hat, &tunic, &frontShoe, 
-                            &backShoe, &bottom, &backpack,
-                            finalWordsBuffer );
+                        setPlayerDisconnected(
+                            nextPlayer,
+                            "Long-distance statue sounding detected" );
+                        }
+                    else {
+                    
+                        timeSec_t statueTime;
 
-                        if( numRead == 10 ) {
-                            char *message = autoSprintf( 
-                                "ST\n"
-                                "%d %d %d %f %f %s %d;%d;%d;%d;%d;%d %s\n#",
-                                m.x - nextPlayer->birthPos.x,
-                                m.y - nextPlayer->birthPos.y,
-                                displayID, age, statueAge,
-                                nameBuffer,
-                                hat, tunic, frontShoe, backShoe, 
-                                bottom, backpack,
+                        char dataBuffer[MAP_STATUE_DATA_LENGTH];
+                        memset( dataBuffer, 0, MAP_STATUE_DATA_LENGTH );
+
+                        char found = getStatueData( m.x, m.y,
+                                                    &statueTime, dataBuffer );
+                    
+                        if( found ) {
+                            double statueAge = computeAge( statueTime );
+                            int displayID;
+                            double age;
+                            char nameBuffer[100];
+                            char finalWordsBuffer[100];
+                            int hat, tunic, frontShoe, backShoe;
+                            int bottom, backpack;
+
+                            int i = 0;
+                            while( dataBuffer[i] != '\0' ) {
+                                if( dataBuffer[i] == '|' ) {
+                                    dataBuffer[i] = ' ';
+                                    }
+                                i++;
+                                }
+                        
+                            int numRead = sscanf(
+                                dataBuffer,
+                                "%d %lf %99s %d %d %d %d %d %d %99s",
+                                &displayID,
+                                &age, nameBuffer,
+                                &hat, &tunic, &frontShoe, 
+                                &backShoe, &bottom, &backpack,
                                 finalWordsBuffer );
+
+                            if( numRead == 10 ) {
+                                char *message = autoSprintf( 
+                                    "ST\n"
+                                    "%d %d %d %f %f %s %d;%d;%d;%d;%d;%d %s\n#",
+                                    m.x - nextPlayer->birthPos.x,
+                                    m.y - nextPlayer->birthPos.y,
+                                    displayID, age, statueAge,
+                                    nameBuffer,
+                                    hat, tunic, frontShoe, backShoe, 
+                                    bottom, backpack,
+                                    finalWordsBuffer );
                             
-                            sendMessageToPlayer( nextPlayer, message, 
-                                             strlen( message ) );
-                            delete [] message;
-                            }
-                        else {
-                            printf( "Bad data string found in statue db: %s",
-                                    dataBuffer );
+                                sendMessageToPlayer( nextPlayer, message, 
+                                                     strlen( message ) );
+                                delete [] message;
+                                }
+                            else {
+                                printf( "Bad data string found in statue db: %s",
+                                        dataBuffer );
+                                }
                             }
                         }
                     }
