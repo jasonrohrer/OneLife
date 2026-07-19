@@ -18400,6 +18400,13 @@ static LiveObject *getClosestFollower( LiveObject *inLeader ) {
 static void tryToStartKill( LiveObject *nextPlayer, int inTargetID,
                             SimpleVector<int> *playerIndicesToSendUpdatesAbout,
                             char inInfiniteRange = false ) {
+
+    if( nextPlayer->id == inTargetID ) {
+        // trying to kill self?  Doesn't make sense
+        // Various client mods exploit this degenerate case
+        return;
+        }
+    
     if( inTargetID > 0 && 
         nextPlayer->holdingID > 0 ) {
                             

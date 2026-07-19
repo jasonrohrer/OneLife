@@ -18,6 +18,8 @@ Server Fixes:
 
 --Added instrumentation to log slow server steps and give a time profile.
 
+--Degenerate KILL command on your own ID is now blocked.  Some modded clients
+  were exploiting this.
 
 
 
