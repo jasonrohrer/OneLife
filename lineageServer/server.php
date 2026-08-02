@@ -3314,7 +3314,7 @@ function ls_purge() {
 
     $query =  "DELETE FROM $tableNamePrefix"."lives ".
         "WHERE $whereClauseA ".
-        "AND death_time < DATE_SUB( NOW(), INTERVAL 1 YEAR ) LIMIT 10000;";
+        "AND death_time < DATE_SUB( NOW(), INTERVAL 6 MONTH ) LIMIT 10000;";
 
     $result = ls_queryDatabase( $query );
 

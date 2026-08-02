@@ -23,6 +23,10 @@ Server Fixes:
 
 --Blocked long-distance probing of statue and grave locations.
 
+--Lineage server now purges non-record breaking lives that are older than 6
+  months (was 1 year before).  We had 750K lives built up, and the lineage
+  server was getting bogged again.
+
 
 
 
