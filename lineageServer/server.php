@@ -3012,8 +3012,9 @@ function ls_characterPage() {
         eval( $header );
 
         echo "You seem like you might be a bot.<br><br>";
-        echo "Please vist the family tree front page, and <b>enable cookies</b> "
-            "in your browser, before viewing ".
+        echo "Please vist the family tree front page, " .
+            "and <b>enable cookies</b> " .
+            "in your browser, before viewing " .
             "individual character pages<br><br>";
         echo "<a href=/server.php?action=front_page>Family Tree Front Page</a>";
 
