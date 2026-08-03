@@ -27,6 +27,9 @@ Server Fixes:
   months (was 1 year before).  We had 750K lives built up, and the lineage
   server was getting bogged again.
 
+--Actually, back to 1 year purge time.  Bots were hammering the server, and
+  that was the problem.
+
 
 
 
