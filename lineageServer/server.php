@@ -3019,6 +3019,8 @@ function ls_characterPage() {
         echo "<a href=/server.php?action=front_page>Family Tree Front Page</a>";
 
         eval( $footer );
+
+        return;
         }
 
     $id = ls_requestFilter( "id", "/[0-9]+/i", "0" );
