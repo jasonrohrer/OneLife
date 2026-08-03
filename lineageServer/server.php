@@ -1663,6 +1663,8 @@ function ls_getFaceURLForAge( $inAge, $inDisplayID ) {
 
 function ls_frontPage() {
 
+    ls_setFrontPageIPCookie();
+
     // no longer accepting raw email in search box
     $emailFilter = "";
         //ls_requestFilter( "filter", "/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+/i", "" );
@@ -2995,6 +2997,28 @@ function ls_getLifeExists( $inID ) {
 
 
 function ls_characterPage() {
+    
+    global $header, $footer;
+    
+
+    if( ! ls_checkFrontPageIPCookie() ) {
+
+        // user has not visited the front page from this IP address
+        // in over 2 hours... this might be a bot scraping the site
+
+        header( "HTTP/1.1 403 Forbidden" );
+        header( "Content-Type: text/html; charset=UTF-8" );
+
+        eval( $header );
+
+        echo "You seem like you might be a bot.<br><br>";
+        echo "Please vist the family tree front page, and <b>enable cookies</b> "
+            "in your browser, before viewing ".
+            "individual character pages<br><br>";
+        echo "<a href=/server.php?action=front_page>Family Tree Front Page</a>";
+
+        eval( $footer );
+        }
 
     $id = ls_requestFilter( "id", "/[0-9]+/i", "0" );
 
@@ -3010,7 +3034,7 @@ function ls_characterPage() {
     
     //echo "ID = $id and relID = $rel_id<br>";
     
-    global $header, $footer;
+   
 
     eval( $header );
 
@@ -3991,7 +4015,59 @@ function ls_clearPasswordCookie() {
 
     setcookie( $cookieName, "", $expireTime, "/" );
     }
- 
+
+
+
+function ls_getCorrectFrontPageIPCookieValue() {
+    global $sharedGameServerSecret;
+
+    // hash of the ip address that was used to access the front page
+    // future character_page requests must come from that same IP address
+    $cookieValue =
+        strtoupper( ls_hmac_sha1( $sharedGameServerSecret,
+                                  $remoteIP ) );
+
+    return $cookieValue;
+    }
+
+
+
+function ls_setFrontPageIPCookie() {
+    global $tableNamePrefix;
+    
+    $cookieName = $tableNamePrefix . "cookie_front_page_visit";
+
+    // expire in 2 hours
+    $expireTime = time() + 2 * 60;
+
+    $cookieValue = ls_getCorrectFrontPageIPCookieValue();
+    
+    setcookie( $cookieName,
+               $cookieValue,
+               $expireTime,
+               "/" );
+    }
+
+
+// returns false on failure, true on success
+function ls_checkFrontPageIPCookie() {
+
+    global $tableNamePrefix;
+    
+    $cookieName = $tableNamePrefix . "cookie_front_page_visit";
+
+    $correctCookieValue = ls_getCorrectFrontPageIPCookieValue();
+
+    if( isset( $_COOKIE[ $cookieName ] ) ) {
+        if( $_COOKIE[ $cookieName ] == $correctCookieValue ) {
+            return true;
+            }
+        }
+
+    // cookie not set or not correct
+    return false;         
+    }
+    
  
 
 

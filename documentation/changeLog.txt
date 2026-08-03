@@ -30,6 +30,12 @@ Server Fixes:
 --Actually, back to 1 year purge time.  Bots were hammering the server, and
   that was the problem.
 
+--Lineage server now sets a cookie with your IP hash when you visit the front
+  page, and then checks for that cookie when you view individual character_page
+  pages.  Bot nets are switching IP addresses constantly and not visiting the
+  front page, so this should stop them while allowing real humans through.
+
+
 
 
 
